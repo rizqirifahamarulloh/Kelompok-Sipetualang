@@ -1,5 +1,7 @@
-# Kelompok-Sipetualang
+# Kelompok SiPetualang
+
 Kelompok 08 Nurul Fikri Academy - Fullstack Web Dev
+
 
 Nama Anggota
 1. Rizqi Rifah Amarulloh (Ketua Kelompok - Backend)
