@@ -1,0 +1,273 @@
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 0 60px 100px;
+  overflow: hidden;
+}
+
+.hero__bg {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  z-index: 0;
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+.hero__bg-desktop {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.hero__bg-mobile {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: none;
+}
+
+.hero__notch {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 14px 32px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+}
+
+.hero__breadcrumb {
+  position: relative;
+  color: black;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.hero__breadcrumb-home {
+  color: rgb(42, 181, 115);
+  font-weight: 600;
+}
+
+.hero__breadcrumb-sep {
+  color: rgb(150, 150, 150);
+  font-weight: 400;
+}
+
+.hero__breadcrumb-page {
+  color: rgb(100, 100, 100);
+  font-weight: 500;
+}
+
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.hero__content {
+  position: absolute;
+  top: 50%;
+  left: 60px;
+  right: 60px;
+  transform: translateY(-50%);
+  max-width: 1400px;
+  margin: 0 auto;
+  z-index: 1;
+}
+
+.hero__title {
+  font-size: 52px;
+  font-weight: 700;
+  color: var(--color-white);
+  line-height: 1.15;
+  margin-bottom: 16px;
+  white-space: pre-line;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+.hero__subtitle {
+  font-size: 16px;
+  font-weight: 300;
+  max-width: 600px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.hero__buttons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.hero__cta,
+.hero__works-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  border-radius: 50px;
+  min-width: 180px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.hero__cta {
+  gap: 10px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  letter-spacing: 0.5px;
+  box-shadow: 0 8px 30px rgba(42, 181, 115, 0.35);
+}
+
+.hero__works-btn {
+  gap: 8px;
+  background-color: transparent;
+  color: white;
+  border: 1px solid rgb(220, 220, 220);
+}
+
+.hero__cta:hover {
+  background: var(--color-primary-dark);
+  box-shadow: 0 12px 40px rgba(42, 181, 115, 0.5);
+}
+
+.hero__cta-arrow {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--transition-fast);
+}
+
+.hero__cta:hover .hero__cta-arrow {
+  transform: translateX(4px);
+}
+
+.hero__scroll-indicator {
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.hero__scroll-line {
+  width: 2px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero__scroll-line::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: var(--color-primary);
+  animation: scrollDown 2s infinite;
+}
+
+@keyframes scrollDown {
+  0% {
+    top: -50%;
+  }
+
+  100% {
+    top: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 0;
+    min-height: 100svh;
+  }
+
+  .hero__bg {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+  }
+
+  .hero__bg-desktop {
+    display: none;
+  }
+
+  .hero__bg-mobile {
+    display: block;
+    padding: 16px;
+    border-radius: 32px;
+  }
+
+  .hero__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    left: 24px;
+    right: 24px;
+  }
+
+  .hero__title {
+    text-align: center;
+    font-size: 32px;
+  }
+
+  .hero__subtitle {
+    font-size: 13px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero__buttons {
+    flex-direction: column;
+    width: 100%;
+    gap: 16px;
+  }
+
+  .hero__cta,
+  .hero__works-btn {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .hero__notch {
+    bottom: 0;
+    padding: 10px 24px 28px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+
+  .hero__breadcrumb {
+    font-size: 12px;
+  }
+}
