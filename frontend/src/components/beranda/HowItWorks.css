@@ -62,11 +62,11 @@
 .how-it-works__card {
   position: relative;
   background-color: rgb(239, 255, 244);
-  -webkit-mask-image: url('../assets/Service-Card-1.png');
+  -webkit-mask-image: url('../../assets/beranda/Service-Card-1.png');
   -webkit-mask-size: 100% 100%;
   -webkit-mask-position: center;
   -webkit-mask-repeat: no-repeat;
-  mask-image: url('../assets/Service-Card-1.png');
+  mask-image: url('../../assets/beranda/Service-Card-1.png');
   mask-size: 100% 100%;
   mask-position: center;
   mask-repeat: no-repeat;
@@ -76,11 +76,13 @@
   min-height: 300px;
   border-radius: 0;
   border: none;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.06));
 }
 
 .how-it-works__icon {
-  width: 64px;
-  height: 64px;
+  width: 70px;
+  height: 70px;
+  margin-left: 60px;
   object-fit: contain;
   margin-bottom: 24px;
 }
@@ -88,14 +90,20 @@
 .how-it-works__card-title {
   font-size: 20px;
   font-weight: 600;
+  padding-left: 10px;
   color: black;
   margin-bottom: 12px;
 }
 
 .how-it-works__card-desc {
   font-size: 14px;
+  padding-left: 10px;
   color: rgb(80, 80, 80);
   line-height: 1.6;
+}
+
+.text-red {
+  color: rgb(220, 38, 38);
 }
 
 .how-it-works__card:hover {
@@ -116,6 +124,14 @@
 
   .how-it-works__title {
     font-size: 28px;
+  }
+
+  .how-it-works__card-title {
+    text-align: center;
+  }
+
+  .how-it-works__card-desc {
+    text-align: center;
   }
 
   .how-it-works__grid {

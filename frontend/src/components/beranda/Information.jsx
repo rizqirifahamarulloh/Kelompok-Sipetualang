@@ -1,7 +1,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import infoImage from '../assets/Images-informasi-section.png';
-import arrowRight from '../assets/icon-arrow-right.svg';
+import infoImage from '../../assets/beranda/Images-informasi-section.png';
+import arrowRight from '../../assets/beranda/icon-arrow-right.svg';
 import './Information.css';
 
 function Information() {
@@ -53,7 +53,7 @@ function Information() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              🛡️ Info Keamanan
+              Info Keamanan
             </motion.button>
           </div>
         </motion.div>

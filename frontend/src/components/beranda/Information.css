@@ -8,12 +8,13 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  gap: 150px;
   align-items: center;
 }
 
 .information__image {
   position: relative;
+  width: 120%;
 }
 
 .information__image img {
@@ -106,6 +107,11 @@
   .information {
     padding: 60px 5%;
   }
+
+  .information__image {
+  position: relative;
+  width: 100%;
+}
 
   .information__container {
     grid-template-columns: 1fr;

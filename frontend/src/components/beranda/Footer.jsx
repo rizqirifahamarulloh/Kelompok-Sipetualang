@@ -1,8 +1,8 @@
 import ScrollReveal from './ScrollReveal'
-import footerBg from '../assets/BG-Footer-Section.png'
-import logo from '../assets/Logo.png'
-import facebookIcon from '../assets/Facebook Icon.svg'
-import linkedinIcon from '../assets/LinkedIn.svg'
+import footerBg from '../../assets/beranda/BG-Footer-Section.png'
+import logo from '../../assets/beranda/Logo.png'
+import facebookIcon from '../../assets/beranda/Facebook Icon.svg'
+import linkedinIcon from '../../assets/beranda/LinkedIn.svg'
 import './Footer.css'
 
 function Footer() {

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
-import heroBg from '../assets/Image-bg.png'
-import heroBgMobile from '../assets/Image-bg-android.png'
-import arrowRight from '../assets/icon-arrow-right.svg'
+import heroBg from '../../assets/beranda/Image-bg.png'
+import heroBgMobile from '../../assets/beranda/Image-bg-android.png'
+import arrowRight from '../../assets/beranda/icon-arrow-right.svg'
 import ScrollReveal from './ScrollReveal'
 import './Hero.css'
 

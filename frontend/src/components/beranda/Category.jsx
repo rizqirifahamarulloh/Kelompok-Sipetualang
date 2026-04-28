@@ -1,19 +1,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import cat1 from '../assets/Card-Category-1.png'
-import cat2 from '../assets/Card-Category-2.png'
-import cat3 from '../assets/Card-Category-3.png'
-import cat4 from '../assets/Card-Category-4.png'
-import cat5 from '../assets/Card-Category-5.png'
+import cat1 from '../../assets/beranda/Card-Category-1.png'
+import cat2 from '../../assets/beranda/Card-Category-2.png'
+import cat3 from '../../assets/beranda/Card-Category-3.png'
+import cat4 from '../../assets/beranda/Card-Category-4.png'
+import cat5 from '../../assets/beranda/Card-Category-5.png'
+import cat6 from '../../assets/beranda/Card-Category-6.png'
+import cat7 from '../../assets/beranda/Card-Category-7.png'
 import ScrollReveal from './ScrollReveal'
 import './Category.css'
 
 const categories = [
-  { image: cat1, title: 'Tenda', available: '84 items available', tag: 'Popular' },
-  { image: cat2, title: 'Carrier', available: '42 items available', tag: 'Best Seller' },
-  { image: cat3, title: 'Sleeping Bag', available: '15 items available', tag: null },
-  { image: cat4, title: 'Cooking Set', available: '30 items available', tag: 'New' },
-  { image: cat5, title: 'Trekking Pole', available: '50 items available', tag: null },
+  { image: cat1, title: 'JaketGore tex Waterprof', available: '23 items available', tag: 'Popular' },
+  { image: cat2, title: 'Sleeping Bag', available: '42 items available', tag: 'Best Seller' },
+  { image: cat3, title: 'Carrier Eiger Escapade 25', available: '15 items available', tag: null },
+  { image: cat4, title: 'Tenda Borneo Pro', available: '15 items available', tag: 'New' },
+  { image: cat5, title: 'Forester Sepatu Mendaki', available: '10 items available', tag: null },
+  { image: cat6, title: 'Trekking Pole', available: '24 items available', tag: null },
+  { image: cat7, title: 'Emergency Blanket', available: '50 items available', tag: null },
 ]
 
 function Category() {
@@ -49,9 +53,7 @@ function Category() {
               Sewa Gear Outdoor{'\n'}Kini Lebih Mudah
             </h2>
             <p className="category__subtitle">
-              Temukan berbagai pilihan peralatan outdoor berkualitas untuk
-              mendukung petualangan kamu Dari tenda sleeping bag hingga
-              peralatan hiking lengkap
+              Kamu cukup mengetik nama lokasi tujuan. Sistem kami merekomendasikan alat yang pas dengan kondisi alam di sana. Kamu bisa mengecek jumlah ketersediaan tenda atau carrier saat ini juga.
             </p>
           </div>
         </ScrollReveal>

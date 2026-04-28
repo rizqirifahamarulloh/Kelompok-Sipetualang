@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import ScrollReveal from './ScrollReveal'
+import avatar1 from '../../assets/beranda/Avatar1.png'
+import avatar2 from '../../assets/beranda/Avatar2.png'
+import avatar3 from '../../assets/beranda/Avatar3.png'
+import avatar4 from '../../assets/beranda/Avatar4.png'
+import avatar5 from '../../assets/beranda/Avatar5.png'
 import './Testimonial.css'
 
 const testimonials = [
@@ -7,31 +12,36 @@ const testimonials = [
     quote: '"Carrier dan tenda yang saya sewa sangat nyaman digunakan selama 3 hari di Gunung Semeru Harga terjangkau dengan kualitas premium"',
     name: 'Budi Setiawan',
     role: 'Fotografer Alam',
-    theme: 'green'
+    theme: 'green',
+    avatar: avatar1
   },
   {
     quote: '"Pengalaman pertama sewa di SiPetualang langsung memuaskan Barang diantar tepat waktu dan kondisinya sangat baik Pasti sewa lagi"',
     name: 'Maya Putri',
     role: 'Adventure Enthusiast',
-    theme: 'dark'
+    theme: 'dark',
+    avatar: avatar2
   },
   {
     quote: '"Cooking set dan sleeping bag yang disewakan sangat lengkap Membuat camping jadi lebih nyaman dan menyenangkan Terima kasih SiPetualang"',
     name: 'Riko Firmansyah',
     role: 'Camper',
-    theme: 'light'
+    theme: 'light',
+    avatar: avatar3
   },
   {
     quote: '"Pelayanan sangat ramah dan proses pengambilan barang super cepat Kondisi carrier masih terlihat baru dan terawat dengan sangat baik"',
     name: 'Dinda Shafira',
     role: 'Pendaki Pemula',
-    theme: 'green'
+    theme: 'green',
+    avatar: avatar4
   },
   {
     quote: '"Sangat membantu untuk pendakian rombongan Peralatan masak dan tenda kapasitas besar tersedia lengkap Sangat direkomendasikan"',
     name: 'Andi Pratama',
     role: 'Ketua Komunitas',
-    theme: 'dark'
+    theme: 'dark',
+    avatar: avatar5
   }
 ]
 
@@ -57,14 +67,16 @@ function Testimonial() {
         <ScrollReveal>
           <div className="testimonial__cards-wrapper">
             {testimonials.map((item, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={`testi-ui-card testi-ui-card-${index + 1} theme-${item.theme} ${activeCard === index ? 'active' : ''}`}
                 onClick={() => toggleCard(index)}
               >
                 <p className="testi-ui-quote">{item.quote}</p>
                 <div className="testi-ui-profile">
-                  <div className="testi-ui-avatar"></div>
+                  <div className="testi-ui-avatar">
+                    <img src={item.avatar} alt={item.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  </div>
                   <div className="testi-ui-info">
                     <h4 className="testi-ui-name">{item.name}</h4>
                     <span className="testi-ui-role">{item.role}</span>

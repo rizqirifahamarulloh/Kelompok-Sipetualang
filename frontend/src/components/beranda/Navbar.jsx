@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import logo from '../assets/Logo.png'
-import searchIcon from '../assets/icon-search.svg'
-import cartIcon from '../assets/icon-simple-cart.svg'
-import arrowRight from '../assets/icon-arrow-right.svg'
+import logo from '../../assets/beranda/Logo.png'
+import searchIcon from '../../assets/beranda/icon-search.svg'
+import cartIcon from '../../assets/beranda/icon-simple-cart.svg'
+import arrowRight from '../../assets/beranda/icon-arrow-right.svg'
 import './Navbar.css'
 
 const navLinks = [

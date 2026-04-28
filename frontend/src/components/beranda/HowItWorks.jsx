@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import searchIcon from '../assets/Icon-Search-Services.svg';
-import tagIcon from '../assets/Icon-Tag-Service.svg';
-import documentIcon from '../assets/Icon-Document-Service.svg';
-import sendIcon from '../assets/Icon-Send-Service.svg';
+import searchIcon from '../../assets/beranda/Icon-Search-Services.svg';
+import tagIcon from '../../assets/beranda/Icon-Tag-Service.svg';
+import documentIcon from '../../assets/beranda/Icon-Document-Service.svg';
+import sendIcon from '../../assets/beranda/Icon-Send-Service.svg';
 import ScrollReveal from './ScrollReveal';
 import './HowItWorks.css';
 
@@ -15,17 +15,17 @@ const steps = [
   {
     icon: tagIcon,
     title: 'Pemesanan',
-    desc: 'Cari alat favorit Anda dari berbagai kategori dan merek terpercaya.',
+    desc: 'Tentukan tanggal mulai dan durasi sewa yang sesuai dengan jadwal Anda.',
   },
   {
     icon: documentIcon,
     title: 'Pengambilan',
-    desc: 'Cari alat favorit Anda dari berbagai kategori dan merek terpercaya.',
+    desc: <>Ambil di toko mitra terdekat. <span className="text-red">Wajib menyerahkan KTP fisik sebagai jaminan.</span></>,
   },
   {
     icon: sendIcon,
     title: 'Pengembalian',
-    desc: 'Cari alat favorit Anda dari berbagai kategori dan merek terpercaya.',
+    desc: 'Kembalikan alat dalam kondisi baik dan ambil kembali KTP Kamu.',
   },
 ];
 

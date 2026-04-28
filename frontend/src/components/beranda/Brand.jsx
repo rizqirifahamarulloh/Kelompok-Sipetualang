@@ -1,11 +1,11 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import brandBg from '../assets/BG-Brand-Section.png';
-import brand1 from '../assets/Logo-Brand-1.png';
-import brand2 from '../assets/Logo-Brand-2.png';
-import brand3 from '../assets/Logo-Brand-3.png';
-import brand4 from '../assets/Logo-Brand-4.png';
-import brand5 from '../assets/Logo-Brand-5.png';
+import brandBg from '../../assets/beranda/BG-Brand-Section.png';
+import brand1 from '../../assets/beranda/Logo-Brand-1.png';
+import brand2 from '../../assets/beranda/Logo-Brand-2.png';
+import brand3 from '../../assets/beranda/Logo-Brand-3.png';
+import brand4 from '../../assets/beranda/Logo-Brand-4.png';
+import brand5 from '../../assets/beranda/Logo-Brand-5.png';
 import './Brand.css';
 
 const brands = [brand1, brand2, brand3, brand4, brand5];

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import Navbar from './components/Navbar'
-import Hero from './components/Hero'
-import Information from './components/Information'
-import HowItWorks from './components/HowItWorks'
-import Category from './components/Category'
-import Brand from './components/Brand'
-import Testimonial from './components/Testimonial'
-import Footer from './components/Footer'
-import LoadingScreen from './components/LoadingScreen'
+import Navbar from './components/beranda/Navbar'
+import Hero from './components/beranda/Hero'
+import Information from './components/beranda/Information'
+import HowItWorks from './components/beranda/HowItWorks'
+import Category from './components/beranda/Category'
+import Brand from './components/beranda/Brand'
+import Testimonial from './components/beranda/Testimonial'
+import Footer from './components/beranda/Footer'
+import LoadingScreen from './components/beranda/LoadingScreen'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
