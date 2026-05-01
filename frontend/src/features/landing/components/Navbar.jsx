@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { navLinks } from '@/features/landing/constants'
 import logo from '@/assets/beranda/Logo.png'
@@ -56,13 +57,13 @@ export default function Navbar() {
           <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart">
             <img src={cartIcon} alt="Cart" className="w-5 h-5" />
           </button>
-          <a
-            href="#login"
+          <Link
+            to="/login"
             className="flex items-center justify-center gap-2 bg-sp-primary text-white py-2.5 px-6 rounded-full text-sm font-semibold no-underline transition-all duration-300 ease-in-out ml-4 hover:bg-[rgb(26,122,77)] hover:-translate-y-0.5 group"
           >
             Masuk
             <img src={arrowRight} alt="" className="w-4 h-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
-          </a>
+          </Link>
         </div>
 
         <button
@@ -105,13 +106,14 @@ export default function Navbar() {
               <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart">
                 <img src={cartIcon} alt="Cart" className="w-5 h-5" />
               </button>
-              <a
-                href="#login"
+              <Link
+                to="/login"
                 className="flex items-center justify-center gap-2 bg-sp-primary text-white py-2.5 px-6 rounded-full text-sm font-semibold no-underline transition-all duration-300 ease-in-out w-full mt-2 hover:bg-[rgb(26,122,77)] hover:-translate-y-0.5 group"
+                onClick={() => setMobileOpen(false)}
               >
                 Masuk
                 <img src={arrowRight} alt="" className="w-4 h-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
-              </a>
+              </Link>
             </div>
           </motion.div>
         )}
