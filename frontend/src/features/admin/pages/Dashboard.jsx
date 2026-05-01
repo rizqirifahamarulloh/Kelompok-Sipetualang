@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { dashboardService } from '@/features/admin/services/dashboardService'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -12,21 +13,15 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
-import {
-  Users,
-  Package,
-  ShoppingCart,
-  Banknote,
-  AlertTriangle,
-} from 'lucide-react'
+import { Users, Package, ShoppingCart, Banknote, AlertTriangle } from 'lucide-react'
 
 const statusVariants = {
-  pending_payment: { label: 'Menunggu Bayar', variant: 'outline' },
-  paid: { label: 'Dibayar', variant: 'secondary' },
-  rented: { label: 'Disewa', variant: 'default' },
-  completed: { label: 'Selesai', variant: 'default' },
-  cancelled: { label: 'Dibatalkan', variant: 'destructive' },
-  overdue: { label: 'Terlambat', variant: 'destructive' },
+  pending_payment: 'outline',
+  paid: 'secondary',
+  rented: 'default',
+  completed: 'default',
+  cancelled: 'destructive',
+  overdue: 'destructive',
 }
 
 function formatCurrency(amount) {
@@ -37,32 +32,12 @@ function formatCurrency(amount) {
   }).format(amount)
 }
 
-function StatsCards({ stats }) {
+function StatsCards({ stats, t }) {
   const cards = [
-    {
-      title: 'Total Pengguna',
-      value: stats?.total_users ?? 0,
-      icon: Users,
-      description: 'Pengguna terdaftar',
-    },
-    {
-      title: 'Total Alat',
-      value: stats?.total_gears ?? 0,
-      icon: Package,
-      description: 'Alat outdoor tersedia',
-    },
-    {
-      title: 'Total Transaksi',
-      value: stats?.total_transactions ?? 0,
-      icon: ShoppingCart,
-      description: 'Transaksi keseluruhan',
-    },
-    {
-      title: 'Total Pendapatan',
-      value: formatCurrency(stats?.total_revenue ?? 0),
-      icon: Banknote,
-      description: 'Pendapatan kotor',
-    },
+    { title: t('admin.totalUsers'), value: stats?.total_users ?? 0, icon: Users, desc: t('admin.registeredUsers') },
+    { title: t('admin.totalGears'), value: stats?.total_gears ?? 0, icon: Package, desc: t('admin.availableGears') },
+    { title: t('admin.totalTransactions'), value: stats?.total_transactions ?? 0, icon: ShoppingCart, desc: t('admin.allTransactions') },
+    { title: t('admin.totalRevenue'), value: formatCurrency(stats?.total_revenue ?? 0), icon: Banknote, desc: t('admin.grossRevenue') },
   ]
 
   return (
@@ -70,14 +45,12 @@ function StatsCards({ stats }) {
       {cards.map((card) => (
         <Card key={card.title}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {card.title}
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
             <card.icon className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{card.value}</div>
-            <p className="text-xs text-muted-foreground mt-1">{card.description}</p>
+            <p className="text-xs text-muted-foreground mt-1">{card.desc}</p>
           </CardContent>
         </Card>
       ))}
@@ -85,13 +58,13 @@ function StatsCards({ stats }) {
   )
 }
 
-function RecentTransactions({ transactions }) {
+function RecentTransactions({ transactions, t }) {
   if (!transactions?.length) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Transaksi Terbaru</CardTitle>
-          <CardDescription>Belum ada transaksi</CardDescription>
+          <CardTitle>{t('admin.recentTransactions')}</CardTitle>
+          <CardDescription>{t('admin.noTransactions')}</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -100,40 +73,34 @@ function RecentTransactions({ transactions }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Transaksi Terbaru</CardTitle>
-        <CardDescription>5 transaksi terakhir di platform</CardDescription>
+        <CardTitle>{t('admin.recentTransactions')}</CardTitle>
+        <CardDescription>{t('admin.recentTransactionsDesc')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Kode</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Destinasi</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t('admin.code')}</TableHead>
+              <TableHead>{t('admin.customer')}</TableHead>
+              <TableHead>{t('admin.destination')}</TableHead>
+              <TableHead>{t('admin.total')}</TableHead>
+              <TableHead>{t('admin.status')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((trx) => {
-              const status = statusVariants[trx.status] ?? {
-                label: trx.status,
-                variant: 'outline',
-              }
-              return (
-                <TableRow key={trx.id}>
-                  <TableCell className="font-mono text-sm">
-                    {trx.transaction_code}
-                  </TableCell>
-                  <TableCell>{trx.customer?.name ?? '-'}</TableCell>
-                  <TableCell>{trx.destination?.name ?? '-'}</TableCell>
-                  <TableCell>{formatCurrency(trx.total_cost)}</TableCell>
-                  <TableCell>
-                    <Badge variant={status.variant}>{status.label}</Badge>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+            {transactions.map((trx) => (
+              <TableRow key={trx.id}>
+                <TableCell className="font-mono text-sm">{trx.transaction_code}</TableCell>
+                <TableCell>{trx.customer?.name ?? '-'}</TableCell>
+                <TableCell>{trx.destination?.name ?? '-'}</TableCell>
+                <TableCell>{formatCurrency(trx.total_cost)}</TableCell>
+                <TableCell>
+                  <Badge variant={statusVariants[trx.status] ?? 'outline'}>
+                    {t(`status.${trx.status}`, trx.status)}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </CardContent>
@@ -141,7 +108,7 @@ function RecentTransactions({ transactions }) {
   )
 }
 
-function LowStockAlerts({ alerts }) {
+function LowStockAlerts({ alerts, t }) {
   if (!alerts?.length) return null
 
   return (
@@ -149,28 +116,19 @@ function LowStockAlerts({ alerts }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="size-5 text-destructive" />
-          Stok Rendah
+          {t('admin.lowStock')}
         </CardTitle>
-        <CardDescription>
-          Alat dengan stok di bawah 5 unit
-        </CardDescription>
+        <CardDescription>{t('admin.lowStockDesc')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {alerts.map((gear) => (
-            <div
-              key={gear.id}
-              className="flex items-center justify-between rounded-lg border p-3"
-            >
+            <div key={gear.id} className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <p className="font-medium text-sm">{gear.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {gear.category?.name}
-                </p>
+                <p className="text-xs text-muted-foreground">{gear.category?.name}</p>
               </div>
-              <Badge variant="destructive">
-                Stok: {gear.stock}
-              </Badge>
+              <Badge variant="destructive">{t('admin.stock')}: {gear.stock}</Badge>
             </div>
           ))}
         </div>
@@ -185,9 +143,7 @@ function DashboardSkeleton() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
+            <CardHeader className="pb-2"><Skeleton className="h-4 w-24" /></CardHeader>
             <CardContent>
               <Skeleton className="h-8 w-20" />
               <Skeleton className="mt-2 h-3 w-32" />
@@ -196,18 +152,15 @@ function DashboardSkeleton() {
         ))}
       </div>
       <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-40" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-48 w-full" />
-        </CardContent>
+        <CardHeader><Skeleton className="h-5 w-40" /></CardHeader>
+        <CardContent><Skeleton className="h-48 w-full" /></CardContent>
       </Card>
     </div>
   )
 }
 
 export default function Dashboard() {
+  const { t } = useLanguage()
   const [data, setData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -217,13 +170,12 @@ export default function Dashboard() {
         const res = await dashboardService.getStats()
         setData(res.data.data)
       } catch (error) {
-        toast.error('Gagal memuat data dashboard')
+        toast.error(t('admin.loadError'))
         console.error(error)
       } finally {
         setIsLoading(false)
       }
     }
-
     fetchData()
   }, [])
 
@@ -232,20 +184,18 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Ringkasan data dan aktivitas platform SiPetualang
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('admin.dashboardTitle')}</h1>
+        <p className="text-muted-foreground">{t('admin.dashboardSubtitle')}</p>
       </div>
 
-      <StatsCards stats={data?.stats} />
+      <StatsCards stats={data?.stats} t={t} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <RecentTransactions transactions={data?.recent_transactions} />
+          <RecentTransactions transactions={data?.recent_transactions} t={t} />
         </div>
         <div>
-          <LowStockAlerts alerts={data?.low_stock_alerts} />
+          <LowStockAlerts alerts={data?.low_stock_alerts} t={t} />
         </div>
       </div>
     </div>

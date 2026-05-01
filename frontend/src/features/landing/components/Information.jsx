@@ -1,11 +1,13 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
 import infoImage from '@/assets/beranda/Images-informasi-section.png'
 import arrowRight from '@/assets/beranda/icon-arrow-right.svg'
 
 export default function Information() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const { t } = useLanguage()
 
   return (
     <section id="information" className="py-[100px] px-[5%] bg-white max-md:py-[60px]" ref={ref}>
@@ -25,16 +27,13 @@ export default function Information() {
           transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
         >
           <span className="inline-block text-sm font-semibold tracking-[1px] text-sp-primary uppercase mb-3">
-            SEWA GEAR TERBAIK
+            {t('information.taglineBadge')}
           </span>
           <h2 className="text-[40px] max-md:text-[28px] font-bold text-black leading-[1.2] mb-5 whitespace-pre-line">
-            {'Sewa Gear Outdoor\nKini Lebih Mudah!'}
+            {t('information.infoTitle')}
           </h2>
           <p className="text-base text-[rgb(100,100,100)] leading-relaxed mb-8">
-            SiPetualang hadir sebagai platform penyewaan peralatan outdoor
-            terpercaya yang memudahkan kamu menikmati petualangan alam tanpa
-            perlu membeli peralatan mahal. Dari tenda, sleeping bag, hingga
-            peralatan hiking lengkap.
+            {t('information.infoDesc')}
           </p>
 
           <div className="flex gap-4 items-center flex-wrap">
@@ -44,7 +43,7 @@ export default function Information() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Selengkapnya
+              {t('information.readMore')}
               <img src={arrowRight} alt="" className="w-3.5 h-3.5" />
             </motion.a>
 
@@ -53,7 +52,7 @@ export default function Information() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Info Keamanan
+              {t('information.safetyInfo')}
             </motion.button>
           </div>
         </motion.div>

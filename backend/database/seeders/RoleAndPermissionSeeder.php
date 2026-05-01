@@ -37,7 +37,7 @@ class RoleAndPermissionSeeder extends Seeder
             // KTP Verification
             'ktp.verify', 'ktp.reject',
             // Dashboard
-            'dashboard.admin', 'dashboard.penyewa',
+            'dashboard.admin', 'dashboard.vendor',
         ];
 
         foreach ($permissions as $permission) {
@@ -49,13 +49,13 @@ class RoleAndPermissionSeeder extends Seeder
         $superAdmin = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'api']);
         $superAdmin->givePermissionTo(Permission::all());
 
-        $penyewa = Role::firstOrCreate(['name' => 'penyewa', 'guard_name' => 'api']);
-        $penyewa->givePermissionTo([
+        $vendor = Role::firstOrCreate(['name' => 'vendor', 'guard_name' => 'api']);
+        $vendor->givePermissionTo([
             'gears.view', 'gears.create', 'gears.update', 'gears.delete',
             'transactions.view',
             'payments.view',
             'deposits.view',
-            'dashboard.penyewa',
+            'dashboard.vendor',
         ]);
 
         $customer = Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'api']);

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLanguage } from '@/contexts/LanguageContext'
+import ThemeToggle from '@/components/ThemeToggle'
+import LanguageToggle from '@/components/LanguageToggle'
 import { navLinks } from '@/features/landing/constants'
 import logo from '@/assets/beranda/Logo.png'
 import searchIcon from '@/assets/beranda/icon-search.svg'
@@ -10,6 +13,7 @@ import arrowRight from '@/assets/beranda/icon-arrow-right.svg'
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,7 +54,9 @@ export default function Navbar() {
           ))}
         </ul>
 
-        <div className="flex gap-4 items-center max-md:hidden">
+        <div className="flex gap-2 items-center max-md:hidden">
+          <LanguageToggle />
+          <ThemeToggle />
           <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Search">
             <img src={searchIcon} alt="Search" className="w-5 h-5" />
           </button>
@@ -59,9 +65,9 @@ export default function Navbar() {
           </button>
           <Link
             to="/login"
-            className="flex items-center justify-center gap-2 bg-sp-primary text-white py-2.5 px-6 rounded-full text-sm font-semibold no-underline transition-all duration-300 ease-in-out ml-4 hover:bg-[rgb(26,122,77)] hover:-translate-y-0.5 group"
+            className="flex items-center justify-center gap-2 bg-sp-primary text-white py-2.5 px-6 rounded-full text-sm font-semibold no-underline transition-all duration-300 ease-in-out ml-2 hover:bg-[rgb(26,122,77)] hover:-translate-y-0.5 group"
           >
-            Masuk
+            {t('nav.login')}
             <img src={arrowRight} alt="" className="w-4 h-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
           </Link>
         </div>
@@ -100,6 +106,8 @@ export default function Navbar() {
               ))}
             </ul>
             <div className="flex flex-wrap gap-4 px-[30px] pb-6">
+              <LanguageToggle />
+              <ThemeToggle />
               <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Search">
                 <img src={searchIcon} alt="Search" className="w-5 h-5" />
               </button>
@@ -111,7 +119,7 @@ export default function Navbar() {
                 className="flex items-center justify-center gap-2 bg-sp-primary text-white py-2.5 px-6 rounded-full text-sm font-semibold no-underline transition-all duration-300 ease-in-out w-full mt-2 hover:bg-[rgb(26,122,77)] hover:-translate-y-0.5 group"
                 onClick={() => setMobileOpen(false)}
               >
-                Masuk
+                {t('nav.login')}
                 <img src={arrowRight} alt="" className="w-4 h-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
               </Link>
             </div>

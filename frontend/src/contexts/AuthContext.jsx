@@ -56,8 +56,8 @@ export function AuthProvider({ children }) {
     const userRoles = userData.roles?.map((r) => r.name) ?? []
     if (userRoles.includes('super_admin')) {
       navigate('/admin/dashboard')
-    } else if (userRoles.includes('penyewa')) {
-      navigate('/penyewa/dashboard')
+    } else if (userRoles.includes('vendor')) {
+      navigate('/vendor/dashboard')
     } else {
       navigate('/customer/dashboard')
     }

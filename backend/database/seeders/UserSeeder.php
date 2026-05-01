@@ -23,8 +23,8 @@ class UserSeeder extends Seeder
         ]);
         $admin->assignRole('super_admin');
 
-        // Penyewa (Gear Owners)
-        $penyewa1 = User::create([
+        // Vendors (Gear Owners)
+        $vendor1 = User::create([
             'name' => 'Budi Santoso',
             'email' => 'budi@sipetualang.com',
             'password' => 'password',
@@ -33,9 +33,9 @@ class UserSeeder extends Seeder
             'ktp_verified_at' => now(),
             'is_active' => true,
         ]);
-        $penyewa1->assignRole('penyewa');
+        $vendor1->assignRole('vendor');
 
-        $penyewa2 = User::create([
+        $vendor2 = User::create([
             'name' => 'Siti Aminah',
             'email' => 'siti@sipetualang.com',
             'password' => 'password',
@@ -44,7 +44,7 @@ class UserSeeder extends Seeder
             'ktp_verified_at' => now(),
             'is_active' => true,
         ]);
-        $penyewa2->assignRole('penyewa');
+        $vendor2->assignRole('vendor');
 
         // Customers
         $customers = [

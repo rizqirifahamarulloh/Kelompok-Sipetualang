@@ -50,12 +50,12 @@ Route::middleware('auth:api')->group(function () {
         // Route::apiResource('deposits', Admin\DepositController::class);
     });
 
-    // ─── Penyewa (Gear Owner) Routes ────────────────────────────────
-    Route::prefix('penyewa')->middleware('role:penyewa')->group(function () {
+    // ─── Vendor (Gear Owner) Routes ────────────────────────────────
+    Route::prefix('vendor')->middleware('role:vendor')->group(function () {
         // TODO: Phase 2
-        // Route::apiResource('gears', Penyewa\GearController::class);
-        // Route::get('transactions', [Penyewa\TransactionController::class, 'index']);
-        // Route::get('dashboard', [Penyewa\DashboardController::class, 'index']);
+        // Route::apiResource('gears', Vendor\GearController::class);
+        // Route::get('transactions', [Vendor\TransactionController::class, 'index']);
+        // Route::get('dashboard', [Vendor\DashboardController::class, 'index']);
     });
 
     // ─── Customer Routes ────────────────────────────────────────────

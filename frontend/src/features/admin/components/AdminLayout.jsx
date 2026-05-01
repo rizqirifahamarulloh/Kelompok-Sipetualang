@@ -1,5 +1,8 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
+import ThemeToggle from '@/components/ThemeToggle'
+import LanguageToggle from '@/components/LanguageToggle'
 import {
   Sidebar,
   SidebarContent,
@@ -39,60 +42,29 @@ import {
   Shield,
 } from 'lucide-react'
 
-const menuItems = [
-  {
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/admin/dashboard',
-  },
-  {
-    label: 'Pengguna',
-    icon: Users,
-    href: '/admin/users',
-  },
-  {
-    label: 'Alat Outdoor',
-    icon: Package,
-    href: '/admin/gears',
-  },
-  {
-    label: 'Kategori',
-    icon: FolderOpen,
-    href: '/admin/categories',
-  },
-  {
-    label: 'Destinasi',
-    icon: MapPin,
-    href: '/admin/destinations',
-  },
-  {
-    label: 'Transaksi',
-    icon: ShoppingCart,
-    href: '/admin/transactions',
-  },
-  {
-    label: 'Pembayaran',
-    icon: CreditCard,
-    href: '/admin/payments',
-  },
-  {
-    label: 'Verifikasi KTP',
-    icon: Shield,
-    href: '/admin/ktp-verification',
-  },
-]
+function useMenuItems() {
+  const { t } = useLanguage()
+
+  return [
+    { label: t('admin.dashboard'), icon: LayoutDashboard, href: '/admin/dashboard' },
+    { label: t('admin.users'), icon: Users, href: '/admin/users' },
+    { label: t('admin.gears'), icon: Package, href: '/admin/gears' },
+    { label: t('admin.categories'), icon: FolderOpen, href: '/admin/categories' },
+    { label: t('admin.destinations'), icon: MapPin, href: '/admin/destinations' },
+    { label: t('admin.transactions'), icon: ShoppingCart, href: '/admin/transactions' },
+    { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments' },
+    { label: t('admin.ktpVerification'), icon: Shield, href: '/admin/ktp-verification' },
+  ]
+}
 
 function AdminSidebar() {
   const { user, logout } = useAuth()
+  const { t } = useLanguage()
   const location = useLocation()
+  const menuItems = useMenuItems()
 
   const initials = user?.name
-    ? user.name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
+    ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : 'AD'
 
   return (
@@ -107,9 +79,7 @@ function AdminSidebar() {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">SiPetualang</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    Admin Panel
-                  </span>
+                  <span className="truncate text-xs text-muted-foreground">{t('admin.panel')}</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -124,10 +94,7 @@ function AdminSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === item.href}
-                  >
+                  <SidebarMenuButton asChild isActive={location.pathname === item.href}>
                     <Link to={item.href}>
                       <item.icon className="size-4" />
                       <span>{item.label}</span>
@@ -147,31 +114,24 @@ function AdminSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
                   <Avatar className="size-8">
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                      {initials}
-                    </AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{user?.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {user?.email}
-                    </span>
+                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                className="w-[--radix-dropdown-menu-trigger-width]"
-              >
+              <DropdownMenuContent side="top" className="w-[--radix-dropdown-menu-trigger-width]">
                 <DropdownMenuItem>
                   <Settings className="mr-2 size-4" />
-                  Pengaturan
+                  {t('admin.settings')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                   <LogOut className="mr-2 size-4" />
-                  Keluar
+                  {t('admin.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -183,6 +143,8 @@ function AdminSidebar() {
 }
 
 export default function AdminLayout() {
+  const { t } = useLanguage()
+
   return (
     <SidebarProvider>
       <AdminSidebar />
@@ -190,9 +152,11 @@ export default function AdminLayout() {
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <span className="text-sm font-medium text-muted-foreground">
-            Admin Panel
-          </span>
+          <span className="text-sm font-medium text-muted-foreground">{t('admin.panel')}</span>
+          <div className="ml-auto flex items-center gap-1">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6">
           <Outlet />

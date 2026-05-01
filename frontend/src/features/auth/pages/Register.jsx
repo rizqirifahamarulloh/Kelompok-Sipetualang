@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import ThemeToggle from '@/components/ThemeToggle'
+import LanguageToggle from '@/components/LanguageToggle'
 import { toast } from 'sonner'
 import { Loader2, Mountain, ArrowLeft } from 'lucide-react'
 
 export default function Register() {
   const { register } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [form, setForm] = useState({
     name: '',
@@ -29,7 +33,7 @@ export default function Register() {
     e.preventDefault()
 
     if (form.password !== form.password_confirmation) {
-      toast.error('Password dan konfirmasi password tidak cocok')
+      toast.error(t('auth.passwordMismatch'))
       return
     }
 
@@ -37,16 +41,15 @@ export default function Register() {
 
     try {
       await register(form)
-      toast.success('Registrasi berhasil! Silakan login.')
+      toast.success(t('auth.registerSuccess'))
       navigate('/login')
     } catch (error) {
       const data = error.response?.data
       if (data?.errors) {
-        // Show first validation error
         const firstError = Object.values(data.errors)[0]
         toast.error(Array.isArray(firstError) ? firstError[0] : firstError)
       } else {
-        toast.error(data?.message || 'Terjadi kesalahan. Coba lagi.')
+        toast.error(data?.message || t('auth.genericError'))
       }
     } finally {
       setIsSubmitting(false)
@@ -55,20 +58,23 @@ export default function Register() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
-      {/* Background decorative elements */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
       </div>
 
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-1">
+        <LanguageToggle />
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-md space-y-6 relative z-10">
-        {/* Back to home */}
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Kembali ke Beranda
+          {t('auth.backToHome')}
         </Link>
 
         <Card className="border-border/50 shadow-xl">
@@ -76,92 +82,45 @@ export default function Register() {
             <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary/10">
               <Mountain className="size-6 text-primary" />
             </div>
-            <CardTitle className="text-2xl font-bold">Daftar Akun Baru</CardTitle>
-            <CardDescription>
-              Buat akun SiPetualang untuk mulai menyewa alat outdoor
-            </CardDescription>
+            <CardTitle className="text-2xl font-bold">{t('auth.registerTitle')}</CardTitle>
+            <CardDescription>{t('auth.registerSubtitle')}</CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nama Lengkap</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Nama lengkap Anda"
-                  value={form.name}
-                  onChange={updateField('name')}
-                  required
-                  disabled={isSubmitting}
-                />
+                <Label htmlFor="name">{t('auth.fullName')}</Label>
+                <Input id="name" type="text" value={form.name} onChange={updateField('name')} required disabled={isSubmitting} />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="nama@email.com"
-                  value={form.email}
-                  onChange={updateField('email')}
-                  required
-                  autoComplete="email"
-                  disabled={isSubmitting}
-                />
+                <Label htmlFor="email">{t('auth.email')}</Label>
+                <Input id="email" type="email" placeholder="nama@email.com" value={form.email} onChange={updateField('email')} required autoComplete="email" disabled={isSubmitting} />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Nomor Telepon</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="08xxxxxxxxxx"
-                  value={form.phone}
-                  onChange={updateField('phone')}
-                  required
-                  disabled={isSubmitting}
-                />
+                <Label htmlFor="phone">{t('auth.phone')}</Label>
+                <Input id="phone" type="tel" placeholder="08xxxxxxxxxx" value={form.phone} onChange={updateField('phone')} required disabled={isSubmitting} />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Minimal 8 karakter"
-                  value={form.password}
-                  onChange={updateField('password')}
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  disabled={isSubmitting}
-                />
+                <Label htmlFor="password">{t('auth.password')}</Label>
+                <Input id="password" type="password" value={form.password} onChange={updateField('password')} required minLength={8} autoComplete="new-password" disabled={isSubmitting} />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password_confirmation">Konfirmasi Password</Label>
-                <Input
-                  id="password_confirmation"
-                  type="password"
-                  placeholder="Ulangi password"
-                  value={form.password_confirmation}
-                  onChange={updateField('password_confirmation')}
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  disabled={isSubmitting}
-                />
+                <Label htmlFor="password_confirmation">{t('auth.confirmPassword')}</Label>
+                <Input id="password_confirmation" type="password" value={form.password_confirmation} onChange={updateField('password_confirmation')} required minLength={8} autoComplete="new-password" disabled={isSubmitting} />
               </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    Memproses...
+                    {t('auth.processing')}
                   </>
                 ) : (
-                  'Daftar'
+                  t('auth.registerButton')
                 )}
               </Button>
             </form>
@@ -169,12 +128,9 @@ export default function Register() {
             <Separator className="my-6" />
 
             <p className="text-center text-sm text-muted-foreground">
-              Sudah punya akun?{' '}
-              <Link
-                to="/login"
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Masuk
+              {t('auth.hasAccount')}{' '}
+              <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+                {t('auth.loginNow')}
               </Link>
             </p>
           </CardContent>

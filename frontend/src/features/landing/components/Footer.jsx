@@ -1,10 +1,12 @@
 import ScrollReveal from '@/components/ui/ScrollReveal'
+import { useLanguage } from '@/contexts/LanguageContext'
 import footerBg from '@/assets/beranda/BG-Footer-Section.png'
 import logo from '@/assets/beranda/Logo.png'
 import facebookIcon from '@/assets/beranda/Facebook Icon.svg'
 import linkedinIcon from '@/assets/beranda/LinkedIn.svg'
 
 export default function Footer() {
+  const { t } = useLanguage()
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -21,7 +23,7 @@ export default function Footer() {
             <div>
               <img src={logo} alt="SiPetualang" className="h-8 w-auto mb-5" />
               <p className="text-sm text-white/70 leading-relaxed mb-6 max-w-[280px] max-md:max-w-full">
-                Platform penyewaan peralatan outdoor terpercaya Nikmati petualangan tanpa batas bersama SiPetualang
+                {t('footer.description')}
               </p>
               <div className="flex gap-3">
                 <a href="#" className="flex items-center justify-center transition-transform duration-300 ease-in-out bg-white/5 w-10 h-10 rounded-full hover:scale-110 hover:-translate-y-0.5 hover:bg-white/10" aria-label="Facebook">
@@ -35,38 +37,38 @@ export default function Footer() {
 
             <div>
               <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">
-                Tentang SiPetualang
+                {t('footer.aboutTitle')}
               </h4>
               <ul className="flex flex-col gap-4 list-none p-0 m-0 max-md:px-5">
                 <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#tentang-kami" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">→ Tentang Kami</a>
+                  <a href="#tentang-kami" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">→ {t('footer.aboutUs')}</a>
                 </li>
                 <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#cara-sewa" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">Cara sewa</a>
+                  <a href="#cara-sewa" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">{t('footer.howToRent')}</a>
                 </li>
                 <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#cara-member" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">Cara jadi member</a>
+                  <a href="#cara-member" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">{t('footer.howToMember')}</a>
                 </li>
                 <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#cara-pengembalian" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">Cara pengembalian</a>
+                  <a href="#cara-pengembalian" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">{t('footer.howToReturn')}</a>
                 </li>
                 <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#syarat-ketentuan" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">Syarat dan Ketentuan</a>
+                  <a href="#syarat-ketentuan" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">{t('footer.terms')}</a>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">Informasi</h4>
+              <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">{t('footer.infoTitle')}</h4>
               <ul className="flex flex-col gap-4 list-none p-0 m-0 max-md:px-5">
                 <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#informasi-keamanan" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">→ Informasi Keamanan</a>
+                  <a href="#informasi-keamanan" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">→ {t('footer.safetyInfo')}</a>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">Layanan Bantuan</h4>
+              <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">{t('footer.helpTitle')}</h4>
               <ul className="flex flex-col gap-4 list-none p-0 m-0 max-md:px-5">
                 <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
                   2307 Indonesia, Jawa Barat, Depok.
