@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "@fontsource/poppins/300.css";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+@import "@fontsource/poppins/800.css";
+
+@theme {
+  /* Font */
+  --font-poppins: "Poppins", sans-serif;
+
+  /* Colors — SiPetualang palette */
+  --color-sp-primary: #2AB573;
+  --color-sp-primary-dark: #1E9A5F;
+  --color-sp-primary-light: #3DD68E;
+  --color-sp-dark: #1A1A2E;
+  --color-sp-dark-card: #222222;
+  --color-sp-dark-bg: #1C1C1C;
+  --color-sp-dark-footer: #161616;
+
+  --color-sp-emerald-50: #ECFDF5;
+  --color-sp-emerald-100: #D7F5E1;
+  --color-sp-emerald-200: #A7F3D0;
+  --color-sp-emerald-300: #34D399;
+  --color-sp-emerald-400: #68FCBF;
+
+  /* Custom animations */
+  --animate-scroll-down: scroll-down 2s infinite;
+  --animate-marquee: marquee 25s linear infinite;
+  --animate-wave: wave-animation 1.5s infinite linear;
+
+  @keyframes scroll-down {
+    0% { transform: translateY(-50%); }
+    100% { transform: translateY(100%); }
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes wave-animation {
+    0% { background-position-x: 0, 0; }
+    100% { background-position-x: 150px, 0; }
+  }
+}
+
+/* Minimal global base styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-poppins);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
