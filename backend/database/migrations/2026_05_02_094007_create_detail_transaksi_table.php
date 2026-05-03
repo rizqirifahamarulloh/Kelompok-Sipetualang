@@ -14,10 +14,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_barang');
             $table->integer('jumlah_pinjam');
             $table->decimal('subtotal', 10, 2);
-            $table->timestamps();
 
             $table->foreign('id_transaksi')->references('id_transaksi')->on('transaksi')->onDelete('cascade');
-            $table->foreign('id_barang')->references('id_barang')->on('barang')->onDelete('cascade');
+            $table->foreign('id_barang')->references('id_barang')->on('barang');
         });
     }
 

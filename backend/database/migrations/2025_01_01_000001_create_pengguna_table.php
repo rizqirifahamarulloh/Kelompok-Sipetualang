@@ -12,13 +12,11 @@ return new class extends Migration
             $table->id('id_pengguna');
             $table->string('nama', 100);
             $table->string('email', 100)->unique();
+            $table->text('alamat')->nullable();
+            $table->string('kota', 100)->nullable();
             $table->string('password', 255);
             $table->string('no_telp', 15)->nullable();
-            $table->enum('peran_pengguna', ['pemilik', 'penyewa', 'admin']);
-            $table->string('foto_ktp')->nullable();
-            $table->string('foto_swafoto')->nullable();
-            $table->boolean('verifikasi_ktp')->default(false);
-            $table->timestamp('created_at')->useCurrent();
+            $table->enum('peran_pengguna', ['customer', 'admin'])->default('customer');
         });
     }
 

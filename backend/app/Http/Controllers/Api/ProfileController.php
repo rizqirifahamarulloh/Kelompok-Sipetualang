@@ -4,7 +4,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pengguna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -23,23 +22,20 @@ class ProfileController extends Controller
             'success' => true,
             'data' => [
                 'id' => $user->id_pengguna,
-                'name' => $user->name,
+                'name' => $user->nama,
                 'email' => $user->email,
                 'phone' => $user->no_telp,
                 'address' => $user->alamat,
-                'birthdate' => $user->tanggal_lahir,
+                'city' => $user->kota,
                 'role' => $user->peran_pengguna,
-                'ktp_verified' => $user->verifikasi_ktp,
+                'google_id' => $user->google_id,
                 'profile_photo' => $user->profile_photo,
-                'foto_ktp' => $user->foto_ktp,
-                'foto_swafoto' => $user->foto_swafoto,
-                'created_at' => $user->created_at,
             ]
         ]);
     }
 
     /**
-     * Update profile (name, phone, address, birthdate)
+     * Update profile (name, phone, address, city)
      */
     public function update(Request $request)
     {
@@ -48,8 +44,8 @@ class ProfileController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:100',
             'phone' => 'sometimes|string|max:15',
-            'address' => 'sometimes|string|max:255',
-            'birthdate' => 'sometimes|date|before:today',
+            'address' => 'sometimes|string',
+            'city' => 'sometimes|string|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -59,17 +55,17 @@ class ProfileController extends Controller
             ], 422);
         }
 
-        if ($request->has('name')) {
-            $user->name = $request->name;
+        if ($request->filled('name')) {
+            $user->nama = $request->name;
         }
-        if ($request->has('phone')) {
+        if ($request->filled('phone')) {
             $user->no_telp = $request->phone;
         }
-        if ($request->has('address')) {
+        if ($request->filled('address')) {
             $user->alamat = $request->address;
         }
-        if ($request->has('birthdate')) {
-            $user->tanggal_lahir = $request->birthdate;
+        if ($request->filled('city')) {
+            $user->kota = $request->city;
         }
 
         $user->save();
@@ -172,6 +168,7 @@ class ProfileController extends Controller
         ]);
     }
 
+
     /**
      * Delete account
      */
@@ -201,12 +198,6 @@ class ProfileController extends Controller
         // Hapus foto-foto
         if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
             Storage::disk('public')->delete($user->profile_photo);
-        }
-        if ($user->foto_ktp && Storage::disk('public')->exists($user->foto_ktp)) {
-            Storage::disk('public')->delete($user->foto_ktp);
-        }
-        if ($user->foto_swafoto && Storage::disk('public')->exists($user->foto_swafoto)) {
-            Storage::disk('public')->delete($user->foto_swafoto);
         }
 
         // Hapus user

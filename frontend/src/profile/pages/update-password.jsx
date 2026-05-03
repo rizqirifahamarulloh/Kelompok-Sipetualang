@@ -1,72 +1,152 @@
 // src/profile/pages/update-password.jsx
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { profileService } from '@/profile/services/profileService';
+
+import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
+import { Key } from 'lucide-react';
+
 export default function UpdatePassword() {
+    const { user } = useAuth();
     const navigate = useNavigate();
+
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    if (!user) return null;
+
+    const getPhotoUrl = () => {
+        if (!user?.profile_photo) return null;
+        return `http://localhost:8000/storage/${user.profile_photo}`;
+    };
+
+    const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // validasi client-side
         if (newPassword !== confirmPassword) {
-            toast.error('Password baru tidak cocok');
+            toast.error('Konfirmasi password tidak cocok');
             return;
         }
+
         if (newPassword.length < 6) {
             toast.error('Password minimal 6 karakter');
             return;
         }
-        toast.success('Password berhasil diubah (simulasi)');
-        navigate('/profile');
+
+        setLoading(true);
+
+        try {
+            await profileService.updatePassword({
+                current_password: oldPassword,
+                new_password: newPassword,
+                new_password_confirmation: confirmPassword,
+            });
+
+            toast.success('Password berhasil diubah');
+            navigate('/profile');
+        } catch (err) {
+            console.log("ERROR PASSWORD:", err.response);
+
+            toast.error(
+                err.response?.data?.message ||
+                JSON.stringify(err.response?.data?.errors) ||
+                'Gagal mengubah password'
+            );
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="container max-w-2xl py-8">
-            <h1 className="text-2xl font-bold">Ganti Password</h1>
-            <p className="text-muted-foreground mb-6">Perbarui password Anda</p>
+        <>
+            <Navbar />
 
-            <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
-                <div>
-                    <label className="block mb-1">Password Lama</label>
-                    <input
-                        type="password"
-                        value={oldPassword}
-                        onChange={(e) => setOldPassword(e.target.value)}
-                        className="w-full border rounded px-3 py-2"
-                    />
+            <div className="min-h-screen bg-background pt-20">
+                <div className="container max-w-6xl mx-auto px-4 py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+                        {/* SIDEBAR */}
+                        <Sidebar
+                            user={user}
+                            getPhotoUrl={getPhotoUrl}
+                            getInitials={getInitials}
+                        />
+
+                        {/* MAIN */}
+                        <div className="lg:col-span-3">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center gap-2">
+                                        <Key size={18} />
+                                        <CardTitle>Ubah Password</CardTitle>
+                                    </div>
+                                    <CardDescription>
+                                        Pastikan password baru mudah diingat tapi aman
+                                    </CardDescription>
+                                </CardHeader>
+
+                                <CardContent>
+                                    <form onSubmit={handleSubmit} className="space-y-6">
+
+                                        <div className="grid grid-cols-2 gap-4">
+
+                                            <Input
+                                                type="password"
+                                                placeholder="Password lama"
+                                                value={oldPassword}
+                                                onChange={(e) => setOldPassword(e.target.value)}
+                                            />
+
+                                            <Input
+                                                type="password"
+                                                placeholder="Password baru"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                            />
+
+                                            <Input
+                                                type="password"
+                                                placeholder="Konfirmasi password"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                className="col-span-2"
+                                            />
+
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <Button type="submit" disabled={loading}>
+                                                {loading ? 'Menyimpan...' : 'Simpan'}
+                                            </Button>
+
+                                            <Link to="/profile">
+                                                <Button variant="outline">
+                                                    Batal
+                                                </Button>
+                                            </Link>
+                                        </div>
+
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                    </div>
                 </div>
-                <div>
-                    <label className="block mb-1">Password Baru</label>
-                    <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full border rounded px-3 py-2"
-                    />
-                </div>
-                <div>
-                    <label className="block mb-1">Konfirmasi Password Baru</label>
-                    <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full border rounded px-3 py-2"
-                    />
-                </div>
-                <div className="flex gap-3">
-                    <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">
-                        Simpan
-                    </button>
-                    <Link to="/profile">
-                        <button type="button" className="bg-gray-500 text-white px-4 py-2 rounded">
-                            Batal
-                        </button>
-                    </Link>
-                </div>
-            </form>
-        </div>
+            </div>
+        </>
     );
 }

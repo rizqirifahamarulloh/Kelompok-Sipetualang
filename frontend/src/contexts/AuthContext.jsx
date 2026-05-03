@@ -6,7 +6,15 @@ import { authService } from '@/features/auth/services/authService'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user')
+    if (!savedUser) return null
+    try {
+      return JSON.parse(savedUser)
+    } catch {
+      return null
+    }
+  })
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate()
@@ -25,6 +33,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       if (!token) {
+        setUser(null)
         setIsLoading(false)
         return
       }
@@ -33,6 +42,7 @@ export function AuthProvider({ children }) {
         const res = await authService.getProfile()
         const userData = res.data.user || res.data.data
         setUser(userData)
+        localStorage.setItem('user', JSON.stringify(userData))
       } catch {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
@@ -48,20 +58,26 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await authService.login(email, password)
-    
-    const newToken = res.data.token || res.token
-    const userData = res.data.user || res.data.data?.user
-    
+
+    const newToken = res.data.token || res.data.access_token || res.data.data?.token || res.token
+    if (!newToken) {
+      throw new Error('Token login tidak diterima')
+    }
+
     localStorage.setItem('token', newToken)
-    localStorage.setItem('user', JSON.stringify(userData))
     setToken(newToken)
+
+    const profileRes = await authService.getProfile()
+    const userData = profileRes.data.user || profileRes.data.data || profileRes.data
+    if (!userData) {
+      throw new Error('Data user tidak ditemukan')
+    }
+
+    localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
 
-    // Redirect berdasarkan role
-    if (userData.peran_pengguna === 'admin') {
+    if (userData?.peran_pengguna === 'admin') {
       navigate('/admin/dashboard')
-    } else if (userData.peran_pengguna === 'pemilik') {
-      navigate('/pemilik/dashboard')
     } else {
       navigate('/')
     }
@@ -92,6 +108,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         token,
         isAuthenticated,
         isLoading,

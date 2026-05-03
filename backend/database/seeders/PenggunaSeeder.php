@@ -15,37 +15,26 @@ class PenggunaSeeder extends Seeder
             ['email' => 'admin@sipetualang.com'],
             [
                 'nama' => 'Admin SiPetualang',
+                'email' => 'admin@sipetualang.com',
+                'alamat' => 'Jl. Admin No. 1',
+                'kota' => 'Jakarta',
                 'password' => Hash::make('password'),
-                'peran_pengguna' => 'admin',
-                'verifikasi_ktp' => true,
                 'no_telp' => '081234567890',
-                'created_at' => now()
+                'peran_pengguna' => 'admin',
             ]
         );
 
-        // Test Penyewa
+        // Test Customer
         Pengguna::updateOrCreate(
             ['email' => 'penyewa@test.com'],
             [
                 'nama' => 'Budi Penyewa',
+                'email' => 'penyewa@test.com',
+                'alamat' => 'Jl. Penyewa No. 2',
+                'kota' => 'Bandung',
                 'password' => Hash::make('password'),
-                'peran_pengguna' => 'penyewa',
-                'verifikasi_ktp' => true,
                 'no_telp' => '081234567891',
-                'created_at' => now()
-            ]
-        );
-
-        // Test Pemilik
-        Pengguna::updateOrCreate(
-            ['email' => 'pemilik@test.com'],
-            [
-                'nama' => 'Siti Pemilik',
-                'password' => Hash::make('password'),
-                'peran_pengguna' => 'pemilik',
-                'verifikasi_ktp' => false,
-                'no_telp' => '081234567892',
-                'created_at' => now()
+                'peran_pengguna' => 'customer',
             ]
         );
     }

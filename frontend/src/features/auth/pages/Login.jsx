@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
@@ -14,8 +14,19 @@ import { Loader2, Mountain, ArrowLeft } from 'lucide-react'
 import googleIcon from '@/assets/beranda/google.svg'
 
 export default function Login() {
-  const { login } = useAuth()
+  const { login, isAuthenticated, role } = useAuth()
   const { t } = useLanguage()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (role === 'admin') {
+        navigate('/admin/dashboard')
+      } else {
+        navigate('/')
+      }
+    }
+  }, [isAuthenticated, role, navigate])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -114,6 +125,15 @@ export default function Login() {
                 )}
               </Button>
             </form>
+
+            <div className="text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-primary underline-offset-4 hover:underline"
+              >
+                {t('auth.forgotPassword')}
+              </Link>
+            </div>
 
             <Separator className="my-6" />
 

@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\BarangController;
-use App\Http\Controllers\Api\AdminBarangController;
-use App\Http\Controllers\Api\KategoriController;
-use App\Http\Controllers\Api\DestinasiController;
-use App\Http\Controllers\Api\TransaksiController;
+use App\Http\Controllers\Api\Admin\AdminController;
+use App\Http\Controllers\Api\Admin\BarangController;
+use App\Http\Controllers\Api\Admin\AdminBarangController;
+use App\Http\Controllers\Api\Admin\KategoriController;
+use App\Http\Controllers\Api\Admin\DestinasiController;
+use App\Http\Controllers\Api\Admin\TransaksiController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,23 +17,25 @@ Route::post('/login', [AuthController::class, 'login']);
 // Google Auth
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+
+// Refresh token (allow expired JWT to be refreshed)
+Route::post('/refresh', [AuthController::class, 'refresh']);
 
 // Protected routes
 Route::middleware(['jwt.auth'])->group(function () {
     // Auth & Profile (Common for all)
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::put('/profile', [AuthController::class, 'updateProfile']);
-    Route::post('/upload-ktp', [AuthController::class, 'uploadKTP']);
 
     // Catalog routes (Common for all roles)
     Route::get('/kategori', [KategoriController::class, 'index']);
     Route::get('/destinasi', [DestinasiController::class, 'index']);
     Route::get('/barang', [BarangController::class, 'index']);
 
-    // Customer (Penyewa) & Perental (Pemilik) specific routes
-    Route::middleware(['role:penyewa,pemilik'])->group(function () {
+    // Customer specific routes
+    Route::middleware(['role:customer'])->group(function () {
         Route::post('/barang', [BarangController::class, 'store']); // Menyewakan barang (butuh approval)
         Route::get('/barang/my-items', [BarangController::class, 'myItems']); // Lihat barang milik sendiri
 
@@ -50,8 +52,6 @@ Route::middleware(['jwt.auth', 'role:admin'])->group(function () {
     Route::get('/admin/users/{id}', [AdminController::class, 'getUserById']);
     Route::post('/admin/users/{id}/reset-password', [AdminController::class, 'resetPassword']);
     Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser']);
-    Route::get('/admin/pending-ktp', [AdminController::class, 'getPendingKTP']);
-    Route::post('/admin/verify-ktp', [AdminController::class, 'verifyKTP']);
 
     // Admin approval for Barang
     Route::get('/admin/barang/pending', [AdminBarangController::class, 'pendingItems']);
@@ -75,5 +75,6 @@ Route::middleware(['jwt.auth'])->prefix('profile')->group(function () {
     Route::post('/photo', [ProfileController::class, 'updatePhoto']);
     Route::delete('/photo', [ProfileController::class, 'deletePhoto']);
     Route::put('/password', [ProfileController::class, 'updatePassword']);
+    Route::post('/upload-ktp', [ProfileController::class, 'uploadKTP']);
     Route::delete('/', [ProfileController::class, 'destroy']);
 });

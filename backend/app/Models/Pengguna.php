@@ -17,13 +17,13 @@ class Pengguna extends Authenticatable implements JWTSubject
     protected $fillable = [
         'nama',
         'email',
+        'alamat',
+        'kota',
         'password',
         'no_telp',
         'peran_pengguna',
-        'foto_ktp',
-        'foto_swafoto',
-        'verifikasi_ktp',
-        'google_id'
+        'google_id',
+        'profile_photo',
     ];
 
     protected $hidden = [
@@ -31,8 +31,7 @@ class Pengguna extends Authenticatable implements JWTSubject
     ];
 
     protected $casts = [
-        'verifikasi_ktp' => 'boolean',
-        'created_at' => 'datetime',
+        // No specific casts needed
     ];
 
     // JWT Methods
@@ -52,14 +51,9 @@ class Pengguna extends Authenticatable implements JWTSubject
     }
 
     // Role check methods
-    public function isPemilik()
+    public function isCustomer()
     {
-        return $this->peran_pengguna === 'pemilik';
-    }
-
-    public function isPenyewa()
-    {
-        return $this->peran_pengguna === 'penyewa';
+        return $this->peran_pengguna === 'customer';
     }
 
     public function isAdmin()

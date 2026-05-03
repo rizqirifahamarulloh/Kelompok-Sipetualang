@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -40,7 +40,7 @@ class TransaksiController extends Controller
             $total = 0;
             foreach ($request->items as $item) {
                 $barang = Barang::findOrFail($item['id_barang']);
-                
+
                 // Cek stok (sangat basic)
                 if ($barang->jumlah_stok < $item['jumlah']) {
                     throw new \Exception("Stok barang {$barang->nama_barang} tidak mencukupi");

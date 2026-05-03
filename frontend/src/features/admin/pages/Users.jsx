@@ -50,14 +50,12 @@ import { adminService } from '@/features/admin/services/adminService'
 
 const roleColors = {
   admin: 'destructive',
-  pemilik: 'default',
-  penyewa: 'secondary'
+  customer: 'secondary'
 }
 
 const roleLabels = {
   admin: 'Admin',
-  pemilik: 'Pemilik',
-  penyewa: 'Penyewa'
+  customer: 'Customer'
 }
 
 // SKELETON COMPONENT
@@ -381,10 +379,9 @@ export default function Users() {
     return nama.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
 
-  const getPhotoUrl = (fotoKtp) => {
-    if (!fotoKtp) return null
-    if (fotoKtp.startsWith('http')) return fotoKtp
-    return `http://localhost:8000/storage/${fotoKtp}`
+  const getDisplayRole = (role) => {
+    if (role === 'penyewa' || role === 'pemilik') return 'customer'
+    return role
   }
 
   if (isLoading) {
@@ -453,8 +450,8 @@ export default function Users() {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.no_telp || '-'}</TableCell>
                       <TableCell>
-                        <Badge variant={roleColors[user.peran_pengguna] || 'outline'}>
-                          {roleLabels[user.peran_pengguna] || user.peran_pengguna}
+                        <Badge variant={roleColors[getDisplayRole(user.peran_pengguna)] || 'outline'}>
+                          {roleLabels[getDisplayRole(user.peran_pengguna)] || getDisplayRole(user.peran_pengguna)}
                         </Badge>
                       </TableCell>
                       <TableCell>

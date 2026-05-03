@@ -51,9 +51,6 @@ export default function AuthCallback() {
         if (role === 'admin') {
           console.log('Redirecting to /admin/dashboard')
           window.location.href = '/admin/dashboard'
-        } else if (role === 'pemilik') {
-          console.log('Redirecting to /pemilik/dashboard')
-          window.location.href = '/pemilik/dashboard'
         } else {
           console.log('Redirecting to / (landing page)')
           window.location.href = '/'
@@ -68,7 +65,7 @@ export default function AuthCallback() {
     }
 
     handleCallback()
-  }, [])
+  }, [navigate])
 
   if (error) {
     return (

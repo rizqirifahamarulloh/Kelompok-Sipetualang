@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -14,17 +14,26 @@ import { Loader2, Mountain, ArrowLeft } from 'lucide-react'
 import googleIcon from '@/assets/beranda/google.svg'
 
 export default function Register() {
-  const { register } = useAuth()
+  const { register, isAuthenticated, role } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
   const [form, setForm] = useState({
-    name: '',
+    nama: '',
     email: '',
-    phone: '',
+    no_telp: '',
     password: '',
     password_confirmation: '',
-    role: 'penyewa',
   })
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (role === 'admin') {
+        navigate('/admin/dashboard')
+      } else {
+        navigate('/')
+      }
+    }
+  }, [isAuthenticated, role, navigate])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const updateField = (field) => (e) =>
@@ -94,8 +103,8 @@ export default function Register() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">{t('auth.fullName')}</Label>
-                <Input id="name" type="text" value={form.name} onChange={updateField('name')} required disabled={isSubmitting} />
+                <Label htmlFor="nama">{t('auth.fullName')}</Label>
+                <Input id="nama" type="text" value={form.nama} onChange={updateField('nama')} required disabled={isSubmitting} />
               </div>
 
               <div className="space-y-2">
@@ -104,8 +113,8 @@ export default function Register() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">{t('auth.phone')}</Label>
-                <Input id="phone" type="tel" placeholder="08xxxxxxxxxx" value={form.phone} onChange={updateField('phone')} required disabled={isSubmitting} />
+                <Label htmlFor="no_telp">{t('auth.phone')}</Label>
+                <Input id="no_telp" type="tel" placeholder="08xxxxxxxxxx" value={form.no_telp} onChange={updateField('no_telp')} required disabled={isSubmitting} />
               </div>
 
               <div className="space-y-2">
@@ -116,35 +125,6 @@ export default function Register() {
               <div className="space-y-2">
                 <Label htmlFor="password_confirmation">{t('auth.confirmPassword')}</Label>
                 <Input id="password_confirmation" type="password" value={form.password_confirmation} onChange={updateField('password_confirmation')} required minLength={8} autoComplete="new-password" disabled={isSubmitting} />
-              </div>
-
-              {/* Role Selection */}
-              <div className="space-y-2">
-                <Label>{t('auth.registerAs')}</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="penyewa"
-                      checked={form.role === 'penyewa'}
-                      onChange={updateField('role')}
-                      className="size-4 accent-primary"
-                    />
-                    <span className="text-sm">{t('auth.renter')}</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="pemilik"
-                      checked={form.role === 'pemilik'}
-                      onChange={updateField('role')}
-                      className="size-4 accent-primary"
-                    />
-                    <span className="text-sm">{t('auth.owner')}</span>
-                  </label>
-                </div>
               </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>

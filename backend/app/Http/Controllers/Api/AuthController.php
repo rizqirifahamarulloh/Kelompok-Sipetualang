@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -21,7 +24,6 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:100|unique:pengguna',
             'password' => 'required|string|min:6|confirmed',
             'no_telp' => 'nullable|string|max:15',
-            'peran_pengguna' => 'required|in:pemilik,penyewa',
         ]);
 
         if ($validator->fails()) {
@@ -36,8 +38,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'no_telp' => $request->no_telp,
-            'peran_pengguna' => $request->peran_pengguna,
-            'verifikasi_ktp' => false,
+            'peran_pengguna' => 'customer',
         ]);
 
         $token = JWTAuth::fromUser($pengguna);
@@ -85,9 +86,12 @@ class AuthController extends Controller
                 'id_pengguna' => $user->id_pengguna,
                 'nama' => $user->nama,
                 'email' => $user->email,
+                'alamat' => $user->alamat,
+                'kota' => $user->kota,
                 'no_telp' => $user->no_telp,
                 'peran_pengguna' => $user->peran_pengguna,
-                'verifikasi_ktp' => $user->verifikasi_ktp,
+                'google_id' => $user->google_id,
+                'profile_photo' => $user->profile_photo,
             ],
             'token' => $token,
             'token_type' => 'bearer',
@@ -95,8 +99,118 @@ class AuthController extends Controller
         ]);
     }
 
+    // Forgot Password
+    public function forgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:pengguna,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Pengguna::where('email', $request->email)->first();
+        $token = Str::random(64);
+
+        // Simpan ke password_reset_tokens
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            [
+                'token' => $token,
+                'created_at' => Carbon::now()
+            ]
+        );
+
+        $resetLink = config('app.frontend_url', 'http://localhost:5173') . '/reset-password?token=' . $token . '&email=' . urlencode($user->email);
+
+        Mail::send('emails.reset-password', [
+            'user' => $user,
+            'resetLink' => $resetLink
+        ], function ($message) use ($user) {
+            $message->to($user->email)
+                    ->subject('Reset Password - SiPetualang');
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Link reset password telah dikirim ke email Anda'
+        ]);
+    }
+
+    // Reset Password (LANGSUNG KASIH TOKEN JWT BARU)
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required|string',
+            'email' => 'required|email|exists:pengguna,email',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Cek token
+        $resetRecord = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->where('token', $request->token)
+            ->first();
+
+        if (!$resetRecord) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token reset password tidak valid'
+            ], 400);
+        }
+
+        // Cek kadaluarsa (60 menit)
+        if (Carbon::parse($resetRecord->created_at)->addMinutes(60)->isPast()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token reset password sudah kadaluarsa'
+            ], 400);
+        }
+
+        // Update password
+        $user = Pengguna::where('email', $request->email)->first();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Hapus token reset
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+        // Generate JWT TOKEN BARU biar langsung login
+        $newToken = JWTAuth::fromUser($user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password berhasil direset',
+            'token' => $newToken,
+            'token_type' => 'bearer',
+            'expires_in' => config('jwt.ttl') * 60,
+            'user' => [
+                'id_pengguna' => $user->id_pengguna,
+                'nama' => $user->nama,
+                'email' => $user->email,
+                'alamat' => $user->alamat,
+                'kota' => $user->kota,
+                'no_telp' => $user->no_telp,
+                'peran_pengguna' => $user->peran_pengguna,
+                'google_id' => $user->google_id,
+                'profile_photo' => $user->profile_photo,
+            ]
+        ]);
+    }
+
     // Google Login Redirect
-        public function redirectToGoogle()
+    public function redirectToGoogle()
     {
         return Socialite::driver('google')->stateless()->redirect();
     }
@@ -107,23 +221,19 @@ class AuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            // Cari user berdasarkan email atau google_id
             $pengguna = Pengguna::where('email', $googleUser->getEmail())
                 ->orWhere('google_id', $googleUser->getId())
                 ->first();
 
             if (!$pengguna) {
-                // Buat user baru dengan role default 'penyewa'
                 $pengguna = Pengguna::create([
                     'nama' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
                     'password' => Hash::make(Str::random(24)),
-                    'peran_pengguna' => 'penyewa',
+                    'peran_pengguna' => 'customer',
                     'google_id' => $googleUser->getId(),
-                    'verifikasi_ktp' => false,
                 ]);
             } else {
-                // Update google_id jika belum ada
                 if (!$pengguna->google_id) {
                     $pengguna->google_id = $googleUser->getId();
                     $pengguna->save();
@@ -132,7 +242,6 @@ class AuthController extends Controller
 
             $token = JWTAuth::fromUser($pengguna);
 
-            // Redirect ke frontend dengan token
             $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
             $redirectUrl = $frontendUrl . '/auth/callback?token=' . $token . '&user=' . urlencode(json_encode([
                 'id_pengguna' => $pengguna->id_pengguna,
@@ -178,12 +287,12 @@ class AuthController extends Controller
                 'id_pengguna' => $user->id_pengguna,
                 'nama' => $user->nama,
                 'email' => $user->email,
+                'alamat' => $user->alamat,
+                'kota' => $user->kota,
                 'no_telp' => $user->no_telp,
                 'peran_pengguna' => $user->peran_pengguna,
-                'verifikasi_ktp' => $user->verifikasi_ktp,
-                'foto_ktp' => $user->foto_ktp,
-                'foto_swafoto' => $user->foto_swafoto,
-                'created_at' => $user->created_at,
+                'google_id' => $user->google_id,
+                'profile_photo' => $user->profile_photo,
             ]
         ]);
     }
@@ -214,7 +323,10 @@ class AuthController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nama' => 'sometimes|string|max:100',
+            'alamat' => 'sometimes|string',
+            'kota' => 'sometimes|string|max:100',
             'no_telp' => 'sometimes|string|max:15',
+            'profile_photo' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -227,8 +339,18 @@ class AuthController extends Controller
         if ($request->has('nama')) {
             $user->nama = $request->nama;
         }
+        if ($request->has('alamat')) {
+            $user->alamat = $request->alamat;
+        }
+        if ($request->has('kota')) {
+            $user->kota = $request->kota;
+        }
         if ($request->has('no_telp')) {
             $user->no_telp = $request->no_telp;
+        }
+        if ($request->hasFile('profile_photo')) {
+            $photoPath = $request->file('profile_photo')->store('profile_photos', 'public');
+            $user->profile_photo = $photoPath;
         }
 
         $user->save();
@@ -237,43 +359,6 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Profile berhasil diupdate',
             'user' => $user
-        ]);
-    }
-
-    // Upload KTP (for verification)
-    public function uploadKTP(Request $request)
-    {
-        $user = auth()->user();
-
-        $validator = Validator::make($request->all(), [
-            'foto_ktp' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'foto_swafoto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        if ($request->hasFile('foto_ktp')) {
-            $ktpPath = $request->file('foto_ktp')->store('ktp', 'public');
-            $user->foto_ktp = $ktpPath;
-        }
-
-        if ($request->hasFile('foto_swafoto')) {
-            $swafotoPath = $request->file('foto_swafoto')->store('swafoto', 'public');
-            $user->foto_swafoto = $swafotoPath;
-        }
-
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Dokumen KTP berhasil diupload, menunggu verifikasi',
-            'foto_ktp' => $user->foto_ktp,
-            'foto_swafoto' => $user->foto_swafoto,
         ]);
     }
 }

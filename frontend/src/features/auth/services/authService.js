@@ -12,6 +12,17 @@ export const authService = {
     const response = await api.post('/register', data)
     return response
   },
+    // ✅ TAMBAH INI
+  async forgotPassword(email) {
+    const response = await api.post('/auth/forgot-password', { email })
+    return response
+  },
+
+  // ✅ TAMBAH INI
+  async resetPassword(data) {
+    const response = await api.post('/auth/reset-password', data)
+    return response
+  },
 
   async logout() {
     const response = await api.post('/logout')
@@ -29,7 +40,7 @@ export const authService = {
   },
 
   async uploadKTP(formData) {
-    const response = await api.post('/upload-ktp', formData, {
+    const response = await api.post('/profile/upload-ktp', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

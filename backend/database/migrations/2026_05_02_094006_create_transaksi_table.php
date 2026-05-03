@@ -17,9 +17,8 @@ return new class extends Migration
             $table->decimal('nominal_deposit', 10, 2);
             $table->enum('status_sewa', ['menunggu_pembayaran', 'dibayar', 'sedang_disewa', 'selesai', 'dibatalkan'])->default('menunggu_pembayaran');
             $table->date('tanggal_kembali_real')->nullable();
-            $table->timestamps();
 
-            $table->foreign('id_penyewa')->references('id_pengguna')->on('pengguna')->onDelete('cascade');
+            $table->foreign('id_penyewa')->references('id_pengguna')->on('pengguna');
         });
     }
 

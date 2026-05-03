@@ -1,58 +1,153 @@
 // src/profile/pages/delete-akun.jsx
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { profileService } from '@/profile/services/profileService';
+
+import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-export default function DeleteAkun() {
-    const navigate = useNavigate();
-    const { logout } = useAuth();
-    const [confirm, setConfirm] = useState('');
+import { Trash2 } from 'lucide-react';
 
-    const handleDelete = () => {
-        if (confirm !== 'HAPUS AKUN') {
-            toast.error('Ketik "HAPUS AKUN" untuk konfirmasi');
-            return;
+export default function DeleteAkun() {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const [confirmText, setConfirmText] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    if (!user) return null;
+
+    // avatar helper (BIAR SAMA KAYAK EDIT PROFILE)
+    const getPhotoUrl = () => {
+        if (!user?.profile_photo) return null;
+        return `http://localhost:8000/storage/${user.profile_photo}`;
+    };
+
+    const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
+
+    //HANDLE DELETE
+    const handleDelete = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            //validasi
+            if (confirmText !== 'HAPUS AKUN') {
+                toast.error('Ketik "HAPUS AKUN" dulu');
+                setLoading(false);
+                return;
+            }
+
+            if (!password) {
+                toast.error('Password wajib diisi');
+                setLoading(false);
+                return;
+            }
+
+            //kirim password
+            await profileService.deleteAccount({
+                password,
+            });
+
+            toast.success('Akun berhasil dihapus');
+
+            await logout();
+            navigate('/');
+        } catch (err) {
+            console.log("ERROR DELETE:", err.response);
+
+            toast.error(
+                err.response?.data?.message ||
+                JSON.stringify(err.response?.data?.errors) ||
+                'Gagal hapus akun'
+            );
+        } finally {
+            setLoading(false);
         }
-        toast.success('Akun berhasil dihapus');
-        logout();
-        navigate('/');
     };
 
     return (
-        <div className="container max-w-2xl py-8">
-            <h1 className="text-2xl font-bold text-red-600">Hapus Akun</h1>
-            <p className="text-muted-foreground mb-6">Tindakan ini tidak dapat dibatalkan</p>
+        <>
+            <Navbar />
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
-                <div className="bg-red-50 p-4 rounded-lg">
-                    <p className="text-red-600">
-                        ⚠️ Menghapus akun akan menghilangkan semua data Anda secara permanen
-                    </p>
-                </div>
-                <div>
-                    <label className="block mb-1">
-                        Ketik <span className="font-bold">HAPUS AKUN</span> untuk konfirmasi
-                    </label>
-                    <input
-                        type="text"
-                        value={confirm}
-                        onChange={(e) => setConfirm(e.target.value)}
-                        className="w-full border rounded px-3 py-2"
-                        placeholder="HAPUS AKUN"
-                    />
-                </div>
-                <div className="flex gap-3">
-                    <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 rounded">
-                        Hapus Permanen
-                    </button>
-                    <Link to="/profile">
-                        <button className="bg-gray-500 text-white px-4 py-2 rounded">
-                            Batal
-                        </button>
-                    </Link>
+            <div className="min-h-screen bg-background pt-20">
+                <div className="container max-w-6xl mx-auto px-4 py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+                        {/* SIDEBAR*/}
+                        <Sidebar
+                            user={user}
+                            getPhotoUrl={getPhotoUrl}
+                            getInitials={getInitials}
+                        />
+
+                        {/* MAIN */}
+                        <div className="lg:col-span-3">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Hapus Akun</CardTitle>
+                                    <CardDescription>
+                                        Tindakan ini tidak dapat dibatalkan
+                                    </CardDescription>
+                                </CardHeader>
+
+                                <CardContent>
+                                    <form onSubmit={handleDelete} className="space-y-6">
+
+                                        {/* WARNING SIMPLE (GA NORAK, SESUAI STYLE) */}
+                                        <div className="text-sm text-red-500">
+                                            ⚠️ Semua data akan dihapus permanen
+                                        </div>
+
+                                        {/* INPUT */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <Input
+                                                value={confirmText}
+                                                onChange={(e) => setConfirmText(e.target.value)}
+                                                placeholder="Ketik: HAPUS AKUN"
+                                            />
+
+                                            <Input
+                                                type="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder="Password"
+                                            />
+                                        </div>
+
+                                        {/* BUTTON */}
+                                        <div className="flex gap-3">
+                                            <Button
+                                                type="submit"
+                                                variant="destructive"
+                                                disabled={loading}
+                                                className="gap-2"
+                                            >
+                                                <Trash2 size={16} />
+                                                {loading ? 'Menghapus...' : 'Hapus Akun'}
+                                            </Button>
+
+                                            <Link to="/profile">
+                                                <Button variant="outline">
+                                                    Batal
+                                                </Button>
+                                            </Link>
+                                        </div>
+
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

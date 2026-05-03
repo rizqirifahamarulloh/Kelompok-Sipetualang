@@ -11,6 +11,8 @@ import AuthCallback from '@/features/auth/pages/AuthCallback'
 import Home from '@/features/landing/pages/Home'
 import Login from '@/features/auth/pages/Login'
 import Register from '@/features/auth/pages/Register'
+import ForgotPassword from '@/features/auth/pages/ForgotPassword'
+import ResetPassword from '@/features/auth/pages/ResetPassword'
 import AdminLayout from '@/features/admin/components/AdminLayout'
 import Dashboard from '@/features/admin/pages/Dashboard'
 import Users from '@/features/admin/pages/Users'
@@ -46,6 +48,8 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
 
                 {/* Profile routes — any authenticated user */}

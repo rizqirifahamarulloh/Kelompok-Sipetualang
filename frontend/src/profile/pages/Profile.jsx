@@ -1,4 +1,5 @@
 // src/profile/pages/Profile.jsx
+import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,12 +17,25 @@ import {
 } from 'lucide-react';
 
 export default function Profile() {
-  // Dummy data — replace with actual user data from context/state
-  const user = { nama: 'John Doe', email: 'john@example.com', no_telp: '+6281234567890' };
-  const isKtpVerified = false;
+  const { user } = useAuth()
 
-  const getPhotoUrl = () => null;
-  const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-base text-muted-foreground">Memuat profil...</p>
+      </div>
+    )
+  }
+
+  const isKtpVerified = user.verifikasi_ktp ?? false
+
+  const getPhotoUrl = () => {
+    if (!user?.profile_photo) return null
+    if (user.profile_photo.startsWith('http')) return user.profile_photo
+    return `http://localhost:8000/storage/${user.profile_photo}`
+  }
+
+  const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U'
 
   return (
     <>
@@ -53,6 +67,46 @@ export default function Profile() {
 
             {/* Main Content */}
             <div className="lg:col-span-3">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Shield className="size-5 text-primary" />
+                    <CardTitle>Data Profil</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Informasi akun Anda ditampilkan di sini dan dapat diedit melalui tombol di bawah.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Nama</p>
+                      <p className="font-medium">{user.nama}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Email</p>
+                      <p className="font-medium">{user.email}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Telepon</p>
+                      <p className="font-medium">{user.no_telp || '-'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Peran</p>
+                      <p className="font-medium capitalize">{user.peran_pengguna || user.role || 'customer'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Alamat</p>
+                      <p className="font-medium">{user.alamat || '-'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Kota</p>
+                      <p className="font-medium">{user.kota || '-'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">

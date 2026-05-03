@@ -15,9 +15,8 @@ return new class extends Migration
             $table->enum('status_bayar', ['pending', 'sukses', 'gagal'])->default('pending');
             $table->string('bukti_bayar', 255)->nullable();
             $table->timestamp('tanggal_bayar')->nullable();
-            $table->timestamps();
 
-            $table->foreign('id_transaksi')->references('id_transaksi')->on('transaksi')->onDelete('cascade');
+            $table->foreign('id_transaksi')->references('id_transaksi')->on('transaksi');
         });
     }
 

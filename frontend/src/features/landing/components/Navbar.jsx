@@ -16,7 +16,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { t } = useLanguage()
-  const { user, isAuthenticated, logout, role } = useAuth()
+  const { user, isAuthenticated, isLoading, logout, role } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -106,7 +106,9 @@ export default function Navbar() {
           </button>
 
           {/* Cek apakah user sudah login */}
-          {isAuthenticated ? (
+          {isLoading ? (
+            <div className="h-10 w-28 rounded-full bg-white/10 animate-pulse" />
+          ) : isAuthenticated ? (
             <div className="relative user-menu ml-2">
               {/* Tombol profile dengan nama user */}
               <button
@@ -137,27 +139,6 @@ export default function Navbar() {
                       >
                         👤 Profile
                       </Link>
-
-                      {/* Menu khusus role */}
-                      {role === 'penyewa' && (
-                        <Link
-                          to="/my-rentals"
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => setDropdownOpen(false)}
-                        >
-                          📋 Riwayat Sewa
-                        </Link>
-                      )}
-
-                      {role === 'pemilik' && (
-                        <Link
-                          to="/pemilik/dashboard"
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => setDropdownOpen(false)}
-                        >
-                          📊 Dashboard
-                        </Link>
-                      )}
 
                       {role === 'admin' && (
                         <Link
@@ -258,23 +239,13 @@ export default function Navbar() {
                     👤 Profile
                   </Link>
 
-                  {role === 'penyewa' && (
+                  {role === 'admin' && (
                     <Link
-                      to="/my-rentals"
+                      to="/admin/dashboard"
                       className="flex items-center gap-2 bg-white/10 text-white py-2.5 px-4 rounded-full text-sm font-semibold w-full hover:bg-white/20"
                       onClick={() => setMobileOpen(false)}
                     >
-                      📋 Riwayat Sewa
-                    </Link>
-                  )}
-
-                  {(role === 'pemilik' || role === 'admin') && (
-                    <Link
-                      to={role === 'admin' ? '/admin/dashboard' : '/pemilik/dashboard'}
-                      className="flex items-center gap-2 bg-white/10 text-white py-2.5 px-4 rounded-full text-sm font-semibold w-full hover:bg-white/20"
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {role === 'admin' ? '⚙️ Admin Panel' : '📊 Dashboard'}
+                      ⚙️ Admin Panel
                     </Link>
                   )}
 

@@ -12,10 +12,9 @@ return new class extends Migration
             $table->id('id_standar');
             $table->unsignedBigInteger('id_destinasi');
             $table->unsignedBigInteger('id_kategori');
-            $table->timestamps();
 
-            $table->foreign('id_destinasi')->references('id_destinasi')->on('jenis_destinasi')->onDelete('cascade');
-            $table->foreign('id_kategori')->references('id_kategori')->on('kategori')->onDelete('cascade');
+            $table->foreign('id_destinasi')->references('id_destinasi')->on('jenis_destinasi');
+            $table->foreign('id_kategori')->references('id_kategori')->on('kategori');
         });
     }
 

@@ -6,14 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         Schema::table('pengguna', function (Blueprint $table) {
-            $table->string('google_id')->nullable()->unique()->after('verifikasi_ktp');
+            $table->string('google_id')->nullable();
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::table('pengguna', function (Blueprint $table) {
             $table->dropColumn('google_id');

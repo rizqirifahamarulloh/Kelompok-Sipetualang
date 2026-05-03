@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('jenis_destinasi', function (Blueprint $table) {
             $table->id('id_destinasi');
             $table->string('nama_destinasi', 50);
-            $table->timestamps();
         });
     }
 
