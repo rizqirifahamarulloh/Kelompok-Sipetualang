@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import ScrollToTop from '@/components/ScrollToTop'
 import AuthCallback from '@/features/auth/pages/AuthCallback'
 
 // Pages
@@ -50,6 +51,7 @@ function App() {
         <LanguageProvider>
           <AuthProvider>
             <TooltipProvider>
+              <ScrollToTop />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Home />} />
