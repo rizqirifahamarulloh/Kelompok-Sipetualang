@@ -30,5 +30,23 @@ export const adminService = {
   async getStats() {
     const response = await api.get('/admin/dashboard')
     return response
+  },
+
+  // Get verifications
+  async getVerifications() {
+    const response = await api.get('/admin/verifikasi')
+    return response.data
+  },
+
+  // Approve verification
+  async approveVerification(id) {
+    const response = await api.post(`/admin/verifikasi/${id}/approve`)
+    return response
+  },
+
+  // Reject verification
+  async rejectVerification(id, catatan) {
+    const response = await api.post(`/admin/verifikasi/${id}/reject`, { catatan_admin: catatan })
+    return response
   }
 }

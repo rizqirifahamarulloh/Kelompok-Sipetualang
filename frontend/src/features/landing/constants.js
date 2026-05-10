@@ -26,10 +26,8 @@ import avatar5 from '@/assets/beranda/Avatar5.png'
 export const navLinks = [
   { label: 'Beranda', href: '#hero' },
   { label: 'Sewa Alat', href: '#category' },
-  { label: 'Destinasi', href: '#destinasi' },
-  { label: 'Info Keamanan', href: '#information' },
-  { label: 'Kontak', href: '#footer' },
   { label: 'Buka Rental', href: '#buka-rental' },
+  { label: 'Cara Sewa', href: '#cara-sewa' },
 ]
 
 export const steps = [

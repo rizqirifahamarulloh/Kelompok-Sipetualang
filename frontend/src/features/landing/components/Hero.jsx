@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion'
+import { useLanguage } from '@/contexts/LanguageContext'
 import heroBg from '@/assets/beranda/Image-bg.png'
 import heroBgMobile from '@/assets/beranda/Image-bg-android.png'
 import arrowRight from '@/assets/beranda/icon-arrow-right.svg'
 import ScrollReveal from '@/components/ui/ScrollReveal'
 
 export default function Hero() {
+  const { t } = useLanguage()
+
   return (
     <section id="hero" className="relative w-full min-h-screen max-md:min-h-[100svh] flex items-end justify-start py-0 px-[60px] pb-[100px] max-md:p-0 overflow-hidden">
       <div className="absolute top-6 left-6 right-6 bottom-6 max-md:top-0 max-md:left-0 max-md:right-0 max-md:bottom-0 z-0 rounded-[32px] max-md:rounded-none overflow-hidden">
@@ -24,13 +27,13 @@ export default function Hero() {
       <div className="absolute top-1/2 left-[60px] right-[60px] -translate-y-1/2 max-w-[1400px] mx-auto z-[1] max-md:flex max-md:flex-col max-md:items-center max-md:text-center max-md:left-6 max-md:right-6">
         <ScrollReveal>
           <h1 className="text-[52px] max-md:text-[32px] max-md:text-center font-bold text-white leading-[1.15] mb-4 whitespace-pre-line [text-shadow:0_2px_20px_rgba(0,0,0,0.3)]">
-            {'Awali Petualangan\nBersama\nSiPetualang'}
+            {t('hero.title')}
           </h1>
         </ScrollReveal>
 
         <ScrollReveal>
           <p className="text-base max-md:text-[13px] font-light max-w-[600px] text-white/85 mb-8 leading-relaxed max-md:text-center max-md:mx-auto">
-            Sewa perlengkapan gunung dan kemah dengan aman. Kami mencocokkan alat dengan lokasi tujuan kamu. Cek ketersediaan stok secara langsung dan pesan tanpa repot.
+            {t('hero.subtitle')}
           </p>
         </ScrollReveal>
 
@@ -42,7 +45,7 @@ export default function Hero() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Mulai Sewa
+              {t('hero.cta')}
               <img src={arrowRight} alt="" className="w-3.5 h-3.5 transition-transform duration-[0.4s] ease-in-out group-hover:translate-x-1" />
             </motion.a>
 
@@ -52,7 +55,7 @@ export default function Hero() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Cara Kerja
+              {t('hero.explore')}
             </motion.a>
           </div>
         </ScrollReveal>
@@ -66,7 +69,7 @@ export default function Hero() {
 
       <div className="absolute bottom-6 max-md:bottom-0 left-1/2 -translate-x-1/2 bg-white py-3.5 px-8 max-md:py-2.5 max-md:px-6 max-md:pb-7 rounded-t-2xl max-md:rounded-t-xl flex items-center justify-center z-[99]">
         <span className="relative text-black text-sm max-md:text-xs font-medium z-[100] flex items-center gap-0.5 whitespace-nowrap">
-          <span className="text-sp-primary font-semibold">Home</span>
+          <span className="text-sp-primary font-semibold">{t('nav.home')}</span>
           <span className="text-[rgb(150,150,150)] font-normal">{" > "}</span>
           <span className="text-[rgb(100,100,100)] font-medium">Pages</span>
         </span>

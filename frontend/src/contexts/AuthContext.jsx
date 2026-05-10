@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/features/auth/services/authService'
+import { toast } from 'sonner'
 
 const AuthContext = createContext(null)
 
@@ -76,6 +77,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
 
+    // Toast handled by the caller (Login.jsx)
+
     if (userData?.peran_pengguna === 'admin') {
       navigate('/admin/dashboard')
     } else {
@@ -100,7 +103,7 @@ export function AuthProvider({ children }) {
       localStorage.removeItem('user')
       setToken(null)
       setUser(null)
-      navigate('/login')
+      // Toast & navigation handled by the caller
     }
   }
 

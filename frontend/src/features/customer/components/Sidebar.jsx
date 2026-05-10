@@ -1,10 +1,9 @@
-// src/profile/components/Sidebar.jsx
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Shield, 
   User,
@@ -18,10 +17,18 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar({ user, isKtpVerified, getPhotoUrl, getInitials }) {
+  const location = useLocation();
+
+  const menuItems = [
+    { name: 'Profil Saya', path: '/profile', icon: <User size={16} /> },
+    { name: 'Penyewaan Saya', path: '/profile/rentals', icon: <Package size={16} /> },
+    { name: 'Transaksi', path: '/profile/transactions', icon: <CreditCard size={16} /> },
+    { name: 'Verifikasi', path: '/customer/verification', icon: <Shield size={16} /> },
+  ];
+
   return (
     <Card>
       <CardContent className="p-6">
-        {/* Avatar & Nama */}
         <div className="text-center">
           <div className="relative inline-block">
             <Avatar className="size-20 mx-auto ring-4 ring-primary/20">
@@ -31,50 +38,34 @@ export default function Sidebar({ user, isKtpVerified, getPhotoUrl, getInitials 
               </AvatarFallback>
             </Avatar>
           </div>
-          <h2 className="text-lg font-semibold mt-3">{user?.nama || user?.name}</h2>
-          <Badge className="mt-1 bg-green-500 text-xs">
+          <h2 className="text-lg font-semibold mt-3">{user?.nama || 'User'}</h2>
+          <Badge className={`mt-1 text-xs ${user?.is_verified ? 'bg-green-500' : 'bg-yellow-500'}`}>
             <CheckCircle size={10} className="mr-1" />
-            {isKtpVerified ? 'Terverifikasi' : 'Belum Terverifikasi'}
+            {user?.is_verified ? 'Terverifikasi' : 'Belum Verifikasi'}
           </Badge>
         </div>
 
         <Separator className="my-4" />
 
-        {/* Menu Sidebar */}
         <div className="space-y-1">
-          <Link 
-            to="/profile" 
-            className="flex items-center gap-3 text-sm py-2 px-3 rounded-lg bg-primary/10 text-primary font-medium"
-          >
-            <User size={16} />
-            Profil Saya
-          </Link>
-          <Link 
-            to="/profile/rentals" 
-            className="flex items-center gap-3 text-sm py-2 px-3 rounded-lg hover:bg-muted transition"
-          >
-            <Package size={16} />
-            Penyewaan Saya
-          </Link>
-          <Link 
-            to="/profile/transactions" 
-            className="flex items-center gap-3 text-sm py-2 px-3 rounded-lg hover:bg-muted transition"
-          >
-            <CreditCard size={16} />
-            Transaksi
-          </Link>
-          <Link 
-            to="/profile/verification" 
-            className="flex items-center gap-3 text-sm py-2 px-3 rounded-lg hover:bg-muted transition"
-          >
-            <Shield size={16} />
-            Verifikasi
-          </Link>
+          {menuItems.map((item) => (
+            <Link 
+              key={item.path}
+              to={item.path} 
+              className={`flex items-center gap-3 text-sm py-2 px-3 rounded-lg transition-colors ${
+                location.pathname === item.path 
+                  ? "bg-primary/10 text-primary font-medium" 
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {item.icon}
+              {item.name}
+            </Link>
+          ))}
         </div>
 
         <Separator className="my-4" />
 
-        {/* Informasi Ringkas */}
         <div className="space-y-3 text-sm">
           <div className="flex items-center gap-2">
             <Mail size={14} className="text-muted-foreground" />

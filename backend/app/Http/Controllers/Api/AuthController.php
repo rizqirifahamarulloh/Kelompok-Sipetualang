@@ -46,7 +46,7 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Registrasi berhasil',
-            'user' => $pengguna,
+            'user' => array_merge($pengguna->toArray(), ['is_verified' => $pengguna->is_verified]),
             'token' => $token,
             'token_type' => 'bearer',
             'expires_in' => config('jwt.ttl') * 60
@@ -92,6 +92,7 @@ class AuthController extends Controller
                 'peran_pengguna' => $user->peran_pengguna,
                 'google_id' => $user->google_id,
                 'profile_photo' => $user->profile_photo,
+                'is_verified' => $user->is_verified,
             ],
             'token' => $token,
             'token_type' => 'bearer',
@@ -293,6 +294,7 @@ class AuthController extends Controller
                 'peran_pengguna' => $user->peran_pengguna,
                 'google_id' => $user->google_id,
                 'profile_photo' => $user->profile_photo,
+                'is_verified' => $user->is_verified,
             ]
         ]);
     }

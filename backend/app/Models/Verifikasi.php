@@ -2,36 +2,33 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Verifikasi extends Model
 {
-    use HasFactory;
-
     protected $table = 'verifikasi';
+
     protected $primaryKey = 'id_verifikasi';
-    public $timestamps = false;
+
+    public $timestamps = false; // karena kamu pakai tanggal_pengajuan manual
 
     protected $fillable = [
         'id_pengguna',
-        'token',
-        'jenis_verifikasi',
-        'kadaluarsa',
         'foto_ktp',
         'foto_selfie_ktp',
         'status_verifikasi',
-        'tanggal_pengajuan',
         'catatan_admin',
+        'tanggal_pengajuan'
     ];
 
-    protected $casts = [
-        'tanggal_pengajuan' => 'datetime',
-        'kadaluarsa' => 'datetime',
-    ];
+    /*
+    |--------------------------------------------------------------------------
+    | RELASI
+    |--------------------------------------------------------------------------
+    */
 
     public function pengguna()
     {
-        return $this->belongsTo(Pengguna::class, 'id_pengguna', 'id_pengguna');
+        return $this->belongsTo(Pengguna::class, 'id_pengguna');
     }
 }

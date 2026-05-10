@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { testimonials } from '@/features/landing/constants'
 import ScrollReveal from '@/components/ui/ScrollReveal'
 
@@ -41,6 +42,7 @@ function useIsMobile() {
 export default function Testimonial() {
   const [activeCard, setActiveCard] = useState(null)
   const isMobile = useIsMobile()
+  const { t } = useLanguage()
 
   const handleClick = (index) => {
     setActiveCard(activeCard === index ? null : index)
@@ -52,10 +54,10 @@ export default function Testimonial() {
         <ScrollReveal>
           <div className="mb-20">
             <span className="text-sp-primary text-sm font-semibold uppercase tracking-[1px] block mb-4">
-              CERITA DARI JALUR PENDAKIAN
+              {t('testimonial.badge')}
             </span>
             <h2 className="text-[40px] max-md:text-[28px] font-bold text-[rgb(33,37,41)] leading-[1.3] whitespace-pre-line">
-              {'Apa Kata Pelanggan Kami\nTentang Layanan'}
+              {t('testimonial.title')}
             </h2>
           </div>
         </ScrollReveal>

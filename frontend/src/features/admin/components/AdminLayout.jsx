@@ -53,7 +53,7 @@ function useMenuItems() {
     { label: t('admin.destinations'), icon: MapPin, href: '/admin/destinations' },
     { label: t('admin.transactions'), icon: ShoppingCart, href: '/admin/transactions' },
     { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments' },
-    { label: t('admin.ktpVerification'), icon: Shield, href: '/admin/ktp-verification' },
+    { label: t('admin.ktpVerification'), icon: Shield, href: '/admin/ktp-verifikasi' },
   ]
 }
 
@@ -144,6 +144,17 @@ function AdminSidebar() {
 
 export default function AdminLayout() {
   const { t } = useLanguage()
+  const { user } = useAuth() // Hanya ambil user
+
+  // Logika Foto Profil
+  const photoUrl = user?.profile_photo 
+    ? `http://localhost:8000/storage/${user.profile_photo}` 
+    : null
+
+  // Logika Inisial
+  const initials = user?.name
+    ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U'
 
   return (
     <SidebarProvider>
@@ -153,11 +164,57 @@ export default function AdminLayout() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <span className="text-sm font-medium text-muted-foreground">{t('admin.panel')}</span>
-          <div className="ml-auto flex items-center gap-1">
+          
+          <div className="ml-auto flex items-center gap-3">
             <LanguageToggle />
             <ThemeToggle />
+            
+            {/* --- DROPDOWN PROFILE --- */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="relative size-8 rounded-full outline-none hover:opacity-80 transition-opacity">
+                  <Avatar className="size-8 border">
+                    {photoUrl && (
+                      <img 
+                        src={photoUrl} 
+                        alt="profile" 
+                        className="aspect-square h-full w-full object-cover" 
+                      />
+                    )}
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              
+              <DropdownMenuContent align="end" className="w-56">
+                {/* Info User */}
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium text-sm">{user?.name}</p>
+                    <p className="w-[200px] truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+                
+                <DropdownMenuSeparator />
+                
+                {/* Menu Edit Profile saja */}
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="cursor-pointer w-full flex items-center">
+                    <Users className="mr-2 size-4" />
+                    <span>Edit Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* --- AKHIR DROPDOWN --- */}
+            
           </div>
         </header>
+
         <main className="flex-1 p-4 md:p-6">
           <Outlet />
         </main>

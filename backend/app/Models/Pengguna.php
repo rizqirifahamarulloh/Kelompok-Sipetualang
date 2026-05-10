@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Verifikasi;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -13,6 +14,8 @@ class Pengguna extends Authenticatable implements JWTSubject
     protected $table = 'pengguna';
     protected $primaryKey = 'id_pengguna';
     public $timestamps = false;
+
+    protected $appends = ['is_verified'];
 
     protected $fillable = [
         'nama',
@@ -33,6 +36,16 @@ class Pengguna extends Authenticatable implements JWTSubject
     protected $casts = [
         // No specific casts needed
     ];
+
+    public function verifikasi()
+    {
+        return $this->hasMany(Verifikasi::class, 'id_pengguna', 'id_pengguna');
+    }
+
+    public function getIsVerifiedAttribute()
+    {
+        return $this->verifikasi()->where('status_verifikasi', 'disetujui')->exists();
+    }
 
     // JWT Methods
     public function getJWTIdentifier()

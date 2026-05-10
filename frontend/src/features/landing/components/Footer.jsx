@@ -22,63 +22,48 @@ export default function Footer() {
           <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr] max-lg:grid-cols-2 max-md:grid-cols-1 gap-12 max-md:gap-10 pb-12 max-md:pb-8 border-b border-white/[0.08]">
             <div>
               <img src={logo} alt="SiPetualang" className="h-8 w-auto mb-5" />
-              <p className="text-sm text-white/70 leading-relaxed mb-6 max-w-[280px] max-md:max-w-full">
+              <p className="text-sm text-white/70 leading-relaxed mb-6 max-w-[380px] max-md:max-w-full">
                 {t('footer.description')}
               </p>
-              <div className="flex gap-3">
-                <a href="#" className="flex items-center justify-center transition-transform duration-300 ease-in-out bg-white/5 w-10 h-10 rounded-full hover:scale-110 hover:-translate-y-0.5 hover:bg-white/10" aria-label="Facebook">
-                  <img src={facebookIcon} alt="Facebook" className="w-5 h-5" />
-                </a>
-                <a href="#" className="flex items-center justify-center transition-transform duration-300 ease-in-out bg-white/5 w-10 h-10 rounded-full hover:scale-110 hover:-translate-y-0.5 hover:bg-white/10" aria-label="LinkedIn">
-                  <img src={linkedinIcon} alt="LinkedIn" className="w-5 h-5" />
-                </a>
+
+              <div className="flex items-center gap-3 bg-white/5 rounded-lg p-3 max-w-[420px]">
+                <input type="email" placeholder={t('footer.emailPlaceholder')} className="flex-1 bg-transparent outline-none text-white placeholder:text-white/60 px-3 py-2" />
+                <button aria-label="Subscribe" className="w-10 h-10 rounded-full bg-sp-primary flex items-center justify-center ml-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </button>
               </div>
+
+              <p className="text-xs text-white/50 mt-3">{t('footer.privacyNotice')}</p>
             </div>
 
             <div>
-              <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">
-                {t('footer.aboutTitle')}
-              </h4>
+              <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">{t('footer.aboutTitle')}</h4>
               <ul className="flex flex-col gap-4 list-none p-0 m-0 max-md:px-5">
-                <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#tentang-kami" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">→ {t('footer.aboutUs')}</a>
-                </li>
-                <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#cara-sewa" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">{t('footer.howToRent')}</a>
-                </li>
-                <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#cara-member" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">{t('footer.howToMember')}</a>
-                </li>
-                <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#cara-pengembalian" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">{t('footer.howToReturn')}</a>
-                </li>
-                <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#syarat-ketentuan" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">{t('footer.terms')}</a>
-                </li>
+                <li className="text-sm text-white/60"><a href="#tentang-kami" className="no-underline hover:text-sp-primary">→ {t('footer.aboutUs')}</a></li>
+                <li className="text-sm text-white/60"><a href="#cara-sewa" className="no-underline hover:text-sp-primary">{t('footer.howToRent')}</a></li>
+                <li className="text-sm text-white/60"><a href="#buka-rental" className="no-underline hover:text-sp-primary">{t('footer.howToMember')}</a></li>
+                <li className="text-sm text-white/60"><a href="#sewa-alat" className="no-underline hover:text-sp-primary">{t('footer.howToReturn')}</a></li>
+                <li className="text-sm text-white/60"><a href="#syarat-ketentuan" className="no-underline hover:text-sp-primary">{t('footer.terms')}</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">{t('footer.infoTitle')}</h4>
+              <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">{t('footer.categoryTitle')}</h4>
               <ul className="flex flex-col gap-4 list-none p-0 m-0 max-md:px-5">
-                <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="#informasi-keamanan" className="text-white/60 transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary">→ {t('footer.safetyInfo')}</a>
-                </li>
+                <li className="text-sm text-white"><a href="#popular" className="font-semibold no-underline hover:text-sp-primary">{t('footer.popularGear')}</a></li>
+                <li className="text-sm text-white/60"><a href="#tenda-matras" className="no-underline hover:text-sp-primary">{t('footer.tentMattress')}</a></li>
+                <li className="text-sm text-white/60"><a href="#alat-masak" className="no-underline hover:text-sp-primary">{t('footer.cookingGear')}</a></li>
+                <li className="text-sm text-white/60"><a href="#pakaian-gunung" className="no-underline hover:text-sp-primary">{t('footer.mountainClothing')}</a></li>
+                <li className="text-sm text-white/60"><a href="#tas-sepatu" className="no-underline hover:text-sp-primary">{t('footer.bagsShoes')}</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-base font-semibold text-white mb-6 tracking-[0.5px] max-md:px-5">{t('footer.helpTitle')}</h4>
               <ul className="flex flex-col gap-4 list-none p-0 m-0 max-md:px-5">
-                <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  2307 Indonesia, Jawa Barat, Depok.
-                </li>
-                <li className="flex items-center gap-3 text-sm text-white/60 leading-normal">
-                  <a href="mailto:Spetualang@7oroof.com" className="text-sp-primary transition-colors duration-300 ease-in-out no-underline hover:text-sp-primary-light">Spetualang@7oroof.com</a>
-                </li>
-                <li className="flex items-center gap-3 text-lg font-bold text-white leading-normal">
-                  +62 011 6114 5741
-                </li>
+                <li className="text-sm text-white/60">2307 Indonesia, Jawa Barat, Depok.</li>
+                <li className="text-sm"><a href="mailto:Spetualang@7oroof.com" className="text-sp-primary no-underline">Spetualang@7oroof.com</a></li>
+                <li className="text-lg font-bold text-white">+62 011 6114 5741</li>
               </ul>
             </div>
           </div>
@@ -87,13 +72,13 @@ export default function Footer() {
         <ScrollReveal>
           <div className="flex items-center justify-between py-8 max-md:flex-col-reverse max-md:gap-8 max-md:text-center max-md:py-6 max-md:pb-10">
             <p className="text-sm text-white/50">
-              ©2026 SiPetualang, All Rights Reserved. With Love by{' '}
+              ©2026 SiPetualang, {t('footer.rights')}. With Love by{' '}
               <a href="#" className="text-sp-primary no-underline">Spetualang.com</a>
             </p>
 
             <div className="flex gap-4 text-xs text-white/30">
-              <a href="#terms" className="text-inherit no-underline">Terms &amp; Conditions</a>
-              <a href="#privacy" className="text-inherit no-underline">Privacy Policy</a>
+              <a href="#terms" className="text-inherit no-underline">{t('footer.termsConditions')}</a>
+              <a href="#privacy" className="text-inherit no-underline">{t('footer.privacyPolicy')}</a>
               <a href="#sitemap" className="text-inherit no-underline">Sitemap</a>
             </div>
 

@@ -4,9 +4,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileService } from '@/profile/services/profileService';
 
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,13 +21,6 @@ export default function UpdatePassword() {
     const [loading, setLoading] = useState(false);
 
     if (!user) return null;
-
-    const getPhotoUrl = () => {
-        if (!user?.profile_photo) return null;
-        return `http://localhost:8000/storage/${user.profile_photo}`;
-    };
-
-    const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -71,82 +61,64 @@ export default function UpdatePassword() {
     };
 
     return (
-        <>
-            <Navbar />
-
-            <div className="min-h-screen bg-background pt-20">
-                <div className="container max-w-6xl mx-auto px-4 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-                        {/* SIDEBAR */}
-                        <Sidebar
-                            user={user}
-                            getPhotoUrl={getPhotoUrl}
-                            getInitials={getInitials}
-                        />
-
-                        {/* MAIN */}
-                        <div className="lg:col-span-3">
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center gap-2">
-                                        <Key size={18} />
-                                        <CardTitle>Ubah Password</CardTitle>
-                                    </div>
-                                    <CardDescription>
-                                        Pastikan password baru mudah diingat tapi aman
-                                    </CardDescription>
-                                </CardHeader>
-
-                                <CardContent>
-                                    <form onSubmit={handleSubmit} className="space-y-6">
-
-                                        <div className="grid grid-cols-2 gap-4">
-
-                                            <Input
-                                                type="password"
-                                                placeholder="Password lama"
-                                                value={oldPassword}
-                                                onChange={(e) => setOldPassword(e.target.value)}
-                                            />
-
-                                            <Input
-                                                type="password"
-                                                placeholder="Password baru"
-                                                value={newPassword}
-                                                onChange={(e) => setNewPassword(e.target.value)}
-                                            />
-
-                                            <Input
-                                                type="password"
-                                                placeholder="Konfirmasi password"
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                className="col-span-2"
-                                            />
-
-                                        </div>
-
-                                        <div className="flex gap-3">
-                                            <Button type="submit" disabled={loading}>
-                                                {loading ? 'Menyimpan...' : 'Simpan'}
-                                            </Button>
-
-                                            <Link to="/profile">
-                                                <Button variant="outline">
-                                                    Batal
-                                                </Button>
-                                            </Link>
-                                        </div>
-
-                                    </form>
-                                </CardContent>
-                            </Card>
+        <div className="min-h-screen bg-background pt-20">
+            <div className="container max-w-6xl mx-auto px-4 py-8">
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Key size={18} />
+                            <CardTitle>Ubah Password</CardTitle>
                         </div>
+                        <CardDescription>
+                            Pastikan password baru mudah diingat tapi aman
+                        </CardDescription>
+                    </CardHeader>
 
-                    </div>
-                </div>
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                                <Input
+                                    type="password"
+                                    placeholder="Password lama"
+                                    value={oldPassword}
+                                    onChange={(e) => setOldPassword(e.target.value)}
+                                />
+
+                                <Input
+                                    type="password"
+                                    placeholder="Password baru"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                />
+
+                                <Input
+                                    type="password"
+                                    placeholder="Konfirmasi password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="md:col-span-2"
+                                />
+
+                            </div>
+
+                            <div className="flex flex-col md:flex-row gap-3">
+                                <Button type="submit" disabled={loading} className="w-full md:w-auto">
+                                    {loading ? 'Menyimpan...' : 'Simpan'}
+                                </Button>
+
+                                <Link to="/profile" className="w-full md:w-auto">
+                                    <Button variant="outline" className="w-full">
+                                        Batal
+                                    </Button>
+                                </Link>
+                            </div>
+
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
-        </>
+        </div>
     );
 }

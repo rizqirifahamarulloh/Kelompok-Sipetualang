@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { categories } from '@/features/landing/constants'
 import ScrollReveal from '@/components/ui/ScrollReveal'
 
 export default function Category() {
   const [currentIndex, setCurrentIndex] = useState(2)
+  const { t } = useLanguage()
 
   const handleNext = useCallback(() => {
     setCurrentIndex((prevIndex) =>
@@ -32,13 +34,13 @@ export default function Category() {
         <ScrollReveal>
           <div>
             <span className="text-sp-primary text-sm font-semibold uppercase tracking-[1px] inline-block mb-4">
-              KEUNGGULAN PRODUK KAMI
+              {t('category.badge')}
             </span>
             <h2 className="text-[40px] max-md:text-2xl font-bold text-black leading-[1.2] whitespace-pre-line mb-4">
-              {'Sewa Gear Outdoor\nKini Lebih Mudah'}
+              {t('category.title')}
             </h2>
             <p className="text-base text-[rgb(100,100,100)] leading-[1.7] max-w-[800px] mx-auto mb-[60px]">
-              Kamu cukup mengetik nama lokasi tujuan. Sistem kami merekomendasikan alat yang pas dengan kondisi alam di sana. Kamu bisa mengecek jumlah ketersediaan tenda atau carrier saat ini juga.
+              {t('category.subtitle')}
             </p>
           </div>
         </ScrollReveal>

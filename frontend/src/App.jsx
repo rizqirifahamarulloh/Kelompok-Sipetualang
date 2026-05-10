@@ -9,6 +9,9 @@ import AuthCallback from '@/features/auth/pages/AuthCallback'
 
 // Pages
 import Home from '@/features/landing/pages/Home'
+import SewaAlat from '@/features/landing/pages/SewaAlat'
+import CaraSewa from '@/features/landing/pages/CaraSewa'
+import BukaRental from '@/features/landing/pages/BukaRental'
 import Login from '@/features/auth/pages/Login'
 import Register from '@/features/auth/pages/Register'
 import ForgotPassword from '@/features/auth/pages/ForgotPassword'
@@ -16,12 +19,16 @@ import ResetPassword from '@/features/auth/pages/ResetPassword'
 import AdminLayout from '@/features/admin/components/AdminLayout'
 import Dashboard from '@/features/admin/pages/Dashboard'
 import Users from '@/features/admin/pages/Users'
+import KtpVerification from '@/features/admin/pages/ktp-verifikasi'
 
 // Profile - perbaiki pathnya
 import Profile from '@/profile/pages/Profile'  // ← path yang benar
 import EditProfile from '@/profile/pages/edit-profile'
 import UpdatePassword from '@/profile/pages/update-password'
 import DeleteAkun from '@/profile/pages/delete-akun'
+
+
+import VerifikasiCustomer from '@/features/customer/pages/verifikasi';
 
 function Unauthorized() {
   return (
@@ -46,6 +53,9 @@ function App() {
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Home />} />
+                <Route path="/sewa-alat" element={<SewaAlat />} />
+                <Route path="/cara-sewa" element={<CaraSewa />} />
+                <Route path="/buka-rental" element={<BukaRental />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -70,8 +80,13 @@ function App() {
                     <Route path="/admin/destinations" element={<div>Destinations Page</div>} />
                     <Route path="/admin/transactions" element={<div>Transactions Page</div>} />
                     <Route path="/admin/payments" element={<div>Payments Page</div>} />
-                    <Route path="/admin/ktp-verification" element={<div>KTP Verification Page</div>} />
+                    <Route path="/admin/ktp-verifikasi" element={<KtpVerification />} />
                   </Route>
+                </Route>
+
+                  {/* Customer routes — customer only */}
+                <Route element={<ProtectedRoute roles={['customer']} />}>
+                  <Route path="/customer/verification" element={<VerifikasiCustomer />} />
                 </Route>
 
                 {/* Unauthorized fallback */}

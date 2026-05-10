@@ -11,7 +11,10 @@ import Footer from '@/features/landing/components/Footer'
 import LoadingScreen from '@/features/landing/components/LoadingScreen'
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true)
+  // Only show loading on the very first visit per session
+  const [isLoading, setIsLoading] = useState(() => {
+    return !sessionStorage.getItem('sipetualang_visited')
+  })
 
   useEffect(() => {
     if (isLoading) {
@@ -19,6 +22,8 @@ export default function Home() {
     } else {
       document.body.style.overflow = 'auto'
       window.scrollTo(0, 0)
+      // Mark as visited so loading won't show again in this session
+      sessionStorage.setItem('sipetualang_visited', 'true')
     }
   }, [isLoading])
 

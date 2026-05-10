@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
@@ -50,14 +51,17 @@ export default function AuthCallback() {
 
         if (role === 'admin') {
           console.log('Redirecting to /admin/dashboard')
+          toast.success('Login dengan Google berhasil!')
           window.location.href = '/admin/dashboard'
         } else {
           console.log('Redirecting to / (landing page)')
+          toast.success('Login dengan Google berhasil!')
           window.location.href = '/'
         }
       } catch (err) {
         console.error('Error in callback:', err)
         setError(err.message)
+        toast.error('Login gagal: ' + err.message)
         setTimeout(() => {
           window.location.href = '/login'
         }, 3000)

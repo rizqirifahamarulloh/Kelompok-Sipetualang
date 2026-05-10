@@ -14,7 +14,6 @@ export const profileService = {
                 'Content-Type': 'multipart/form-data',
             },
         }),
-
     deletePhoto: () => api.delete('/profile/photo'),
 
     updatePassword: (data) => api.put('/profile/password', data),

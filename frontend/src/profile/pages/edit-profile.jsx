@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileService } from '@/profile/services/profileService';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,104 +95,84 @@ export default function EditProfile() {
     };
 
     return (
-        <>
-            <Navbar />
+        <div className="min-h-screen bg-background pt-20">
+            <div className="container max-w-6xl mx-auto px-4 py-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Edit Profil</CardTitle>
+                        <CardDescription>
+                            Perbarui data akun Anda
+                        </CardDescription>
+                    </CardHeader>
 
-            <div className="min-h-screen bg-background pt-20">
-                <div className="container max-w-6xl mx-auto px-4 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-6">
 
-                        {/* SIDEBAR */}
-                        <Sidebar
-                            user={user}
-                            getPhotoUrl={getPhotoUrl}
-                            getInitials={getInitials}
-                        />
-
-                        {/* MAIN */}
-                        <div className="lg:col-span-3">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Edit Profil</CardTitle>
-                                    <CardDescription>
-                                        Perbarui data akun Anda
-                                    </CardDescription>
-                                </CardHeader>
-
-                                <CardContent>
-                                    <form onSubmit={handleSubmit} className="space-y-6">
-
-                                        {/* FOTO */}
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="relative">
-                                                {getPhotoUrl() ? (
-                                                    <img
-                                                        src={getPhotoUrl()}
-                                                        alt="profile"
-                                                        className="w-24 h-24 rounded-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
-                                                        {getInitials()}
-                                                    </div>
-                                                )}
-
-                                                <label className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full cursor-pointer">
-                                                    <Camera size={16} />
-                                                    <input
-                                                        type="file"
-                                                        hidden
-                                                        onChange={handlePhotoChange}
-                                                    />
-                                                </label>
-                                            </div>
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="relative">
+                                    {getPhotoUrl() ? (
+                                        <img
+                                            src={getPhotoUrl()}
+                                            alt="profile"
+                                            className="w-24 h-24 rounded-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
+                                            {getInitials()}
                                         </div>
+                                    )}
 
-                                        {/* FORM */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <Input
-                                                value={name}
-                                                onChange={(e) => setName(e.target.value)}
-                                                placeholder="Nama"
-                                            />
-                                            <Input
-                                                value={phone}
-                                                onChange={(e) => setPhone(e.target.value)}
-                                                placeholder="Telepon"
-                                            />
-                                            <Input
-                                                value={address}
-                                                onChange={(e) => setAddress(e.target.value)}
-                                                placeholder="Alamat"
-                                            />
-                                            <Input
-                                                value={city}
-                                                onChange={(e) => setCity(e.target.value)}
-                                                placeholder="Kota"
-                                            />
-                                        </div>
+                                    <label className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full cursor-pointer">
+                                        <Camera size={16} />
+                                        <input
+                                            type="file"
+                                            hidden
+                                            onChange={handlePhotoChange}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
 
-                                        {/* BUTTON */}
-                                        <div className="flex gap-3">
-                                            <Button type="submit" disabled={loading} className="gap-2">
-                                                <Save size={16} />
-                                                {loading ? 'Menyimpan...' : 'Simpan'}
-                                            </Button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Nama"
+                                />
+                                <Input
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="Telepon"
+                                />
+                                <Input
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                    placeholder="Alamat"
+                                />
+                                <Input
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    placeholder="Kota"
+                                />
+                            </div>
 
-                                            <Link to="/profile">
-                                                <Button variant="outline">
-                                                    Batal
-                                                </Button>
-                                            </Link>
-                                        </div>
+                            <div className="flex flex-col md:flex-row gap-3">
+                                <Button type="submit" disabled={loading} className="gap-2 w-full md:w-auto">
+                                    <Save size={16} />
+                                    {loading ? 'Menyimpan...' : 'Simpan'}
+                                </Button>
 
-                                    </form>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-                </div>
+                                <Link to="/profile" className="w-full md:w-auto">
+                                    <Button variant="outline" className="w-full">
+                                        Batal
+                                    </Button>
+                                </Link>
+                            </div>
+
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
-        </>
+        </div>
     );
 }

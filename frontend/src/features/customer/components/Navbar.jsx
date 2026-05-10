@@ -35,10 +35,10 @@ export default function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-sm hover:text-primary transition">Home</Link>
-            <Link to="/catalog" className="text-sm hover:text-primary transition">Catalog</Link>
-            <Link to="/about" className="text-sm hover:text-primary transition">About</Link>
-            <Link to="/contact" className="text-sm hover:text-primary transition">Contact</Link>
+            <Link to="/" className="text-sm hover:text-primary transition">Beranda</Link>
+            <Link to="/catalog" className="text-sm hover:text-primary transition">Sewa Alat</Link>
+            <Link to="/buka-rental" className="text-sm hover:text-primary transition">Buka Rental</Link>
+            <Link to="/cara-sewa" className="text-sm hover:text-primary transition">Cara Sewa</Link>
           </div>
 
           {/* Right Side */}
@@ -63,10 +63,10 @@ export default function Navbar() {
         {isOpen && (
           <div className="md:hidden py-4 border-t">
             <div className="flex flex-col gap-3">
-              <Link to="/" className="text-sm py-2 hover:text-primary transition">Home</Link>
-              <Link to="/catalog" className="text-sm py-2 hover:text-primary transition">Catalog</Link>
-              <Link to="/about" className="text-sm py-2 hover:text-primary transition">About</Link>
-              <Link to="/contact" className="text-sm py-2 hover:text-primary transition">Contact</Link>
+              <Link to="/" className="text-sm py-2 hover:text-primary transition">Beranda</Link>
+              <Link to="/catalog" className="text-sm py-2 hover:text-primary transition">Sewa Alat</Link>
+              <Link to="/buka-rental" className="text-sm py-2 hover:text-primary transition">Buka Rental</Link>
+              <Link to="/cara-sewa" className="text-sm py-2 hover:text-primary transition">Cara Sewa</Link>
               <div className="flex items-center justify-between pt-2 border-t">
                 <div className="flex gap-2">
                   <LanguageToggle />

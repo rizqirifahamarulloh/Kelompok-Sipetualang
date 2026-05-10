@@ -1,18 +1,19 @@
 {
   "nav": {
     "home": "Beranda",
-    "catalog": "Katalog",
-    "howItWorks": "Cara Kerja",
-    "about": "Tentang Kami",
+    "catalog": "Sewa Alat",
+    "howItWorks": "Cara Sewa",
+    "about": "Buka Rental",
     "contact": "Kontak",
     "login": "Masuk",
-    "register": "Daftar"
+    "register": "Daftar",
+    "viewProfile": "Lihat Profile"
   },
   "hero": {
-    "title": "Petualangan Dimulai dari Sini",
-    "subtitle": "Sewa peralatan outdoor berkualitas untuk pendakian, camping, dan petualangan alam lainnya",
+    "title": "Awali Petualangan\nBersama\nSiPetualang",
+    "subtitle": "Sewa perlengkapan gunung dan kemah dengan aman. Kami mencocokkan alat dengan lokasi tujuan kamu. Cek ketersediaan stok secara langsung dan pesan tanpa repot.",
     "cta": "Mulai Sewa",
-    "explore": "Lihat Katalog"
+    "explore": "Cara Kerja"
   },
   "information": {
     "tagline": "Platform Penyewaan Terpercaya",
@@ -31,25 +32,32 @@
     "safetyInfo": "Info Keamanan"
   },
   "howItWorks": {
-    "title": "Cara Kerja SiPetualang",
-    "subtitle": "3 langkah mudah untuk memulai petualangan",
-    "step1Title": "Pilih Alat",
-    "step1Desc": "Telusuri katalog dan pilih peralatan yang Anda butuhkan",
-    "step2Title": "Sewa & Bayar",
-    "step2Desc": "Tentukan durasi sewa dan lakukan pembayaran",
-    "step3Title": "Ambil & Petualang",
-    "step3Desc": "Ambil alat di titik jemput dan mulai petualangan"
+    "badge": "LANGKAH MUDAH",
+    "title": "Cara Kerja Utama\nSiPetualang",
+    "subtitle": "Kami merancang sistem peminjaman yang ringkas dan melindungi kedua belah pihak. Ikuti empat langkah ini untuk memulai perjalanan kamu.",
+    "step1Title": "Pencarian",
+    "step1Desc": "Cari alat favorit Anda dari berbagai kategori dan merek terpercaya.",
+    "step2Title": "Pemesanan",
+    "step2Desc": "Tentukan tanggal mulai dan durasi sewa yang sesuai dengan jadwal Anda.",
+    "step3Title": "Pengambilan",
+    "step3Desc": "Ambil di toko mitra terdekat. Wajib menyerahkan KTP fisik sebagai jaminan.",
+    "step4Title": "Pengembalian",
+    "step4Desc": "Kembalikan alat dalam kondisi baik dan ambil kembali KTP Kamu."
   },
   "category": {
-    "title": "Kategori Peralatan",
-    "subtitle": "Temukan peralatan outdoor sesuai kebutuhan petualanganmu"
+    "badge": "KEUNGGULAN PRODUK KAMI",
+    "title": "Sewa Gear Outdoor\nKini Lebih Mudah",
+    "subtitle": "Kamu cukup mengetik nama lokasi tujuan. Sistem kami merekomendasikan alat yang pas dengan kondisi alam di sana. Kamu bisa mengecek jumlah ketersediaan tenda atau carrier saat ini juga."
   },
   "testimonial": {
-    "title": "Apa Kata Mereka",
+    "badge": "CERITA DARI JALUR PENDAKIAN",
+    "title": "Apa Kata Pelanggan Kami\nTentang Layanan",
     "subtitle": "Cerita dari para petualang yang telah menggunakan SiPetualang"
   },
   "footer": {
-    "description": "Platform penyewaan peralatan outdoor terpercaya. Nikmati petualangan tanpa batas bersama SiPetualang",
+    "description": "Penyedia perlengkapan outdoor terlengkap untuk kebutuhan petualangan Anda.",
+    "emailPlaceholder": "Input email anda",
+    "privacyNotice": "Dengan berlangganan, Anda menerima Kebijakan Privasi.",
     "quickLinks": "Tautan Cepat",
     "services": "Layanan",
     "contact": "Kontak Kami",
@@ -57,12 +65,20 @@
     "aboutTitle": "Tentang SiPetualang",
     "aboutUs": "Tentang Kami",
     "howToRent": "Cara sewa",
-    "howToMember": "Cara jadi member",
-    "howToReturn": "Cara pengembalian",
+    "howToMember": "Buka Rental",
+    "howToReturn": "Sewa Alat",
     "terms": "Syarat dan Ketentuan",
     "infoTitle": "Informasi",
     "safetyInfo": "Informasi Keamanan",
-    "helpTitle": "Layanan Bantuan"
+    "helpTitle": "Layanan Bantuan",
+    "categoryTitle": "Kategori Populer",
+    "popularGear": "Alat populer",
+    "tentMattress": "Tenda & Matras",
+    "cookingGear": "Alat Masak",
+    "mountainClothing": "Pakaian Gunung",
+    "bagsShoes": "Tas & Sepatu",
+    "termsConditions": "Syarat & Ketentuan",
+    "privacyPolicy": "Kebijakan Privasi"
   },
   "auth": {
     "loginTitle": "Masuk ke SiPetualang",
@@ -152,6 +168,17 @@
     "completed": "Selesai",
     "cancelled": "Dibatalkan",
     "overdue": "Terlambat"
+  },
+  "pages": {
+    "comingSoon": "Halaman ini sedang dalam pengembangan. Nantikan update selanjutnya!"
+  },
+  "toast": {
+    "loginSuccess": "Login berhasil! Selamat datang kembali.",
+    "logoutSuccess": "Anda telah berhasil logout.",
+    "registerSuccess": "Registrasi berhasil! Silakan login.",
+    "deleteAccountSuccess": "Akun Anda berhasil dihapus.",
+    "verificationSent": "Dokumen verifikasi berhasil dikirim!",
+    "welcomeHome": "Selamat datang di SiPetualang!"
   },
   "common": {
     "unauthorized": "Anda tidak memiliki akses ke halaman ini"
