@@ -1,21 +1,33 @@
-import { useState } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
 import { useAuth } from '@/contexts/AuthContext';
 import { customerService } from '../services/customerService';
+import api from '@/services/api';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Shield, Upload, Camera, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Upload, Camera, ChevronRight, CheckCircle2, Clock, XCircle, ShieldCheck } from 'lucide-react';
 
 export default function Verifikasi() {
-  const { user } = useAuth();
-
+  const { user, setUser } = useAuth();
   const [ktp, setKtp] = useState(null);
   const [selfie, setSelfie] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const verificationStatus = user?.verification_status;
+  const verificationNote = user?.verification_note;
+  // Handle both boolean and string/integer truthy values
+  const isApproved = user?.is_verified === true || user?.is_verified === 1 || user?.is_verified === 'true' || verificationStatus === 'disetujui';
+
+  useEffect(() => {
+    console.log('Verification Debug:', { 
+      is_verified: user?.is_verified, 
+      status: verificationStatus, 
+      isApproved 
+    });
+  }, [user, verificationStatus, isApproved]);
 
   if (!user) {
     return (
@@ -48,6 +60,13 @@ export default function Verifikasi() {
     try {
       await customerService.submitVerification(formData);
       toast.success("Dokumen verifikasi berhasil dikirim!");
+      
+      // Refresh user data using the api service
+      const res = await api.get('/profile');
+      const updatedUser = { ...user, ...res.data.data };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
       setKtp(null);
       setSelfie(null);
     } catch (err) {
@@ -59,22 +78,143 @@ export default function Verifikasi() {
     }
   };
 
+  const renderStatus = () => {
+    // Prioritas 1: Jika sudah disetujui/verified
+    if (isApproved) {
+      return (
+        <div className="text-center py-12 px-4">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-6">
+            <ShieldCheck size={32} />
+          </div>
+          <h3 className="text-xl font-bold mb-2">Identitas Anda sudah disetujui</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Selamat! Verifikasi akun Anda telah berhasil. Silahkan merental alat yang ada di platform kami.
+          </p>
+          <Button onClick={() => window.location.href = '/sewa-alat'}>
+            Mulai Rental Sekarang
+          </Button>
+        </div>
+      );
+    }
+
+    // Prioritas 2: Jika sedang menunggu
+    if (verificationStatus === 'pending') {
+      return (
+        <div className="text-center py-12 px-4">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mx-auto mb-6">
+            <Clock size={32} />
+          </div>
+          <h3 className="text-xl font-bold mb-2">Data Anda sudah terkirim</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Mohon tunggu untuk diverifikasi oleh admin. Proses ini memakan waktu maksimal 1x24 jam.
+          </p>
+          <Button variant="outline" onClick={() => window.location.href = '/'}>
+            Kembali ke Beranda
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {verificationStatus === 'ditolak' && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 mb-2">
+            <XCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
+            <div>
+              <p className="text-sm font-bold text-red-800">Verifikasi Ditolak</p>
+              <p className="text-xs text-red-700 leading-relaxed">
+                KTP ditolak dikarenakan: <strong className="bg-red-100 px-1 rounded">{verificationNote}</strong>. Tolong upload ulang foto yang lebih jelas.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* KTP */}
+          <div className="p-6 border-2 border-dashed rounded-xl text-center hover:bg-accent/50 transition-colors">
+            <Upload className="mx-auto mb-3 text-primary size-8" />
+            <p className="text-sm font-semibold">Foto KTP Asli</p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setKtp(e.target.files[0])}
+              className="mt-3 text-xs w-full"
+            />
+            {ktp && <p className="text-xs mt-2 text-green-600 font-medium">✓ {ktp.name}</p>}
+          </div>
+
+          {/* SELFIE */}
+          <div className="p-6 border-2 border-dashed rounded-xl text-center hover:bg-accent/50 transition-colors">
+            <Camera className="mx-auto mb-3 text-primary size-8" />
+            <p className="text-sm font-semibold">Selfie + KTP</p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setSelfie(e.target.files[0])}
+              className="mt-3 text-xs w-full"
+            />
+            {selfie && <p className="text-xs mt-2 text-green-600 font-medium">✓ {selfie.name}</p>}
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
+          <div className="space-y-2">
+            <p className="text-sm font-bold flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-green-500" /> Panduan Foto KTP
+            </p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>KTP harus asli, bukan fotokopi</li>
+              <li>Tulisan dan angka terbaca jelas</li>
+              <li>Tidak tertutup bayangan atau pantulan cahaya</li>
+            </ul>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-bold flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-green-500" /> Panduan Selfie
+            </p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Wajah terlihat jelas tanpa masker/kacamata hitam</li>
+              <li>Pegang KTP di bawah dagu, jangan tutupi wajah</li>
+              <li>Pastikan kamera fokus pada wajah dan KTP</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 flex items-center gap-4">
+          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center shrink-0">
+            <Shield size={20} className="text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">Data Anda Terenkripsi</p>
+            <p className="text-xs text-muted-foreground">Kami menjamin kerahasiaan dokumen Anda hanya untuk verifikasi internal.</p>
+          </div>
+        </div>
+
+        <Button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full h-11"
+        >
+          {loading ? "Sedang Mengirim..." : "Kirim Dokumen Verifikasi"}
+          <ChevronRight className="ml-2 size-4" />
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar />
-
       <div className="min-h-screen bg-background pt-20">
         <div className="container max-w-6xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-            {/* SIDEBAR */}
             <Sidebar
               user={user}
               getPhotoUrl={getPhotoUrl}
               getInitials={getInitials}
             />
-
-            {/* MAIN */}
             <div className="lg:col-span-3">
               <Card>
                 <CardHeader>
@@ -86,89 +226,11 @@ export default function Verifikasi() {
                     KTP diperlukan untuk prosedur keamanan penyewaan alat
                   </CardDescription>
                 </CardHeader>
-
-                <CardContent className="space-y-6">
-
-                  {/* UPLOAD AREA */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* KTP */}
-                    <div className="p-6 border-2 border-dashed rounded-xl text-center hover:bg-accent/50 transition-colors">
-                      <Upload className="mx-auto mb-3 text-primary size-8" />
-                      <p className="text-sm font-semibold">Foto KTP Asli</p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setKtp(e.target.files[0])}
-                        className="mt-3 text-xs w-full"
-                      />
-                      {ktp && <p className="text-xs mt-2 text-green-600 font-medium">✓ {ktp.name}</p>}
-                    </div>
-
-                    {/* SELFIE */}
-                    <div className="p-6 border-2 border-dashed rounded-xl text-center hover:bg-accent/50 transition-colors">
-                      <Camera className="mx-auto mb-3 text-primary size-8" />
-                      <p className="text-sm font-semibold">Selfie + KTP</p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setSelfie(e.target.files[0])}
-                        className="mt-3 text-xs w-full"
-                      />
-                      {selfie && <p className="text-xs mt-2 text-green-600 font-medium">✓ {selfie.name}</p>}
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* GUIDELINES SECTION */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
-                    <div className="space-y-2">
-                      <p className="text-sm font-bold flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-green-500" /> Panduan Foto KTP
-                      </p>
-                      <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                        <li>KTP harus asli, bukan fotokopi</li>
-                        <li>Tulisan dan angka terbaca jelas</li>
-                        <li>Tidak tertutup bayangan atau pantulan cahaya</li>
-                      </ul>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-bold flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-green-500" /> Panduan Selfie
-                      </p>
-                      <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                        <li>Wajah terlihat jelas tanpa masker/kacamata hitam</li>
-                        <li>Pegang KTP di bawah dagu, jangan tutupi wajah</li>
-                        <li>Pastikan kamera fokus pada wajah dan KTP</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* SECURITY INFO */}
-                  <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 flex items-center gap-4">
-                    <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center shrink-0">
-                      <Shield size={20} className="text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Data Anda Terenkripsi</p>
-                      <p className="text-xs text-muted-foreground">Kami menjamin kerahasiaan dokumen Anda hanya untuk verifikasi internal.</p>
-                    </div>
-                  </div>
-
-                  {/* SUBMIT BUTTON */}
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="w-full h-11"
-                  >
-                    {loading ? "Sedang Mengirim..." : "Kirim Dokumen Verifikasi"}
-                    <ChevronRight className="ml-2 size-4" />
-                  </Button>
-
+                <CardContent>
+                  {renderStatus()}
                 </CardContent>
               </Card>
             </div>
-
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -11,6 +11,7 @@ import StepSyaratKetentuan from '@/features/bukarental/components/StepSyaratKete
 import StepFormPendaftaran from '@/features/bukarental/components/StepFormPendaftaran'
 import StepUnggahKTP from '@/features/bukarental/components/StepUnggahKTP'
 import StepPendaftaranBerhasil from '@/features/bukarental/components/StepPendaftaranBerhasil'
+import api from '@/services/api'
 import '@/features/landing/landing.css'
 import '@/features/bukarental/bukarental.css'
 
@@ -21,18 +22,101 @@ const stepVariants = {
 }
 
 export default function BukaRental() {
+  const { user, setUser } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
+  const isVerified = user?.is_verified
+  const verificationStatus = user?.verification_status
+  const verificationNote = user?.verification_note
+
+  useEffect(() => {
+    // Determine initial step based on verification status
+    if (verificationStatus === 'pending' || verificationStatus === 'disetujui') {
+      setCurrentStep(4)
+    } else if (verificationStatus === 'ditolak') {
+      // Pastikan data profil sudah lengkap sebelum melompat ke step 3
+      if (user?.nama && user?.no_telp && user?.tanggal_lahir) {
+        setCurrentStep(3)
+      } else {
+        setCurrentStep(2)
+      }
+    }
+  }, [verificationStatus, user])
+
   const [formData, setFormData] = useState({
-    namaLengkap: '',
-    email: '',
-    telepon: '',
-    tanggalLahir: '',
+    namaLengkap: user?.nama || '',
+    email: user?.email || '',
+    telepon: user?.no_telp || '',
+    tanggalLahir: user?.tanggal_lahir || '',
     equipment: [],
   })
   const [ktpFile, setKtpFile] = useState(null)
+  const [selfieFile, setSelfieFile] = useState(null)
   const navigate = useNavigate()
 
-  const handleNext = () => {
+  const activateRental = async () => {
+    try {
+      // 1. Update Profile first - hanya kirim data yang tidak kosong
+      const profileData = {}
+      if (formData.namaLengkap) profileData.name = formData.namaLengkap
+      if (formData.telepon) profileData.phone = formData.telepon
+      if (formData.tanggalLahir) profileData.birth_date = formData.tanggalLahir
+      
+      if (Object.keys(profileData).length > 0) {
+        await api.put('/profile', profileData)
+      }
+
+      let isInstantlyActivated = false;
+
+      // 2. Jika ada file KTP, berarti user belum terverifikasi, kirim ke admin untuk di-approve
+      if (ktpFile && selfieFile) {
+        const uploadData = new FormData()
+        uploadData.append('foto_ktp', ktpFile)
+        uploadData.append('foto_selfie_ktp', selfieFile)
+        uploadData.append('catatan_admin', '[PENDAFTARAN_RENTAL]')
+        
+        await api.post('/customer/verifikasi', uploadData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+      } else if (isVerified) {
+        // Jika KTP sudah diverifikasi sebelumnya, langsung aktifkan fitur rental tanpa nunggu admin lagi
+        await api.post('/profile/rental')
+        isInstantlyActivated = true;
+      }
+
+      // Refresh profile data to get latest verification_status and rental status
+      const profileRes = await api.get('/profile')
+      const updatedUser = { ...user, ...profileRes.data.data }
+      setUser(updatedUser)
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+
+      if (isInstantlyActivated) {
+        navigate('/rental-dashboard', { replace: true })
+      }
+
+      return true
+    } catch (err) {
+      console.error(err)
+      const message = err.response?.data?.message || 'Gagal memproses pendaftaran. Coba lagi.'
+      toast.error(message)
+      return false
+    }
+  }
+
+  const handleNext = async () => {
+    if (currentStep === 2) {
+      if (isVerified) {
+        // Skip verification step if already verified
+        const success = await activateRental()
+        if (success) {
+          toast.success('Pendaftaran rental berhasil!')
+          setCurrentStep(4)
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+        return
+      }
+    }
     if (currentStep < 4) {
       setCurrentStep(prev => prev + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -44,21 +128,22 @@ export default function BukaRental() {
       navigate('/')
       return
     }
-    setCurrentStep(prev => prev - 1)
+    if (currentStep === 4 && isVerified) {
+      // If going back from step 4 and skipped step 3, go to step 2
+      setCurrentStep(2)
+    } else {
+      setCurrentStep(prev => prev - 1)
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleSkipKTP = () => {
-    toast.info('Upload KTP dapat dilakukan nanti di halaman profil.')
-    setCurrentStep(4)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const handleFinish = () => {
-    // In a real implementation, this would submit data to the backend API
-    toast.success('Pendaftaran rental berhasil!')
-    setCurrentStep(4)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const handleFinish = async () => {
+    const success = await activateRental()
+    if (success) {
+      toast.success('Pengajuan verifikasi berhasil dikirim!')
+      setCurrentStep(4)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   const renderStep = () => {
@@ -84,17 +169,26 @@ export default function BukaRental() {
           <StepUnggahKTP
             onNext={handleFinish}
             onBack={handleBack}
-            onSkip={handleSkipKTP}
             ktpFile={ktpFile}
             setKtpFile={setKtpFile}
+            selfieFile={selfieFile}
+            setSelfieFile={setSelfieFile}
+            rejectionNote={verificationStatus === 'ditolak' ? (verificationNote || 'Foto KTP buram, terpotong, atau identitas tidak sesuai dengan panduan.') : null}
           />
         )
       case 4:
-        return <StepPendaftaranBerhasil />
+        return <StepPendaftaranBerhasil status={verificationStatus} />
       default:
         return null
     }
   }
+
+  useEffect(() => {
+    // Jika sudah punya akses rental, langsung arahkan ke Dashboard Rental
+    if (user?.rental === 'true') {
+      navigate('/rental-dashboard', { replace: true })
+    }
+  }, [user?.rental, navigate])
 
   return (
     <div className="landing-scrollbar">

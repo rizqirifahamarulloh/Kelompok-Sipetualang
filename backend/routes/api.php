@@ -48,10 +48,14 @@ Route::middleware(['jwt.auth'])->group(function () {
     |--------------------------------------------------------------------------
     | ADMIN ONLY
     |--------------------------------------------------------------------------
-    */
+    |*/
     Route::middleware([RoleMiddleware::class.':admin'])->prefix('admin')->group(function () {
 
         Route::get('/dashboard', [AdminController::class, 'dashboard']);
+        
+        // 🔥 CRUD Users
+        Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword']);
+        Route::apiResource('/users', AdminController::class);
 
         // 🔥 verifikasi KTP
         Route::get('/verifikasi', [VerifikasiController::class, 'index']);
@@ -70,7 +74,8 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::put('/', [ProfileController::class, 'update']);
         Route::post('/photo', [ProfileController::class, 'updatePhoto']);
         Route::delete('/photo', [ProfileController::class, 'deletePhoto']);
-        Route::put('/password', [ProfileController::class, 'updatePassword']);
+        Route::post('/password', [ProfileController::class, 'updatePassword']);
+        Route::post('/rental', [ProfileController::class, 'openRental']);
         Route::delete('/', [ProfileController::class, 'destroy']);
     });
 

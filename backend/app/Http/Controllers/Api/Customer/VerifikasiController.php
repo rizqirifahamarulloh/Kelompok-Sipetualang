@@ -40,7 +40,8 @@ class VerifikasiController extends Controller
             'id_pengguna' => $user->id_pengguna,
             'foto_ktp' => $ktp,
             'foto_selfie_ktp' => $selfie,
-            'status_verifikasi' => 'pending'
+            'status_verifikasi' => 'pending',
+            'catatan_admin' => $request->catatan_admin // Flag pendaftaran rental
         ]);
 
         return response()->json([

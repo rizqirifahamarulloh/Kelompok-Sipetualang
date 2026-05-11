@@ -15,7 +15,7 @@ class Pengguna extends Authenticatable implements JWTSubject
     protected $primaryKey = 'id_pengguna';
     public $timestamps = false;
 
-    protected $appends = ['is_verified'];
+    protected $appends = ['is_verified', 'verification_status', 'verification_note'];
 
     protected $fillable = [
         'nama',
@@ -27,6 +27,8 @@ class Pengguna extends Authenticatable implements JWTSubject
         'peran_pengguna',
         'google_id',
         'profile_photo',
+        'rental',
+        'tanggal_lahir',
     ];
 
     protected $hidden = [
@@ -34,18 +36,34 @@ class Pengguna extends Authenticatable implements JWTSubject
     ];
 
     protected $casts = [
-        // No specific casts needed
+        'tanggal_lahir' => 'date',
     ];
 
     public function verifikasi()
     {
-        return $this->hasMany(Verifikasi::class, 'id_pengguna', 'id_pengguna');
+        return $this->hasMany(Verifikasi::class, 'id_pengguna', 'id_pengguna')->orderBy('id_verifikasi', 'desc');
     }
+
+
 
     public function getIsVerifiedAttribute()
     {
         return $this->verifikasi()->where('status_verifikasi', 'disetujui')->exists();
     }
+
+    public function getVerificationStatusAttribute()
+    {
+        $latest = $this->verifikasi()->first();
+        return $latest ? $latest->status_verifikasi : null;
+    }
+
+    public function getVerificationNoteAttribute()
+    {
+        $latest = $this->verifikasi()->first();
+        return $latest ? $latest->catatan_admin : null;
+    }
+
+
 
     // JWT Methods
     public function getJWTIdentifier()
@@ -60,6 +78,10 @@ class Pengguna extends Authenticatable implements JWTSubject
             'nama' => $this->nama,
             'email' => $this->email,
             'peran' => $this->peran_pengguna,
+            'rental' => $this->rental,
+            'tanggal_lahir' => $this->tanggal_lahir,
+            'verification_status' => $this->verification_status,
+            'verification_note' => $this->verification_note,
         ];
     }
 

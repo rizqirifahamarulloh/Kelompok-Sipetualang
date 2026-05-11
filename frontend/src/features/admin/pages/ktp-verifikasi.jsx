@@ -33,9 +33,9 @@ export default function KtpVerification() {
     getData();
   }, []);
 
-  const approve = async (id) => {
+  const approve = async (id, activateRental = false) => {
     try {
-      await adminService.approveVerification(id);
+      await adminService.approveVerification(id, activateRental);
       getData();
     } catch (err) {
       console.log(err);
@@ -78,62 +78,82 @@ export default function KtpVerification() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {data.map((item) => (
-            <Card key={item.id_verifikasi}>
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>{item.pengguna?.nama}</span>
+          {data.map((item) => {
+            const isRentalRequest = item.catatan_admin === '[PENDAFTARAN_RENTAL]';
+            
+            return (
+              <Card key={item.id_verifikasi} className={isRentalRequest ? 'border-blue-200 bg-blue-50/10' : ''}>
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center">
+                    <div className="flex flex-col gap-1">
+                      <span>{item.pengguna?.nama}</span>
+                      {isRentalRequest && (
+                        <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded w-fit font-normal">
+                          PENGAJUAN BUKA RENTAL
+                        </span>
+                      )}
+                    </div>
 
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs ${getStatusColor(
-                      item.status_verifikasi
-                    )}`}
-                  >
-                    {item.status_verifikasi}
-                  </span>
-                </CardTitle>
-              </CardHeader>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs ${getStatusColor(
+                        item.status_verifikasi
+                      )}`}
+                    >
+                      {item.status_verifikasi}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
 
-              <CardContent className="grid md:grid-cols-3 gap-4 items-center">
-                <div>
-                  <p className="text-xs mb-1">KTP</p>
-                  <img
-                    src={`http://localhost:8000/storage/${item.foto_ktp}`}
-                    className="rounded-lg border w-full h-40 object-cover"
-                  />
-                </div>
+                <CardContent className="grid md:grid-cols-3 gap-4 items-center">
+                  <div>
+                    <p className="text-xs mb-1">KTP</p>
+                    <img
+                      src={`http://localhost:8000/storage/${item.foto_ktp}`}
+                      className="rounded-lg border w-full h-40 object-cover"
+                    />
+                  </div>
 
-                <div>
-                  <p className="text-xs mb-1">Selfie</p>
-                  <img
-                    src={`http://localhost:8000/storage/${item.foto_selfie_ktp}`}
-                    className="rounded-lg border w-full h-40 object-cover"
-                  />
-                </div>
+                  <div>
+                    <p className="text-xs mb-1">Selfie</p>
+                    <img
+                      src={`http://localhost:8000/storage/${item.foto_selfie_ktp}`}
+                      className="rounded-lg border w-full h-40 object-cover"
+                    />
+                  </div>
 
-                <div className="flex flex-col gap-2">
-                  {item.status_verifikasi === "pending" ? (
-                    <>
-                      <Button onClick={() => approve(item.id_verifikasi)}>
-                        Approve
-                      </Button>
+                  <div className="flex flex-col gap-2">
+                    {item.status_verifikasi === "pending" ? (
+                      <>
+                        {isRentalRequest ? (
+                          <Button 
+                            className="bg-blue-600 hover:bg-blue-700 text-white" 
+                            onClick={() => approve(item.id_verifikasi, true)}
+                          >
+                            Approve & Aktifkan Rental
+                          </Button>
+                        ) : (
+                          <Button onClick={() => approve(item.id_verifikasi, false)}>
+                            Approve KTP
+                          </Button>
+                        )}
 
-                      <Button
-                        variant="destructive"
-                        onClick={() => reject(item.id_verifikasi)}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Sudah diproses
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                        <Button
+                          variant="destructive"
+                          onClick={() => reject(item.id_verifikasi)}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Sudah diproses
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

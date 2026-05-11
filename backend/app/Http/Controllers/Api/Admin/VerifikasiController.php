@@ -27,7 +27,7 @@ class VerifikasiController extends Controller
     }
 
     // ✅ Approve KTP
-    public function approve($id)
+    public function approve(Request $request, $id)
     {
         $verifikasi = Verifikasi::findOrFail($id);
 
@@ -35,8 +35,17 @@ class VerifikasiController extends Controller
         $verifikasi->catatan_admin = null;
         $verifikasi->save();
 
+        // Update status rental pengguna menjadi true HANYA jika diminta dari React
+        if ($request->activate_rental) {
+            $pengguna = $verifikasi->pengguna;
+            if ($pengguna) {
+                $pengguna->rental = 'true';
+                $pengguna->save();
+            }
+        }
+
         return response()->json([
-            'message' => 'Verifikasi disetujui'
+            'message' => 'Verifikasi disetujui' . ($request->activate_rental ? ' dan fitur rental diaktifkan' : '')
         ]);
     }
 

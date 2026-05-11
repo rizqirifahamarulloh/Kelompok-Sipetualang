@@ -30,6 +30,13 @@ class ProfileController extends Controller
                 'role' => $user->peran_pengguna,
                 'google_id' => $user->google_id,
                 'profile_photo' => $user->profile_photo,
+                'rental' => $user->rental,
+                'tanggal_lahir' => $user->tanggal_lahir ? $user->tanggal_lahir->format('Y-m-d') : null,
+                'verification_status' => $user->verification_status,
+                'verification_note' => $user->verification_note,
+                'is_verified' => $user->is_verified,
+                'rental_status' => $user->rental_status,
+                'rental_note' => $user->rental_note,
             ]
         ]);
     }
@@ -42,10 +49,11 @@ class ProfileController extends Controller
         $user = auth()->user();
 
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|string|max:100',
-            'phone' => 'sometimes|string|max:15',
-            'address' => 'sometimes|string',
-            'city' => 'sometimes|string|max:100',
+            'name' => 'sometimes|required|string|max:100',
+            'phone' => 'sometimes|required|string|max:15',
+            'address' => 'sometimes|required|string',
+            'city' => 'sometimes|required|string|max:100',
+            'birth_date' => 'sometimes|required|date',
         ]);
 
         if ($validator->fails()) {
@@ -66,6 +74,9 @@ class ProfileController extends Controller
         }
         if ($request->filled('city')) {
             $user->kota = $request->city;
+        }
+        if ($request->filled('birth_date')) {
+            $user->tanggal_lahir = $request->birth_date;
         }
 
         $user->save();
@@ -206,6 +217,22 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Akun berhasil dihapus'
+        ]);
+    }
+
+    /**
+     * Set rental to true
+     */
+    public function openRental()
+    {
+        $user = auth()->user();
+        $user->rental = 'true';
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status rental berhasil diperbarui',
+            'rental' => $user->rental
         ]);
     }
 }

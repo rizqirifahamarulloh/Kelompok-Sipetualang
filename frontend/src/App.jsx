@@ -20,6 +20,7 @@ import ResetPassword from '@/features/auth/pages/ResetPassword'
 import AdminLayout from '@/features/admin/components/AdminLayout'
 import Dashboard from '@/features/admin/pages/Dashboard'
 import Users from '@/features/admin/pages/Users'
+import UserDetail from '@/features/admin/pages/UserDetail'
 import KtpVerification from '@/features/admin/pages/ktp-verifikasi'
 
 // Profile - perbaiki pathnya
@@ -30,6 +31,7 @@ import DeleteAkun from '@/profile/pages/delete-akun'
 
 
 import VerifikasiCustomer from '@/features/customer/pages/verifikasi';
+import DashboardRental from '@/features/bukarental/components/DashboardRental';
 
 function Unauthorized() {
   return (
@@ -77,6 +79,7 @@ function App() {
                   <Route element={<AdminLayout />}>
                     <Route path="/admin/dashboard" element={<Dashboard />} />
                     <Route path="/admin/users" element={<Users />} />
+                    <Route path="/admin/users/:id" element={<UserDetail />} />
                     <Route path="/admin/gears" element={<div>Gears Page</div>} />
                     <Route path="/admin/categories" element={<div>Categories Page</div>} />
                     <Route path="/admin/destinations" element={<div>Destinations Page</div>} />
@@ -89,6 +92,7 @@ function App() {
                   {/* Customer routes — customer only */}
                 <Route element={<ProtectedRoute roles={['customer']} />}>
                   <Route path="/customer/verification" element={<VerifikasiCustomer />} />
+                  <Route path="/rental-dashboard" element={<DashboardRental />} />
                 </Route>
 
                 {/* Unauthorized fallback */}

@@ -206,6 +206,11 @@ class AuthController extends Controller
                 'peran_pengguna' => $user->peran_pengguna,
                 'google_id' => $user->google_id,
                 'profile_photo' => $user->profile_photo,
+                'rental' => $user->rental,
+                'tanggal_lahir' => $user->tanggal_lahir,
+                'is_verified' => $user->is_verified,
+                'verification_status' => $user->verification_status,
+                'verification_note' => $user->verification_note,
             ]
         ]);
     }
@@ -294,7 +299,11 @@ class AuthController extends Controller
                 'peran_pengguna' => $user->peran_pengguna,
                 'google_id' => $user->google_id,
                 'profile_photo' => $user->profile_photo,
+                'rental' => $user->rental,
+                'tanggal_lahir' => $user->tanggal_lahir,
                 'is_verified' => $user->is_verified,
+                'verification_status' => $user->verification_status,
+                'verification_note' => $user->verification_note,
             ]
         ]);
     }

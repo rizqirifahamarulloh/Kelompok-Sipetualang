@@ -20,6 +20,12 @@ export const adminService = {
     return response
   },
 
+  // Update user
+  async updateUser(id, data) {
+    const response = await api.put(`/admin/users/${id}`, data)
+    return response
+  },
+
   // Delete user
   async deleteUser(userId) {
     const response = await api.delete(`/admin/users/${userId}`)
@@ -39,8 +45,8 @@ export const adminService = {
   },
 
   // Approve verification
-  async approveVerification(id) {
-    const response = await api.post(`/admin/verifikasi/${id}/approve`)
+  async approveVerification(id, activateRental = false) {
+    const response = await api.post(`/admin/verifikasi/${id}/approve`, { activate_rental: activateRental })
     return response
   },
 
