@@ -22,16 +22,23 @@ import Dashboard from '@/features/admin/pages/Dashboard'
 import Users from '@/features/admin/pages/Users'
 import UserDetail from '@/features/admin/pages/UserDetail'
 import KtpVerification from '@/features/admin/pages/ktp-verifikasi'
+import Gears from '@/features/admin/pages/Gears'
+import GearDetail from '@/features/admin/pages/GearDetail'
 
-// Profile - perbaiki pathnya
-import Profile from '@/profile/pages/Profile'  // ← path yang benar
+// Profile
+import Profile from '@/profile/pages/Profile'
 import EditProfile from '@/profile/pages/edit-profile'
 import UpdatePassword from '@/profile/pages/update-password'
 import DeleteAkun from '@/profile/pages/delete-akun'
 
-
 import VerifikasiCustomer from '@/features/customer/pages/verifikasi';
 import DashboardRental from '@/features/bukarental/components/DashboardRental';
+import Categories from './features/admin/pages/Categories'
+import Destinations from './features/admin/pages/Destinations'
+import TransactionsList from './features/admin/pages/Transactions'
+import TransactionDetail from './features/admin/pages/TransactionDetail'
+import Payment from './features/admin/pages/Payment'
+import PaymentDetail from './features/admin/pages/PsymentDetail'
 
 function Unauthorized() {
   return (
@@ -80,16 +87,23 @@ function App() {
                     <Route path="/admin/dashboard" element={<Dashboard />} />
                     <Route path="/admin/users" element={<Users />} />
                     <Route path="/admin/users/:id" element={<UserDetail />} />
-                    <Route path="/admin/gears" element={<div>Gears Page</div>} />
-                    <Route path="/admin/categories" element={<div>Categories Page</div>} />
-                    <Route path="/admin/destinations" element={<div>Destinations Page</div>} />
-                    <Route path="/admin/transactions" element={<div>Transactions Page</div>} />
-                    <Route path="/admin/payments" element={<div>Payments Page</div>} />
+                    <Route path="/admin/gears" element={<Gears />} />
+                    <Route path="/admin/gears/:id" element={<GearDetail />} />
+                    <Route path="/admin/categories" element={<Categories />} />
+                    <Route path="/admin/destinations" element={<Destinations />} />
+                    <Route path="/admin/transactions" element={<TransactionsList />} />
+                    <Route path="/admin/transactions/:id" element={<TransactionDetail />} />
+                    <Route path="/admin/payments" element={<Payment />} />
+                    <Route path="/admin/payments/:id" element={<PaymentDetail />} />
+
+                    <Route path="/admin/gears/:id" element={<GearDetail />} />
+
+                    {/* <Route path="/admin/payments" element={<Payments />} /> */}
                     <Route path="/admin/ktp-verifikasi" element={<KtpVerification />} />
                   </Route>
                 </Route>
 
-                  {/* Customer routes — customer only */}
+                {/* Customer routes — customer only */}
                 <Route element={<ProtectedRoute roles={['customer']} />}>
                   <Route path="/customer/verification" element={<VerifikasiCustomer />} />
                   <Route path="/rental-dashboard" element={<DashboardRental />} />

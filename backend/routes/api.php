@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\Admin\VerifikasiController;
 use App\Http\Controllers\Api\Customer\VerifikasiController as CustomerVerifikasi;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\Admin\BarangController;
+use App\Http\Controllers\Api\Admin\KategoriController;
+use App\Http\Controllers\Api\Admin\DestinasiController;
 use App\Http\Middleware\RoleMiddleware;
 
 /*
@@ -13,6 +16,7 @@ use App\Http\Middleware\RoleMiddleware;
 | PUBLIC ROUTES
 |--------------------------------------------------------------------------
 */
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -49,10 +53,10 @@ Route::middleware(['jwt.auth'])->group(function () {
     | ADMIN ONLY
     |--------------------------------------------------------------------------
     |*/
-    Route::middleware([RoleMiddleware::class.':admin'])->prefix('admin')->group(function () {
+    Route::middleware([RoleMiddleware::class . ':admin'])->prefix('admin')->group(function () {
 
         Route::get('/dashboard', [AdminController::class, 'dashboard']);
-        
+
         // 🔥 CRUD Users
         Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword']);
         Route::apiResource('/users', AdminController::class);
@@ -62,6 +66,17 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/verifikasi/{id}', [VerifikasiController::class, 'show']);
         Route::post('/verifikasi/{id}/approve', [VerifikasiController::class, 'approve']);
         Route::post('/verifikasi/{id}/reject', [VerifikasiController::class, 'reject']);
+
+        // 🔥 Barang
+        Route::get('/barang', [BarangController::class, 'index']);
+        Route::get('/barang/{id}', [BarangController::class, 'show']);
+        Route::put('/barang/{id}', [BarangController::class, 'update']);
+        Route::post('/barang/{id}', [BarangController::class, 'update']); // untuk FormData + _method=PUT
+        Route::delete('/barang/{id}', [BarangController::class, 'destroy']);
+
+        // 🔥 Kategori & Destinasi
+        Route::get('/kategori', [KategoriController::class, 'index']);
+        Route::get('/destinasi', [DestinasiController::class, 'index']);
     });
 
     /*
@@ -78,5 +93,4 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::post('/rental', [ProfileController::class, 'openRental']);
         Route::delete('/', [ProfileController::class, 'destroy']);
     });
-
 });

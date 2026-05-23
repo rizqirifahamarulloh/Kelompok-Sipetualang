@@ -1,0 +1,272 @@
+import { useState, useEffect } from "react";
+import { Package, ArrowLeft, Edit, Trash2, Tag, Star, MapPin, ExternalLink } from "lucide-react";
+import EditGearModal from "../components/Gears/EditGearModal";
+import DeleteGearModal from "../components/Gears/DeleteGearModal";
+
+// Config & Dummy data logic specific to the Detail View
+const STATUS_CONFIG = {
+  tersedia: { label: "Tersedia", dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  habis:    { label: "Habis",    dot: "bg-red-500",     badge: "bg-red-50 text-red-700 border border-red-200" },
+};
+
+const STATUS_KEMBALI_CONFIG = {
+  dikembalikan: { label: "Dikembalikan", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  terlambat:    { label: "Terlambat",    className: "bg-red-50 text-red-700 border border-red-200" },
+  aktif:        { label: "Aktif",        className: "bg-orange-50 text-orange-700 border border-orange-200" },
+  menunggu:     { label: "Menunggu",     className: "bg-yellow-50 text-yellow-700 border border-yellow-200" },
+};
+
+const APPROVAL_CONFIG = {
+  pending:   { label: "Pending",   className: "bg-yellow-50 text-yellow-700 border border-yellow-200" },
+  disetujui: { label: "Disetujui", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  ditolak:   { label: "Ditolak",   className: "bg-red-50 text-red-700 border border-red-200" },
+};
+
+const formatHarga = (val) => `Rp ${Number(val || 0).toLocaleString("id-ID")}`;
+const formatTanggal = (val) =>
+  val ? new Date(val).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-";
+
+export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete, categories, destinations, gearsData }) {
+  const [gear, setGear] = useState(null);
+  const [activeTab, setActiveTab] = useState("transaksi");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  useEffect(() => {
+    const found = gearsData.find((g) => g.id_barang === gearId);
+    setGear(found ? { ...found } : null);
+  }, [gearId, gearsData]);
+
+  if (!gear) return <div className="p-8 text-center text-gray-400">Alat tidak ditemukan.</div>;
+
+  const statusCfg = STATUS_CONFIG[gear.status_barang] || STATUS_CONFIG.habis;
+  const transaksiList = gear.detail_transaksi || [];
+
+  const handleSaveEdit = (formData) => {
+    const updatedGear = {
+      ...gear,
+      ...formData,
+      id_kategori: Number(formData.id_kategori),
+      harga_sewa: Number(formData.harga_sewa),
+      jumlah_stok: Number(formData.jumlah_stok),
+      kategori: { nama_kategori: categories.find((c) => c.id_kategori === Number(formData.id_kategori))?.nama_kategori || gear.kategori?.nama_kategori },
+      destinasi: destinations.filter((d) => formData.destinasi_ids.includes(d.id_destinasi)),
+    };
+    setGear(updatedGear);
+    onGearUpdate(updatedGear);
+  };
+
+  const statsItems = [
+    { label: "Total Disewa", value: gear.total_disewa ?? transaksiList.length, suffix: "Kali" },
+    { label: "Stok Total", value: gear.jumlah_stok ?? 0, suffix: "Unit" },
+    { label: "Tersedia", value: gear.stok_tersedia ?? gear.jumlah_stok ?? 0, suffix: "Unit" },
+    { label: "Kondisi", value: gear.kondisi ?? "Baik", suffix: "" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-2">
+          <button onClick={onBack} className="p-2 rounded-lg hover:bg-gray-100 transition">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <p className="text-xs text-gray-400">
+              Dashboard &gt;{" "}
+              <span onClick={onBack} className="cursor-pointer hover:underline text-gray-600">Manajemen Alat</span>
+              {" "}&gt; Detail Alat
+            </p>
+            <h1 className="text-2xl font-bold">Detail Alat</h1>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-emerald-700 border border-emerald-500 rounded-full hover:bg-emerald-50 transition bg-white">
+            <Edit size={15} /> Edit
+          </button>
+          <button onClick={() => setIsDeleteModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-full hover:bg-red-700 transition">
+            <Trash2 size={15} /> Hapus
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Foto & Stats */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="relative rounded-xl overflow-hidden bg-gray-50 border border-gray-100 mb-4 h-64 flex items-center justify-center">
+            <div className="flex flex-col items-center text-gray-300">
+              <Package size={48} className="mb-3" />
+              <span className="text-sm">Belum ada foto</span>
+            </div>
+            <div className="absolute top-3 left-3">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusCfg.badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${statusCfg.dot}`}></span>
+                {statusCfg.label}
+              </span>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            {statsItems.map((s, i) => (
+              <div key={i} className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight mb-1">{s.label}</p>
+                <p className="font-bold text-base leading-tight">{s.value}</p>
+                {s.suffix && <p className="text-[10px] text-gray-400">{s.suffix}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Info Alat */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs border border-gray-200 bg-gray-50 text-gray-600 uppercase tracking-wide">
+              <Tag size={11} />{gear.kategori?.nama_kategori || "-"}
+            </span>
+            {gear.rating && (
+              <span className="flex items-center gap-1 text-sm text-amber-600 font-medium">
+                <Star size={14} className="fill-amber-400 text-amber-400" />
+                {gear.rating} ({gear.jumlah_ulasan || 0} Ulasan)
+              </span>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold mb-1">{gear.nama_barang}</h2>
+            <p className="text-2xl font-bold text-emerald-700">{formatHarga(gear.harga_sewa)}<span className="text-sm font-normal text-gray-400"> / hari</span></p>
+          </div>
+
+          <p className="text-sm text-gray-500 leading-relaxed">{gear.deskripsi || "Tidak ada deskripsi."}</p>
+
+          <div className="space-y-2 pt-2 border-t border-gray-100">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Pemilik</span>
+              <span className="font-medium">{gear.pemilik?.nama || "SiPetualang HQ"}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Status Approval</span>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${APPROVAL_CONFIG[gear.status_approval]?.className || ""}`}>
+                {APPROVAL_CONFIG[gear.status_approval]?.label || gear.status_approval}
+              </span>
+            </div>
+          </div>
+
+          {gear.destinasi && gear.destinasi.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-400 mb-2 flex items-center gap-1"><MapPin size={12} /> Destinasi yang Sesuai</p>
+              <div className="flex flex-wrap gap-2">
+                {gear.destinasi.map((d) => (
+                  <span key={d.id_destinasi} className="px-2.5 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {d.nama_destinasi}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              const updated = { ...gear, status_barang: gear.status_barang === "tersedia" ? "habis" : "tersedia" };
+              setGear(updated);
+              onGearUpdate(updated);
+            }}
+            className="w-full py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          >
+            {gear.status_barang === "tersedia" ? "Nonaktifkan Alat" : "Aktifkan Alat"}
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 flex gap-6 px-2">
+        {["transaksi", "ulasan"].map((tab) => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className={`pb-3 text-sm font-semibold ${activeTab === tab ? "border-b-2 border-emerald-700 text-emerald-800" : "text-gray-400 hover:text-gray-600"}`}>
+            {tab === "transaksi" ? "Riwayat Transaksi Alat" : "Ulasan"}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "transaksi" && (
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="p-4 border-b flex items-center justify-between">
+            <h3 className="font-semibold text-sm">Riwayat Transaksi Alat</h3>
+            <button className="text-xs text-emerald-600 hover:underline flex items-center gap-1">
+              Lihat Semua <ExternalLink size={11} />
+            </button>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
+                {["Nama Penyewa", "Tanggal Mulai", "Durasi", "Status Pengembalian", "Aksi"].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {transaksiList.length === 0 ? (
+                <tr><td colSpan={5} className="text-center py-8 text-gray-400">Belum ada riwayat transaksi.</td></tr>
+              ) : transaksiList.map((trx, i) => {
+                const sk = trx.status_sewa || "aktif";
+                const skCfg = STATUS_KEMBALI_CONFIG[sk] || STATUS_KEMBALI_CONFIG.aktif;
+                const durasi = trx.tanggal_mulai && trx.tanggal_selesai
+                  ? Math.ceil((new Date(trx.tanggal_selesai) - new Date(trx.tanggal_mulai)) / 86400000) : "-";
+                return (
+                  <tr key={trx.id_transaksi || i} className="border-b border-gray-50 hover:bg-gray-50/50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold shrink-0">
+                          {(trx.penyewa?.nama || "?").slice(0, 2).toUpperCase()}
+                        </div>
+                        <span>{trx.penyewa?.nama || "-"}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400">{formatTanggal(trx.tanggal_mulai)}</td>
+                    <td className="px-4 py-3">{durasi !== "-" ? `${durasi} Hari` : "-"}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${skCfg.className}`}>
+                        {sk === "dikembalikan" && "✓ "}{skCfg.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded"><ExternalLink size={13} /></button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {transaksiList.length > 0 && (
+            <div className="bg-slate-50 border-t p-5 flex justify-end gap-16">
+              <div className="text-right">
+                <p className="text-xs text-gray-400 mb-1">Total Transaksi</p>
+                <p className="font-bold text-xl">{transaksiList.length}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-400 mb-1">Total Pendapatan</p>
+                <p className="font-bold text-xl text-emerald-800">
+                  {formatHarga(transaksiList.reduce((s, t) => s + Number(t.total_biaya || 0), 0))}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "ulasan" && (
+        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-400">
+          <Star size={32} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Belum ada ulasan untuk alat ini.</p>
+        </div>
+      )}
+
+      <EditGearModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}
+        gear={gear} categories={categories} destinations={destinations} onSave={handleSaveEdit} />
+      <DeleteGearModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => { setIsDeleteModalOpen(false); onGearDelete(gear.id_barang); onBack(); }}
+        itemName={gear?.nama_barang || "Alat ini"} />
+    </div>
+  );
+}
