@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\Admin\BarangController;
 use App\Http\Controllers\Api\Admin\KategoriController;
 use App\Http\Controllers\Api\Admin\DestinasiController;
+use App\Http\Controllers\Api\NotifikasiController;
 use App\Http\Middleware\RoleMiddleware;
 
 /*
@@ -37,6 +38,9 @@ Route::middleware(['jwt.auth'])->group(function () {
     // 🔐 Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+
+    // 🔔 Notifikasi (semua role)
+    Route::get('/notifikasi', [NotifikasiController::class, 'index']);
 
     /*
     |--------------------------------------------------------------------------
@@ -75,8 +79,8 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::delete('/barang/{id}', [BarangController::class, 'destroy']);
 
         // 🔥 Kategori & Destinasi
-        Route::get('/kategori', [KategoriController::class, 'index']);
-        Route::get('/destinasi', [DestinasiController::class, 'index']);
+        Route::apiResource('/kategori', KategoriController::class);
+        Route::apiResource('/destinasi', DestinasiController::class);
     });
 
     /*

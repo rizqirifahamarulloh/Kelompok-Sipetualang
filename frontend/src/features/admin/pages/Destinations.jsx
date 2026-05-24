@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,48 +35,43 @@ import {
 import DestinationModal from "../components/Destinations/DestinationModal";
 import DeleteDestinationModal from "../components/Destinations/DeleteDestinationModal";
 import DetailDestinationModal from "../components/Destinations/DetailDestinationModal";
+import { destinationService } from "../services/destinationService";
 
 export default function Destinations() {
-  const dummyDestinations = [
-    {
-      id_destinasi: 1,
-      nama_destinasi: "Mount Rinjani",
-    },
-    {
-      id_destinasi: 2,
-      nama_destinasi: "Mount Semeru",
-    },
-    {
-      id_destinasi: 3,
-      nama_destinasi: "Mount Prau",
-    },
-  ];
-
-  const [destinationList, setDestinationList] =
-    useState(dummyDestinations);
-
+  const [destinationList, setDestinationList] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [isAddModalOpen, setIsAddModalOpen] =
-    useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deletingItem, setDeletingItem] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  const [editingItem, setEditingItem] =
-    useState(null);
+  const fetchDestinations = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await destinationService.getDestinations();
+      if (res && res.status === "success") {
+        setDestinationList(res.data || []);
+      } else {
+        setError("Failed to fetch destinations.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("An error occurred while loading destinations.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const [isEditModalOpen, setIsEditModalOpen] =
-    useState(false);
-
-  const [deletingItem, setDeletingItem] =
-    useState(null);
-
-  const [isDeleteModalOpen, setIsDeleteModalOpen] =
-    useState(false);
-
-  const [detailItem, setDetailItem] =
-    useState(null);
-
-  const [isDetailModalOpen, setIsDetailModalOpen] =
-    useState(false);
+  useEffect(() => {
+    fetchDestinations();
+  }, []);
 
   const filtered = destinationList.filter((d) =>
     d.nama_destinasi
@@ -84,8 +79,8 @@ export default function Destinations() {
       .includes(search.toLowerCase())
   );
 
-  const triggerRefresh = (newData) => {
-    setDestinationList(newData);
+  const triggerRefresh = () => {
+    fetchDestinations();
   };
 
   const handleEditFromDetail = (item) => {
@@ -218,13 +213,22 @@ export default function Destinations() {
             </TableHeader>
 
             <TableBody>
-              {filtered.length === 0 ? (
+              {loading ? (
                 <TableRow>
                   <TableCell
                     colSpan={3}
                     className="text-center py-10 text-muted-foreground"
                   >
-                    No destinations found.
+                    Loading destinations...
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="text-center py-10 text-muted-foreground"
+                  >
+                    {error || "No destinations found."}
                   </TableCell>
                 </TableRow>
               ) : (

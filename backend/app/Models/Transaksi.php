@@ -16,4 +16,8 @@ class Transaksi extends Model
     public function penyewa() {
         return $this->belongsTo(Pengguna::class, 'id_penyewa', 'id_pengguna');
     }
+
+    public function pembayaran() {
+        return $this->hasOne(Pembayaran::class, 'id_transaksi', 'id_transaksi');
+    }
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,28 +34,13 @@ import {
 import CategoryModal from "../components/Categories/CategoryModal";
 import DeleteCategoryModal from "../components/Categories/DeleteCategoryModal";
 import DetailCategoryModal from "../components/Categories/DetailCategoryModal";
+import { categoryService } from "../services/categoryService";
 
 export default function Categories() {
-  const dummyCategories = [
-    {
-      id_kategori: 1,
-      nama_kategori: "Camping",
-      jumlah_barang: 12,
-    },
-    {
-      id_kategori: 2,
-      nama_kategori: "Hiking",
-      jumlah_barang: 8,
-    },
-    {
-      id_kategori: 3,
-      nama_kategori: "Climbing",
-      jumlah_barang: 5,
-    },
-  ];
-
-  const [categoryList, setCategoryList] = useState(dummyCategories);
+  const [categoryList, setCategoryList] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -68,12 +53,34 @@ export default function Categories() {
   const [detailItem, setDetailItem] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await categoryService.getCategories();
+      if (res && res.status === "success") {
+        setCategoryList(res.data || []);
+      } else {
+        setError("Failed to fetch categories.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("An error occurred while loading categories.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   const filtered = categoryList.filter((c) =>
     c.nama_kategori.toLowerCase().includes(search.toLowerCase())
   );
 
-  const triggerRefresh = (newData) => {
-    setCategoryList(newData);
+  const triggerRefresh = () => {
+    fetchCategories();
   };
 
   const handleEditFromDetail = (item) => {
@@ -211,13 +218,22 @@ export default function Categories() {
             </TableHeader>
 
             <TableBody>
-              {filtered.length === 0 ? (
+              {loading ? (
                 <TableRow>
                   <TableCell
                     colSpan={4}
                     className="text-center py-10 text-muted-foreground"
                   >
-                    No categories found.
+                    Loading categories...
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-10 text-muted-foreground"
+                  >
+                    {error || "No categories found."}
                   </TableCell>
                 </TableRow>
               ) : (

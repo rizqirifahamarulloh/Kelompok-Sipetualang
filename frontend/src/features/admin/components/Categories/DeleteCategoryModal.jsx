@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import { Trash2 } from "lucide-react";
+import { categoryService } from "../../services/categoryService";
 
 export default function DeleteCategoryModal({
   isOpen,
@@ -12,23 +13,24 @@ export default function DeleteCategoryModal({
   categoryList,
 }) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (!isOpen || !item) return null;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setLoading(true);
+    setError("");
 
-    setTimeout(() => {
-      const updatedData = categoryList.filter(
-        (c) => c.id_kategori !== item.id_kategori
-      );
-
-      onSuccess(updatedData);
-
+    try {
+      await categoryService.deleteCategory(item.id_kategori);
+      onSuccess();
       onClose();
-
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to delete category.");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -50,6 +52,12 @@ export default function DeleteCategoryModal({
           <strong>{item.nama_kategori}</strong> will
           be deleted.
         </p>
+
+        {error && (
+          <p className="text-xs text-red-500 mb-4">
+            {error}
+          </p>
+        )}
 
         <div className="flex gap-3">
           <Button

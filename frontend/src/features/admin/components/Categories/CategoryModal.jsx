@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { Tag, X, Check } from "lucide-react";
+import { categoryService } from "../../services/categoryService";
 
 export default function CategoryModal({
   isOpen,
@@ -25,43 +26,34 @@ export default function CategoryModal({
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       setError("Category name is required.");
       return;
     }
 
     setLoading(true);
+    setError("");
 
-    setTimeout(() => {
-      let updatedData = [];
-
+    try {
       if (isEdit) {
-        updatedData = categoryList.map((item) =>
-          item.id_kategori === editData.id_kategori
-            ? {
-                ...item,
-                nama_kategori: name,
-              }
-            : item
-        );
+        await categoryService.updateCategory(editData.id_kategori, {
+          nama_kategori: name,
+        });
       } else {
-        updatedData = [
-          ...categoryList,
-          {
-            id_kategori: Date.now(),
-            nama_kategori: name,
-            jumlah_barang: 0,
-          },
-        ];
+        await categoryService.createCategory({
+          nama_kategori: name,
+        });
       }
 
-      onSuccess(updatedData);
-
+      onSuccess();
       onClose();
-
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to save category.");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
