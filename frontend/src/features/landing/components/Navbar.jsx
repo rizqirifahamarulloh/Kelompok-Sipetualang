@@ -4,11 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { toast } from 'sonner'
-import ThemeToggle from '@/components/ThemeToggle'
-import LanguageToggle from '@/components/LanguageToggle'
+import NotificationBell from '@/components/NotificationBell'
 import { User, LogOut } from 'lucide-react'
 import logo from '@/assets/beranda/Logo.png'
-import searchIcon from '@/assets/beranda/icon-search.svg'
 import cartIcon from '@/assets/beranda/icon-simple-cart.svg'
 import arrowRight from '@/assets/beranda/icon-arrow-right.svg'
 
@@ -112,18 +110,10 @@ export default function Navbar() {
         </ul>
 
         <div className="flex gap-2 items-center max-md:hidden">
-          <LanguageToggle variant="navbar" />
-          <ThemeToggle variant="navbar" />
-          <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Search">
-            <img src={searchIcon} alt="Search" className="w-5 h-5" />
-          </button>
-          <button 
-            className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" 
-            aria-label="Cart"
-            onClick={handleCartClick}
-          >
+          <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart" onClick={handleCartClick}>
             <img src={cartIcon} alt="Cart" className="w-5 h-5" />
           </button>
+          <NotificationBell variant="navbar" />
 
           {/* Auth section */}
           {isLoading ? (
@@ -233,14 +223,10 @@ export default function Navbar() {
               ))}
             </ul>
             <div className="flex flex-wrap gap-4 px-[30px] pb-6">
-              <LanguageToggle variant="navbar" />
-              <ThemeToggle variant="navbar" />
-              <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Search">
-                <img src={searchIcon} alt="Search" className="w-5 h-5" />
-              </button>
               <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart" onClick={handleCartClick}>
                 <img src={cartIcon} alt="Cart" className="w-5 h-5" />
               </button>
+              <NotificationBell variant="navbar" />
 
               {/* Mobile Auth Section */}
               {isAuthenticated ? (

@@ -2,8 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Mountain, ChevronLeft } from 'lucide-react';
-import ThemeToggle from '@/components/ThemeToggle';
-import LanguageToggle from '@/components/LanguageToggle';
+import NotificationBell from '@/components/NotificationBell';
 import { i } from 'framer-motion/client';
 import { Button } from '@/components/ui/button';
 
@@ -43,8 +42,7 @@ export default function Navbar() {
 
           {/* Right Side */}
           <div className="hidden md:flex items-center gap-3">
-            <LanguageToggle />
-            <ThemeToggle />
+            <NotificationBell />
             <Link to="/">
               <Button variant="ghost" size="sm" className="gap-2">
                 <ChevronLeft size={16} />
@@ -69,8 +67,7 @@ export default function Navbar() {
               <Link to="/cara-sewa" className="text-sm py-2 hover:text-primary transition">Cara Sewa</Link>
               <div className="flex items-center justify-between pt-2 border-t">
                 <div className="flex gap-2">
-                  <LanguageToggle />
-                  <ThemeToggle />
+                  <NotificationBell />
                 </div>
                 <Link to="/">
                   <Button variant="ghost" size="sm" className="gap-2">

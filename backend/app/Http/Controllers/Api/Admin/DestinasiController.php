@@ -10,7 +10,7 @@ class DestinasiController extends Controller
 {
     public function index()
     {
-        $destinasi = JenisDestinasi::all();
+        $destinasi = JenisDestinasi::orderByDesc('id_destinasi')->get();
         return response()->json([
             'status' => 'success',
             'data' => $destinasi

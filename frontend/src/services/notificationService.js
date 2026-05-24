@@ -6,5 +6,15 @@ export const notificationService = {
   async getNotifications() {
     const response = await api.get('/notifikasi');
     return response.data;
-  }
+  },
+
+  async deleteNotification(id) {
+    const response = await api.delete(`/notifikasi/${id}`);
+    return response.data;
+  },
+
+  async markNotificationRead(id) {
+    const response = await api.patch(`/notifikasi/${id}/read`);
+    return response.data;
+  },
 };

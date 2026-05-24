@@ -8,13 +8,13 @@ import {
   X,
   Check,
 } from "lucide-react";
+import { destinationService } from "@/features/admin/services/destinationService";
 
 export default function DestinationModal({
   isOpen,
   onClose,
   onSuccess,
   editData,
-  destinationList,
 }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -23,50 +23,56 @@ export default function DestinationModal({
   const isEdit = !!editData;
 
   useEffect(() => {
-    setName(editData?.nama_destinasi || "");
-    setError("");
+    if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setName(editData?.nama_destinasi || "");
+      setError("");
+    }
   }, [editData, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       setError("Destination name is required.");
       return;
     }
 
     setLoading(true);
+    setError("");
 
-    setTimeout(() => {
-      let updatedData = [];
-
+    try {
       if (isEdit) {
-        updatedData = destinationList.map(
-          (item) =>
-            item.id_destinasi ===
-            editData.id_destinasi
-              ? {
-                  ...item,
-                  nama_destinasi: name,
-                }
-              : item
-        );
-      } else {
-        updatedData = [
-          ...destinationList,
+        const res = await destinationService.updateDestination(
+          editData.id_destinasi,
           {
-            id_destinasi: Date.now(),
             nama_destinasi: name,
-          },
-        ];
+          }
+        );
+
+        if (res?.status !== "success") {
+          throw new Error("Failed to update destination.");
+        }
+      } else {
+        const res = await destinationService.createDestination({
+          nama_destinasi: name,
+        });
+
+        if (res?.status !== "success") {
+          throw new Error("Failed to add destination.");
+        }
       }
 
-      onSuccess(updatedData);
-
+      onSuccess();
       onClose();
-
+    } catch (err) {
+      console.error(err);
+      setError(
+        err?.message || "Unable to save destination. Please try again."
+      );
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (

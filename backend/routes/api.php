@@ -41,6 +41,8 @@ Route::middleware(['jwt.auth'])->group(function () {
 
     // 🔔 Notifikasi (semua role)
     Route::get('/notifikasi', [NotifikasiController::class, 'index']);
+    Route::patch('/notifikasi/{id}/read', [NotifikasiController::class, 'markRead']);
+    Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy']);
 
     /*
     |--------------------------------------------------------------------------
