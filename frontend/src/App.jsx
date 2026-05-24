@@ -10,7 +10,10 @@ import AuthCallback from '@/features/auth/pages/AuthCallback'
 
 // Pages
 import Home from '@/features/landing/pages/Home'
+import BarangShow from '@/features/landing/pages/BarangShow';
+
 import SewaAlat from '@/features/landing/pages/SewaAlat'
+import TokoPage from '@/features/landing/pages/TokoPage'
 import CaraSewa from '@/features/landing/pages/CaraSewa'
 import BukaRental from '@/features/landing/pages/BukaRental'
 import Login from '@/features/auth/pages/Login'
@@ -21,15 +24,17 @@ import AdminLayout from '@/features/admin/components/AdminLayout'
 import Dashboard from '@/features/admin/pages/Dashboard'
 import Users from '@/features/admin/pages/Users'
 import UserDetail from '@/features/admin/pages/UserDetail'
+import Revenue from '@/features/admin/pages/Revenue'
 import KtpVerification from '@/features/admin/pages/ktp-verifikasi'
 
-// Profile - perbaiki pathnya
-import Profile from '@/profile/pages/Profile'  // ← path yang benar
+// Customer Profile - perbaiki pathnya
+import Profile from '@/profile/pages/Profile'
 import EditProfile from '@/profile/pages/edit-profile'
 import UpdatePassword from '@/profile/pages/update-password'
 import DeleteAkun from '@/profile/pages/delete-akun'
-
-
+import ChatPage from '@/features/customer/pages/chat';
+import CartPage from '@/features/customer/pages/cart';
+import TransactionsPage from '@/features/customer/pages/transactions';
 import VerifikasiCustomer from '@/features/customer/pages/verifikasi';
 import DashboardRental from '@/features/bukarental/components/DashboardRental';
 
@@ -58,6 +63,8 @@ function App() {
                 {/* Public routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/sewa-alat" element={<SewaAlat />} />
+                <Route path="/barang/:id" element={<BarangShow />} />
+                <Route path="/toko/:id" element={<TokoPage />} />
                 <Route path="/cara-sewa" element={<CaraSewa />} />
                 <Route path="/buka-rental" element={<BukaRental />} />
                 <Route path="/login" element={<Login />} />
@@ -83,14 +90,19 @@ function App() {
                     <Route path="/admin/gears" element={<div>Gears Page</div>} />
                     <Route path="/admin/categories" element={<div>Categories Page</div>} />
                     <Route path="/admin/destinations" element={<div>Destinations Page</div>} />
-                    <Route path="/admin/transactions" element={<div>Transactions Page</div>} />
                     <Route path="/admin/payments" element={<div>Payments Page</div>} />
                     <Route path="/admin/ktp-verifikasi" element={<KtpVerification />} />
+                    <Route path="/admin/revenue" element={<Revenue />} />
+                    <Route path="/admin/transactions" element={<Revenue />} />
                   </Route>
                 </Route>
 
                   {/* Customer routes — customer only */}
                 <Route element={<ProtectedRoute roles={['customer']} />}>
+                  <Route path="/customer/chat" element={<ChatPage />} />
+                  <Route path="/customer/cart" element={<CartPage />} />
+                  <Route path="/profile/transactions" element={<TransactionsPage />} />
+                  <Route path="/customer/transactions" element={<TransactionsPage />} />
                   <Route path="/customer/verification" element={<VerifikasiCustomer />} />
                   <Route path="/rental-dashboard" element={<DashboardRental />} />
                 </Route>

@@ -2,15 +2,19 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\TokoController;
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\Admin\VerifikasiController;
 use App\Http\Controllers\Api\Customer\VerifikasiController as CustomerVerifikasi;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\Customer\RentalController;
+use App\Http\Controllers\Api\Customer\ChatController;
+use App\Http\Controllers\Api\Customer\TransaksiController;
 use App\Http\Middleware\RoleMiddleware;
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC ROUTES
+| PUBLIC ROUTES (TANPA LOGIN)
 |--------------------------------------------------------------------------
 */
 Route::post('/register', [AuthController::class, 'register']);
@@ -23,6 +27,13 @@ Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::post('/refresh', [AuthController::class, 'refresh']);
 
+// PUBLIC RENTAL ROUTES
+Route::get('/rental/barang', [RentalController::class, 'getAvailableBarang']);
+Route::get('/rental/barang/{id}', [RentalController::class, 'getBarangById']);
+Route::get('/toko/pengguna/{id}', [TokoController::class, 'getPengguna']);
+Route::get('/toko/barang/{ownerId}', [TokoController::class, 'getBarangByOwner']);
+Route::post('/payment/midtrans/notification', [TransaksiController::class, 'handleNotification']);
+
 /*
 |--------------------------------------------------------------------------
 | PROTECTED (LOGIN REQUIRED)
@@ -30,7 +41,6 @@ Route::post('/refresh', [AuthController::class, 'refresh']);
 */
 Route::middleware(['jwt.auth'])->group(function () {
 
-    // 🔐 Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
@@ -40,29 +50,66 @@ Route::middleware(['jwt.auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('customer')->group(function () {
-        // 🔥 upload KTP
+
         Route::post('/verifikasi', [CustomerVerifikasi::class, 'store']);
+
+        // RENTAL ROUTES
+        Route::prefix('rental')->group(function () {
+            Route::get('/my-barang', [RentalController::class, 'myBarang']);
+            Route::post('/barang', [RentalController::class, 'addBarang']);
+            Route::put('/barang/{id}', [RentalController::class, 'editBarang']);
+            Route::delete('/barang/{id}', [RentalController::class, 'deleteBarang']);
+            Route::get('/cart', [RentalController::class, 'getCart']);
+            Route::post('/cart', [RentalController::class, 'addToCart']);
+            Route::put('/cart/{id}', [RentalController::class, 'updateCart']);
+            Route::delete('/cart/{id}', [RentalController::class, 'removeFromCart']);
+            Route::post('/checkout', [RentalController::class, 'checkout']);
+            Route::get('/transactions', [RentalController::class, 'myTransactions']);
+        });
+
+        // 🔥 TRANSACTION ROUTES (Checkout dengan Midtrans)
+        Route::prefix('transaksi')->group(function () {
+            Route::post('/checkout', [TransaksiController::class, 'checkout']);
+            Route::get('/sebagai-penyewa', [TransaksiController::class, 'getTransaksiSebagaiPenyewa']);
+            Route::get('/sebagai-pemilik', [TransaksiController::class, 'getTransaksiSebagaiPemilik']);
+            Route::put('/{id}/status', [TransaksiController::class, 'updateStatus']);
+        });
+
+        // CHAT ROUTES
+        Route::prefix('chat')->group(function () {
+            Route::get('/conversations', [ChatController::class, 'getConversations']);
+            Route::get('/customers', [ChatController::class, 'getAvailableCustomers']);
+            Route::post('/conversation/{userId}', [ChatController::class, 'getOrCreateConversation']);
+            Route::get('/messages/{conversationId}', [ChatController::class, 'getMessages']);
+            Route::post('/message', [ChatController::class, 'sendMessage']);
+        });
     });
 
     /*
     |--------------------------------------------------------------------------
     | ADMIN ONLY
     |--------------------------------------------------------------------------
-    |*/
+    */
     Route::middleware([RoleMiddleware::class.':admin'])->prefix('admin')->group(function () {
 
         Route::get('/dashboard', [AdminController::class, 'dashboard']);
-        
-        // 🔥 CRUD Users
         Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword']);
         Route::apiResource('/users', AdminController::class);
-
-        // 🔥 verifikasi KTP
         Route::get('/verifikasi', [VerifikasiController::class, 'index']);
         Route::get('/verifikasi/{id}', [VerifikasiController::class, 'show']);
         Route::post('/verifikasi/{id}/approve', [VerifikasiController::class, 'approve']);
         Route::post('/verifikasi/{id}/reject', [VerifikasiController::class, 'reject']);
-    });
+
+        Route::get('/verifikasi-barang/pending', [\App\Http\Controllers\Api\Admin\VerifikasiBarangController::class, 'getPendingBarang']);
+        Route::get('/verifikasi-barang', [\App\Http\Controllers\Api\Admin\VerifikasiBarangController::class, 'getAllBarang']);
+        Route::post('/verifikasi-barang/approve/{id}', [\App\Http\Controllers\Api\Admin\VerifikasiBarangController::class, 'approveBarang']);
+        Route::post('/verifikasi-barang/reject/{id}', [\App\Http\Controllers\Api\Admin\VerifikasiBarangController::class, 'rejectBarang']);
+
+        Route::get('/revenue', [AdminController::class, 'getRevenueStats']);
+        Route::get('/transactions', [AdminController::class, 'getAllTransactions']);
+        Route::get('/owner-earnings', [AdminController::class, 'getOwnerEarnings']);
+
+        });
 
     /*
     |--------------------------------------------------------------------------
@@ -78,5 +125,4 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::post('/rental', [ProfileController::class, 'openRental']);
         Route::delete('/', [ProfileController::class, 'destroy']);
     });
-
 });

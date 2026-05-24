@@ -1,0 +1,371 @@
+<?php
+
+namespace App\Http\Controllers\Api\Customer;
+
+use App\Http\Controllers\Controller;
+use App\Models\Barang;
+use App\Models\Cart;
+use App\Models\Transaksi;
+use App\Models\DetailTransaksi;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class RentalController extends Controller
+{
+    // ==================== PUBLIC METHODS (tanpa auth) ====================
+
+    // Get all available barang from DATABASE (untuk public)
+    public function getAvailableBarang()
+    {
+        $barang = Barang::with('pemilik')
+            ->where('status_barang', 'tersedia')
+            ->where('status_approval', 'disetujui')
+            ->where('jumlah_stok', '>', 0)
+            ->orderBy('id_barang', 'desc')
+            ->get();
+
+        return response()->json($barang);
+    }
+
+    // Get detail barang by ID (untuk public)
+    public function getBarangById($id)
+    {
+        $barang = Barang::with('pemilik')
+            ->where('id_barang', $id)
+            ->first();
+
+        if (!$barang) {
+            return response()->json(['error' => 'Barang tidak ditemukan'], 404);
+        }
+
+        return response()->json($barang);
+    }
+
+    // ==================== CUSTOMER METHODS (dengan auth) ====================
+
+    // Get barang milik sendiri
+    public function myBarang()
+    {
+        $barang = Barang::where('id_pemilik', Auth::id())
+            ->with('kategori')
+            ->orderBy('id_barang', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $barang
+        ]);
+    }
+
+    // Tambah barang untuk disewakan
+    public function addBarang(Request $request)
+    {
+        $request->validate([
+            'nama_barang' => 'required|string|max:100',
+            'deskripsi' => 'nullable|string',
+            'harga_sewa' => 'required|numeric|min:1000',
+            'jumlah_stok' => 'required|integer|min:1',
+            'id_kategori' => 'required|exists:kategori,id_kategori',
+        ]);
+
+        $barang = Barang::create([
+            'id_pemilik' => Auth::id(),
+            'id_kategori' => $request->id_kategori,
+            'nama_barang' => $request->nama_barang,
+            'deskripsi' => $request->deskripsi,
+            'harga_sewa' => $request->harga_sewa,
+            'jumlah_stok' => $request->jumlah_stok,
+            'status_barang' => 'tersedia',
+            'status_approval' => 'pending',
+            'butuh_verifikasi' => true
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Barang berhasil ditambahkan, menunggu verifikasi admin',
+            'data' => $barang
+        ], 201);
+    }
+
+    // Edit barang
+    public function editBarang(Request $request, $id)
+    {
+        $barang = Barang::where('id_barang', $id)
+            ->where('id_pemilik', Auth::id())
+            ->whereIn('status_approval', ['pending', 'ditolak'])
+            ->first();
+
+        if (!$barang) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barang tidak ditemukan atau sudah diverifikasi'
+            ], 404);
+        }
+
+        $request->validate([
+            'nama_barang' => 'sometimes|string|max:100',
+            'deskripsi' => 'nullable|string',
+            'harga_sewa' => 'sometimes|numeric|min:1000',
+            'jumlah_stok' => 'sometimes|integer|min:1',
+        ]);
+
+        $barang->update($request->only([
+            'nama_barang', 'deskripsi', 'harga_sewa', 'jumlah_stok'
+        ]));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Barang berhasil diupdate',
+            'data' => $barang
+        ]);
+    }
+
+    // Hapus barang
+    public function deleteBarang($id)
+    {
+        $barang = Barang::where('id_barang', $id)
+            ->where('id_pemilik', Auth::id())
+            ->first();
+
+        if (!$barang) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barang tidak ditemukan'
+            ], 404);
+        }
+
+        $barang->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Barang berhasil dihapus'
+        ]);
+    }
+
+    // ==================== CART METHODS ====================
+
+    // Get cart
+    public function getCart()
+    {
+        $cart = Cart::where('id_penyewa', Auth::id())
+            ->where('status', 'pending')
+            ->with('barang.pemilik')
+            ->get();
+
+        $total = $cart->sum('total_harga');
+
+        return response()->json([
+            'success' => true,
+            'data' => $cart,
+            'total' => $total
+        ]);
+    }
+
+    // Add to cart
+    public function addToCart(Request $request)
+    {
+        $request->validate([
+            'id_barang' => 'required|exists:barang,id_barang',
+            'jumlah' => 'required|integer|min:1',
+            'tanggal_mulai' => 'required|date|after_or_equal:today',
+            'tanggal_selesai' => 'required|date|after:tanggal_mulai'
+        ]);
+
+        $barang = Barang::findOrFail($request->id_barang);
+
+        // Cek approval dan stok
+        if ($barang->status_approval !== 'disetujui') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barang belum diverifikasi admin'
+            ], 400);
+        }
+
+        if ($barang->status_barang !== 'tersedia' || $barang->jumlah_stok < $request->jumlah) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Stok tidak mencukupi'
+            ], 400);
+        }
+
+        // Cek apakah sudah di cart
+        $existingCart = Cart::where('id_penyewa', Auth::id())
+            ->where('id_barang', $request->id_barang)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingCart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barang sudah ada di keranjang'
+            ], 400);
+        }
+
+        // Hitung total
+        $start = \Carbon\Carbon::parse($request->tanggal_mulai);
+        $end = \Carbon\Carbon::parse($request->tanggal_selesai);
+        $totalHari = $start->diffInDays($end) + 1;
+        $totalHarga = $barang->harga_sewa * $totalHari * $request->jumlah;
+
+        $cart = Cart::create([
+            'id_penyewa' => Auth::id(),
+            'id_barang' => $request->id_barang,
+            'jumlah' => $request->jumlah,
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_selesai' => $request->tanggal_selesai,
+            'total_hari' => $totalHari,
+            'total_harga' => $totalHarga,
+            'status' => 'pending'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Barang ditambahkan ke keranjang',
+            'data' => $cart->load('barang')
+        ], 201);
+    }
+
+    // Update cart
+    public function updateCart(Request $request, $id)
+    {
+        $cart = Cart::where('id_cart', $id)
+            ->where('id_penyewa', Auth::id())
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$cart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item tidak ditemukan'
+            ], 404);
+        }
+
+        $request->validate([
+            'jumlah' => 'sometimes|integer|min:1',
+            'tanggal_mulai' => 'sometimes|date',
+            'tanggal_selesai' => 'sometimes|date'
+        ]);
+
+        if ($request->has('jumlah')) {
+            $cart->jumlah = $request->jumlah;
+        }
+        if ($request->has('tanggal_mulai')) {
+            $cart->tanggal_mulai = $request->tanggal_mulai;
+        }
+        if ($request->has('tanggal_selesai')) {
+            $cart->tanggal_selesai = $request->tanggal_selesai;
+        }
+
+        // Recalculate
+        $start = \Carbon\Carbon::parse($cart->tanggal_mulai);
+        $end = \Carbon\Carbon::parse($cart->tanggal_selesai);
+        $totalHari = $start->diffInDays($end) + 1;
+        $cart->total_hari = $totalHari;
+        $cart->total_harga = $cart->barang->harga_sewa * $totalHari * $cart->jumlah;
+
+        $cart->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Keranjang diupdate',
+            'data' => $cart->load('barang')
+        ]);
+    }
+
+    // Remove from cart
+    public function removeFromCart($id)
+    {
+        $cart = Cart::where('id_cart', $id)
+            ->where('id_penyewa', Auth::id())
+            ->first();
+
+        if (!$cart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item tidak ditemukan'
+            ], 404);
+        }
+
+        $cart->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item dihapus dari keranjang'
+        ]);
+    }
+
+    // Checkout
+    public function checkout()
+    {
+        $carts = Cart::where('id_penyewa', Auth::id())
+            ->where('status', 'pending')
+            ->with('barang')
+            ->get();
+
+        if ($carts->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Keranjang kosong'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $totalBiaya = $carts->sum('total_harga');
+            $nominalDeposit = $totalBiaya * 0.5;
+            $firstCart = $carts->first();
+
+            $transaksi = Transaksi::create([
+                'id_penyewa' => Auth::id(),
+                'tanggal_mulai' => $firstCart->tanggal_mulai,
+                'tanggal_selesai' => $firstCart->tanggal_selesai,
+                'total_biaya' => $totalBiaya,
+                'nominal_deposit' => $nominalDeposit,
+                'status_sewa' => 'menunggu_pembayaran'
+            ]);
+
+            foreach ($carts as $cart) {
+                DetailTransaksi::create([
+                    'id_transaksi' => $transaksi->id_transaksi,
+                    'id_barang' => $cart->id_barang,
+                    'jumlah_pinjam' => $cart->jumlah,
+                    'subtotal' => $cart->total_harga
+                ]);
+
+                $cart->barang->decrement('jumlah_stok', $cart->jumlah);
+                $cart->update(['status' => 'checkout']);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Checkout berhasil!',
+                'data' => ['id_transaksi' => $transaksi->id_transaksi]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // My transactions
+    public function myTransactions()
+    {
+        $transaksi = Transaksi::where('id_penyewa', Auth::id())
+            ->with(['detailTransaksi.barang', 'pembayaran'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $transaksi
+        ]);
+    }
+}

@@ -37,5 +37,18 @@ class PenggunaSeeder extends Seeder
                 'peran_pengguna' => 'customer',
             ]
         );
+
+          Pengguna::updateOrCreate(
+            ['email' => 'perental@test.com'],
+            [
+                'nama' => 'Budi Perental',
+                'email' => 'perental@test.com',
+                'alamat' => 'Jl. Perental No. 1',
+                'kota' => 'Jakarta',
+                'password' => Hash::make('password'),
+                'no_telp' => '081234567891',
+                'peran_pengguna' => 'customer',
+            ]
+        );
     }
 }

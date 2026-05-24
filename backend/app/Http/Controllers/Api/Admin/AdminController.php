@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -262,6 +263,67 @@ class AdminController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Revenue Statistics (Pembagian Hasil)
+     */
+    public function getRevenueStats()
+    {
+        try {
+            $totalRevenue = Transaksi::where('status_pembayaran', 'sukses')->sum('total_biaya');
+            $totalFeeAdmin = Transaksi::where('status_pembayaran', 'sukses')->sum('fee_admin');
+            $totalPendapatanPemilik = Transaksi::where('status_pembayaran', 'sukses')->sum('pendapatan_pemilik');
+            $totalTransaksi = Transaksi::where('status_pembayaran', 'sukses')->count();
+
+            // Pendapatan per pemilik (perental)
+            $ownerEarnings = Pengguna::where('peran_pengguna', 'customer')
+                ->get()
+                ->map(function($owner) {
+                    $totalPendapatan = Transaksi::where('id_pemilik', $owner->id_pengguna)
+                        ->where('status_pembayaran', 'sukses')
+                        ->sum('pendapatan_pemilik');
+
+                    $totalTransaksi = Transaksi::where('id_pemilik', $owner->id_pengguna)
+                        ->where('status_pembayaran', 'sukses')
+                        ->count();
+
+                    return [
+                        'id_pengguna' => $owner->id_pengguna,
+                        'nama' => $owner->nama,
+                        'email' => $owner->email,
+                        'total_pendapatan' => (float) $totalPendapatan,
+                        'total_transaksi' => $totalTransaksi,
+                    ];
+                })
+                ->filter(function($owner) {
+                    return $owner['total_transaksi'] > 0;
+                })
+                ->values();
+
+            $transactions = Transaksi::with(['penyewa', 'pemilik', 'barang'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'stats' => [
+                        'total_revenue' => (float) $totalRevenue,
+                        'total_fee_admin' => (float) $totalFeeAdmin,
+                        'total_pendapatan_pemilik' => (float) $totalPendapatanPemilik,
+                        'total_transaksi' => $totalTransaksi,
+                    ],
+                    'owner_earnings' => $ownerEarnings,
+                    'transactions' => $transactions,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
             ], 500);
         }
     }

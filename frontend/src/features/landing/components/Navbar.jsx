@@ -17,7 +17,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { t } = useLanguage()
-  const { user, isAuthenticated, isLoading, logout, role } = useAuth()
+  const { user, isAuthenticated, isLoading, logout,} = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -58,7 +58,7 @@ export default function Navbar() {
 
   const handleCartClick = () => {
     if (isAuthenticated) {
-      navigate('/cart')
+      navigate('/customer/cart')
     } else {
       navigate('/login')
     }
@@ -111,12 +111,17 @@ export default function Navbar() {
           ))}
         </ul>
 
+        {/* Desktop Icons - Search, Cart, Chat */}
         <div className="flex gap-2 items-center max-md:hidden">
           <LanguageToggle variant="navbar" />
           <ThemeToggle variant="navbar" />
-          <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Search">
+          <button 
+            className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" 
+            aria-label="Search"
+          >
             <img src={searchIcon} alt="Search" className="w-5 h-5" />
           </button>
+          
           <button 
             className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" 
             aria-label="Cart"
@@ -125,12 +130,21 @@ export default function Navbar() {
             <img src={cartIcon} alt="Cart" className="w-5 h-5" />
           </button>
 
+          {/* Tombol CHAT */}
+          <Link
+             to="/customer/chat" 
+            className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10"
+          >
+            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </Link>
+
           {/* Auth section */}
           {isLoading ? (
             <div className="h-8 w-24 rounded-full bg-white/10 animate-pulse" />
           ) : isAuthenticated ? (
             <div className="relative user-menu ml-2">
-              {/* Profile trigger — click to open dropdown */}
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer transition-opacity duration-300 hover:opacity-80 p-0"
@@ -144,7 +158,6 @@ export default function Navbar() {
                 </svg>
               </button>
 
-              {/* Dropdown */}
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
@@ -154,14 +167,24 @@ export default function Navbar() {
                     transition={{ duration: 0.15 }}
                     className="absolute right-0 mt-3 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[1100]"
                   >
-                    {/* User info header */}
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user?.nama}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                     </div>
 
                     <div className="py-1">
-                      {/* Lihat Profile */}
+                      {/* Chat di dropdown */}
+                      <Link
+                        to="/chat"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors no-underline"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <svg className="size-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        Chat
+                      </Link>
+
                       <Link
                         to="/profile"
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors no-underline"
@@ -171,7 +194,6 @@ export default function Navbar() {
                         {t('nav.viewProfile')}
                       </Link>
 
-                      {/* Logout */}
                       <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors bg-transparent border-none cursor-pointer"
@@ -242,10 +264,20 @@ export default function Navbar() {
                 <img src={cartIcon} alt="Cart" className="w-5 h-5" />
               </button>
 
+              {/* Chat di Mobile */}
+              <Link
+                to="/chat"
+                className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10"
+                onClick={() => setMobileOpen(false)}
+              >
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </Link>
+
               {/* Mobile Auth Section */}
               {isAuthenticated ? (
                 <>
-                  {/* User profile link — mobile */}
                   <Link
                     to="/profile"
                     className="flex items-center gap-3 w-full mt-2 p-3 bg-white/10 rounded-lg no-underline transition-colors hover:bg-white/15"
@@ -260,7 +292,17 @@ export default function Navbar() {
                     </div>
                   </Link>
 
-                  {/* Lihat Profile - mobile */}
+                  <Link
+                    to="/chat"
+                    className="flex items-center gap-2 bg-white/10 text-white py-2.5 px-4 rounded-full text-sm font-semibold w-full hover:bg-white/20 no-underline"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    Chat
+                  </Link>
+
                   <Link
                     to="/profile"
                     className="flex items-center gap-2 bg-white/10 text-white py-2.5 px-4 rounded-full text-sm font-semibold w-full hover:bg-white/20 no-underline"
@@ -270,7 +312,6 @@ export default function Navbar() {
                     {t('nav.viewProfile')}
                   </Link>
 
-                  {/* Logout - mobile */}
                   <button
                     onClick={handleLogout}
                     className="flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 px-6 rounded-full text-sm font-semibold w-full hover:bg-red-700"

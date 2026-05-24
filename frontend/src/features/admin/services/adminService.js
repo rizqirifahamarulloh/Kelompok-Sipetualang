@@ -54,5 +54,20 @@ export const adminService = {
   async rejectVerification(id, catatan) {
     const response = await api.post(`/admin/verifikasi/${id}/reject`, { catatan_admin: catatan })
     return response
+  },
+  
+  async getRevenueStats() {
+    const response = await api.get('/admin/revenue')
+    return response.data
+  },
+  
+  async getAllTransactions() {
+    const response = await api.get('/admin/transactions')
+    return response.data
+  },
+  
+  async getOwnerEarnings() {
+    const response = await api.get('/admin/owner-earnings')
+    return response.data
   }
 }

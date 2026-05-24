@@ -95,4 +95,8 @@ class Pengguna extends Authenticatable implements JWTSubject
     {
         return $this->peran_pengguna === 'admin';
     }
+    public function barang()
+{
+    return $this->hasMany(Barang::class, 'id_pemilik', 'id_pengguna');
+}
 }

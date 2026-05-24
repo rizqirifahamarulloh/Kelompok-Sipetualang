@@ -51,7 +51,7 @@ function useMenuItems() {
     { label: t('admin.gears'), icon: Package, href: '/admin/gears' },
     { label: t('admin.categories'), icon: FolderOpen, href: '/admin/categories' },
     { label: t('admin.destinations'), icon: MapPin, href: '/admin/destinations' },
-    { label: t('admin.transactions'), icon: ShoppingCart, href: '/admin/transactions' },
+    { label: t('admin.transactions'), icon: ShoppingCart, href: '/admin/revenue' },
     { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments' },
     { label: t('admin.ktpVerification'), icon: Shield, href: '/admin/ktp-verifikasi' },
   ]
