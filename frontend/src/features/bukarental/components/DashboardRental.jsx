@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import Navbar from '@/features/customer/components/Navbar'
 import Sidebar from '@/features/customer/components/Sidebar'
+import { BASE_URL } from '@/services/api'
 
 export default function DashboardRental() {
   const { user } = useAuth()
@@ -17,7 +18,7 @@ export default function DashboardRental() {
   const getPhotoUrl = () => {
     if (!user?.profile_photo) return null
     if (user.profile_photo.startsWith('http')) return user.profile_photo
-    return `http://localhost:8000/storage/${user.profile_photo}`
+    return `${BASE_URL}/storage/${user.profile_photo}`
   }
 
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U'

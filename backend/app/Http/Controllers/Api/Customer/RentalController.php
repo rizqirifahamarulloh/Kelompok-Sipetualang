@@ -298,6 +298,14 @@ class RentalController extends Controller
     // Checkout
     public function checkout()
     {
+        $user = Auth::user();
+        if (!$user || !$user->is_verified) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda harus melakukan verifikasi KTP dan disetujui oleh admin terlebih dahulu untuk menyewa barang.'
+            ], 403);
+        }
+
         $carts = Cart::where('id_penyewa', Auth::id())
             ->where('status', 'pending')
             ->with('barang')

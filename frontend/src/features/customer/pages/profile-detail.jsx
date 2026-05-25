@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Edit, Key, Trash2, User } from 'lucide-react';
+import { BASE_URL } from '@/services/api';
 
 export default function ProfileDetail() {
   const { user } = useAuth();
@@ -14,7 +15,7 @@ export default function ProfileDetail() {
   const getPhotoUrl = () => {
     if (!user?.profile_photo) return null;
     if (user.profile_photo.startsWith('http')) return user.profile_photo;
-    return `http://localhost:8000/storage/${user.profile_photo}`;
+    return `${BASE_URL}/storage/${user.profile_photo}`;
   };
 
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';

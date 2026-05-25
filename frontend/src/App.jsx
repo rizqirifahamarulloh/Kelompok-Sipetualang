@@ -26,6 +26,10 @@ import Users from '@/features/admin/pages/Users'
 import UserDetail from '@/features/admin/pages/UserDetail'
 import Revenue from '@/features/admin/pages/Revenue'
 import KtpVerification from '@/features/admin/pages/ktp-verifikasi'
+import Categories from '@/features/admin/pages/Categories'
+import Destinations from '@/features/admin/pages/Destinations'
+import Gears from '@/features/admin/pages/Gears'
+import Payment from '@/features/admin/pages/Payment'
 
 // Customer Profile - perbaiki pathnya
 import Profile from '@/profile/pages/Profile'
@@ -87,10 +91,10 @@ function App() {
                     <Route path="/admin/dashboard" element={<Dashboard />} />
                     <Route path="/admin/users" element={<Users />} />
                     <Route path="/admin/users/:id" element={<UserDetail />} />
-                    <Route path="/admin/gears" element={<div>Gears Page</div>} />
-                    <Route path="/admin/categories" element={<div>Categories Page</div>} />
-                    <Route path="/admin/destinations" element={<div>Destinations Page</div>} />
-                    <Route path="/admin/payments" element={<div>Payments Page</div>} />
+                    <Route path="/admin/gears" element={<Gears />} />
+                    <Route path="/admin/categories" element={<Categories />} />
+                    <Route path="/admin/destinations" element={<Destinations />} />
+                    <Route path="/admin/payments" element={<Payment />} />
                     <Route path="/admin/ktp-verifikasi" element={<KtpVerification />} />
                     <Route path="/admin/revenue" element={<Revenue />} />
                     <Route path="/admin/transactions" element={<Revenue />} />
@@ -105,6 +109,11 @@ function App() {
                   <Route path="/customer/transactions" element={<TransactionsPage />} />
                   <Route path="/customer/verification" element={<VerifikasiCustomer />} />
                   <Route path="/rental-dashboard" element={<DashboardRental />} />
+                  
+                  {/* Fallback routes untuk keselarasan link template */}
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/profile/rentals" element={<TransactionsPage />} />
                 </Route>
 
                 {/* Unauthorized fallback */}

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL, BASE_URL } from '@/services/api';
 
 export default function TransactionsPage() {
   const { user } = useAuth();
@@ -29,7 +30,6 @@ export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState('penyewa');
   const [processingId, setProcessingId] = useState(null);
 
-  const API_URL = 'http://127.0.0.1:8000/api';
   const token = localStorage.getItem('token');
 
   // ✅ FETCH TRANSACTIONS - LANGSUNG DI DALAM useEffect
@@ -126,7 +126,7 @@ export default function TransactionsPage() {
   const getPhotoUrl = () => {
     if (!user?.profile_photo) return null;
     if (user.profile_photo.startsWith('http')) return user.profile_photo;
-    return `http://localhost:8000/storage/${user.profile_photo}`;
+    return `${BASE_URL}/storage/${user.profile_photo}`;
   };
 
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';

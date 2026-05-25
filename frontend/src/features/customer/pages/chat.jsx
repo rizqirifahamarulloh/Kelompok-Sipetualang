@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/features/landing/components/Navbar';
 import Footer from '@/features/landing/components/Footer';
+import { API_URL } from '@/services/api';
 import {
   Send,
   MessageCircle,
@@ -34,7 +35,7 @@ export default function ChatPage() {
   const initializedRef = useRef(false);
 
   const token = localStorage.getItem('token');
-  const API_URL = 'http://127.0.0.1:8000/api';
+
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {

@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Calendar, Search, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL, BASE_URL } from '@/services/api';
+
 
 import Navbar from '@/features/landing/components/Navbar';
 import Footer from '@/features/landing/components/Footer';
@@ -142,8 +144,6 @@ export default function SewaAlat() {
   const [durasi, setDurasi] = useState(1);
   const [recommendedGears, setRecommendedGears] = useState([]);
 
-  const API_URL = 'http://127.0.0.1:8000/api';
-
   // Filter destinasi berdasarkan pencarian
   const filteredDestinations = useMemo(() => {
     if (!destinasiSearch) return [];
@@ -268,7 +268,7 @@ export default function SewaAlat() {
   const getImageUrl = (barang) => {
     if (barang.foto_barang) {
       if (barang.foto_barang.startsWith('http')) return barang.foto_barang;
-      return `${API_URL}/storage/${barang.foto_barang}`;
+      return `${BASE_URL}/storage/${barang.foto_barang}`;
     }
     return 'https://via.placeholder.com/400x300';
   };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from '@/contexts/AuthContext';
 import { customerService } from '../services/customerService';
-import api from '@/services/api';
+import api, { BASE_URL } from '@/services/api';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,7 +40,7 @@ export default function Verifikasi() {
   const getPhotoUrl = () => {
     if (!user?.profile_photo) return null;
     if (user.profile_photo.startsWith('http')) return user.profile_photo;
-    return `http://localhost:8000/storage/${user.profile_photo}`;
+    return `${BASE_URL}/storage/${user.profile_photo}`;
   };
 
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';

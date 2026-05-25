@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
 use App\Models\Transaksi;
+use App\Models\Barang;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -25,20 +26,72 @@ class AdminController extends Controller
                 ], 403);
             }
 
+            // Hitung statistik utama
+            $totalUsers = Pengguna::count();
+            $totalGears = Barang::count();
+            $totalTransactions = Transaksi::where('status_pembayaran', 'sukses')->count();
+            $totalRevenue = Transaksi::where('status_pembayaran', 'sukses')->sum('total_biaya');
+
             $stats = [
-                'total_users' => Pengguna::count(),
-                'total_customers' => Pengguna::where('peran_pengguna', 'customer')->count(),
+                'total_users' => $totalUsers,
+                'total_gears' => $totalGears,
+                'total_transactions' => $totalTransactions,
+                'total_revenue' => (float) $totalRevenue,
             ];
+
+            // Mapping status dari DB ke frontend
+            $statusMap = [
+                'menunggu_pembayaran' => 'pending_payment',
+                'dibayar' => 'paid',
+                'sedang_disewa' => 'rented',
+                'selesai' => 'completed',
+                'dibatalkan' => 'cancelled',
+            ];
+
+            // Ambil 5 transaksi terbaru
+            $recentTransactions = Transaksi::with(['penyewa'])
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function($trx) use ($statusMap) {
+                    return [
+                        'id' => $trx->id_transaksi,
+                        'transaction_code' => $trx->midtrans_order_id ?? ('TRX-' . $trx->id_transaksi),
+                        'customer' => [
+                            'name' => $trx->penyewa ? $trx->penyewa->nama : 'Customer'
+                        ],
+                        'destination' => [
+                            'name' => $trx->nama_barang
+                        ],
+                        'total_cost' => (float) $trx->total_biaya,
+                        'status' => $statusMap[$trx->status_sewa] ?? 'pending_payment'
+                    ];
+                });
+
+            // Ambil 5 barang dengan stok menipis (<= 1)
+            $lowStockGears = Barang::with('kategori')
+                ->where('jumlah_stok', '<=', 1)
+                ->limit(5)
+                ->get()
+                ->map(function($gear) {
+                    return [
+                        'id' => $gear->id_barang,
+                        'name' => $gear->nama_barang,
+                        'category' => [
+                            'name' => $gear->kategori ? $gear->kategori->nama_kategori : 'Kategori'
+                        ],
+                        'stock' => $gear->jumlah_stok
+                    ];
+                });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Dashboard admin',
-                'admin' => [
-                    'id_pengguna' => $admin->id_pengguna,
-                    'nama' => $admin->nama,
-                    'email' => $admin->email,
-                ],
-                'stats' => $stats
+                'data' => [
+                    'stats' => $stats,
+                    'recent_transactions' => $recentTransactions,
+                    'low_stock_alerts' => $lowStockGears
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -327,4 +380,69 @@ class AdminController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get All Transactions
+     */
+    public function getAllTransactions()
+    {
+        try {
+            $transactions = Transaksi::with(['penyewa', 'pemilik', 'barang'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $transactions
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Owner Earnings
+     */
+    public function getOwnerEarnings()
+    {
+        try {
+            $ownerEarnings = Pengguna::where('peran_pengguna', 'customer')
+                ->get()
+                ->map(function($owner) {
+                    $totalPendapatan = Transaksi::where('id_pemilik', $owner->id_pengguna)
+                        ->where('status_pembayaran', 'sukses')
+                        ->sum('pendapatan_pemilik');
+
+                    $totalTransaksi = Transaksi::where('id_pemilik', $owner->id_pengguna)
+                        ->where('status_pembayaran', 'sukses')
+                        ->count();
+
+                    return [
+                        'id_pengguna' => $owner->id_pengguna,
+                        'nama' => $owner->nama,
+                        'email' => $owner->email,
+                        'total_pendapatan' => (float) $totalPendapatan,
+                        'total_transaksi' => $totalTransaksi,
+                    ];
+                })
+                ->filter(function($owner) {
+                    return $owner['total_transaksi'] > 0;
+                })
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => $ownerEarnings
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
+

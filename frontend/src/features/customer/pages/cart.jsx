@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cartService } from "../services/cartService";
 import Navbar from "@/features/landing/components/Navbar";
 import Footer from "@/features/landing/components/Footer";
+import KtpVerificationModal from "@/components/KtpVerificationModal";
 
 import {
   Loader2,
@@ -15,6 +16,7 @@ import {
   Minus,
   Plus,
   ArrowRight,
+  Truck,
 } from "lucide-react";
 
 const storeLocation = {
@@ -30,6 +32,9 @@ export default function CartPage() {
   const [selectedItems, setSelectedItems] = useState({});
   const [processing, setProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isKtpModalOpen, setIsKtpModalOpen] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState("pickup");
+  const [deliveryAddress, setDeliveryAddress] = useState(user?.alamat || "");
 
   // LOAD CART
   const loadCart = async () => {
@@ -165,6 +170,12 @@ export default function CartPage() {
       return;
     }
 
+    const isApproved = user?.is_verified === true || user?.is_verified === 1 || user?.is_verified === 'true' || user?.verification_status === 'disetujui';
+    if (!isApproved) {
+      setIsKtpModalOpen(true);
+      return;
+    }
+
     const selected = cart.filter(
       (item) => selectedItems[item.id_cart]
     );
@@ -180,6 +191,8 @@ export default function CartPage() {
       await cartService.checkoutMulti({
         cart_ids: selected.map((item) => item.id_cart),
         payment_method: "midtrans",
+        metode_pengiriman: deliveryMethod,
+        alamat_pengiriman: deliveryMethod === "delivery" ? deliveryAddress : null,
       });
 
       alert("Checkout berhasil!");
@@ -343,7 +356,10 @@ export default function CartPage() {
                     </div>
 
                     {/* IMAGE */}
-                    <div className="w-full lg:w-44 h-44 bg-[#f7f7f7] rounded-[28px] overflow-hidden flex items-center justify-center">
+                    <Link
+                      to={`/barang/${item.id_barang}`}
+                      className="w-full lg:w-44 h-44 bg-[#f7f7f7] rounded-[28px] overflow-hidden flex items-center justify-center hover:opacity-90 transition-opacity"
+                    >
                       <img
                         src={
                           item.gambar ||
@@ -352,15 +368,20 @@ export default function CartPage() {
                         alt={item.nama_barang}
                         className="w-full h-full object-cover"
                       />
-                    </div>
+                    </Link>
 
                     {/* DETAIL */}
                     <div className="flex-1">
                       <div className="flex justify-between gap-4">
                         <div>
-                          <h2 className="text-2xl font-black text-gray-900 mb-2">
-                            {item.nama_barang}
-                          </h2>
+                          <Link 
+                            to={`/barang/${item.id_barang}`} 
+                            className="hover:text-emerald-500 transition-colors no-underline block"
+                          >
+                            <h2 className="text-2xl font-black text-gray-900 mb-2 hover:text-[#00A779] transition-colors">
+                              {item.nama_barang}
+                            </h2>
+                          </Link>
 
                           <Link
                             to={`/toko/${item.id_pemilik}`}
@@ -558,6 +579,56 @@ export default function CartPage() {
                   </div>
                 </div>
 
+                {/* METODE PENGIRIMAN */}
+                <div className="mt-6 border-t pt-6">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+                    Metode Pengiriman
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('pickup')}
+                      className={`py-3 rounded-xl border flex items-center justify-center gap-2 font-medium text-sm transition-all ${
+                        deliveryMethod === 'pickup'
+                          ? 'bg-[#00A779] text-white border-[#00A779] shadow-md'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Store className="w-4 h-4" />
+                      Pickup
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('delivery')}
+                      className={`py-3 rounded-xl border flex items-center justify-center gap-2 font-medium text-sm transition-all ${
+                        deliveryMethod === 'delivery'
+                          ? 'bg-[#00A779] text-white border-[#00A779] shadow-md'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Truck className="w-4 h-4" />
+                      Delivery
+                    </button>
+                  </div>
+                </div>
+
+                {deliveryMethod === 'delivery' && (
+                  <div className="mt-4">
+                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">
+                      Alamat Pengiriman
+                    </label>
+                    <textarea
+                      rows="3"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Masukkan alamat pengiriman lengkap..."
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#00A779] dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                    />
+                  </div>
+                )}
+
                 {/* BUTTON */}
                 <button
                   onClick={handleCheckout}
@@ -583,6 +654,12 @@ export default function CartPage() {
       </main>
 
       <Footer />
+
+      <KtpVerificationModal 
+        isOpen={isKtpModalOpen}
+        onClose={() => setIsKtpModalOpen(false)}
+        status={user?.verification_status}
+      />
     </div>
   );
 }

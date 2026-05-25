@@ -22,7 +22,7 @@ const stepVariants = {
 }
 
 export default function BukaRental() {
-  const { user, setUser } = useAuth()
+  const { user, setUser, isAuthenticated } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const isVerified = user?.is_verified
   const verificationStatus = user?.verification_status
@@ -105,6 +105,13 @@ export default function BukaRental() {
   }
 
   const handleNext = async () => {
+    if (currentStep === 1) {
+      if (!isAuthenticated) {
+        toast.info('Silakan login terlebih dahulu untuk melanjutkan pendaftaran rental.')
+        navigate('/login', { state: { from: '/buka-rental' } })
+        return
+      }
+    }
     if (currentStep === 2) {
       if (isVerified) {
         // Skip verification step if already verified

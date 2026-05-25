@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Camera, Save } from 'lucide-react';
+import { BASE_URL } from '@/services/api';
 
 export default function EditProfile() {
     const { user, setUser } = useAuth();
@@ -26,7 +27,7 @@ export default function EditProfile() {
     const getPhotoUrl = () => {
         if (preview) return preview;
         if (!user?.profile_photo) return null;
-        return `http://localhost:8000/storage/${user.profile_photo}`;
+        return `${BASE_URL}/storage/${user.profile_photo}`;
     };
 
     // fallback avatar

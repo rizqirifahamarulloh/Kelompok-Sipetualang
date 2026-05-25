@@ -21,6 +21,14 @@ class TransaksiController extends Controller
 
     public function checkout(Request $request)
     {
+        $user = Auth::user();
+        if (!$user || !$user->is_verified) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda harus melakukan verifikasi KTP dan disetujui oleh admin terlebih dahulu untuk menyewa barang.'
+            ], 403);
+        }
+
         $request->validate([
             'id_barang' => 'required|exists:barang,id_barang',
             'jumlah' => 'required|integer|min:1',

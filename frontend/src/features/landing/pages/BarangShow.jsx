@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { chatService } from '@/features/customer/services/chatService';
+import KtpVerificationModal from '@/components/KtpVerificationModal';
+import { API_URL, BASE_URL } from '@/services/api';
 
 import Navbar from '@/features/landing/components/Navbar';
 import Footer from '@/features/landing/components/Footer';
@@ -40,8 +42,8 @@ export default function BarangShow() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const API_URL = 'http://127.0.0.1:8000/api';
   const token = localStorage.getItem('token');
+
 
   const today = useMemo(() => {
     return new Date().toISOString().split('T')[0];
@@ -73,6 +75,7 @@ export default function BarangShow() {
   );
 
   const [showMap, setShowMap] = useState(false);
+  const [isKtpModalOpen, setIsKtpModalOpen] = useState(false);
 
   const totalHari = useMemo(() => {
     if (!tanggalMulai || !tanggalSelesai) return 0;
@@ -199,6 +202,12 @@ export default function BarangShow() {
       return;
     }
 
+    const isApproved = user?.is_verified === true || user?.is_verified === 1 || user?.is_verified === 'true' || user?.verification_status === 'disetujui';
+    if (!isApproved) {
+      setIsKtpModalOpen(true);
+      return;
+    }
+
     if (!barang) return;
 
     try {
@@ -305,7 +314,7 @@ export default function BarangShow() {
         return barang.foto_barang;
       }
 
-      return `${API_URL}/storage/${barang.foto_barang}`;
+      return `${BASE_URL}/storage/${barang.foto_barang}`;
     }
 
     return 'https://via.placeholder.com/600x400';
@@ -637,6 +646,12 @@ export default function BarangShow() {
       </main>
 
       <Footer />
+
+      <KtpVerificationModal 
+        isOpen={isKtpModalOpen}
+        onClose={() => setIsKtpModalOpen(false)}
+        status={user?.verification_status}
+      />
     </div>
   );
 }

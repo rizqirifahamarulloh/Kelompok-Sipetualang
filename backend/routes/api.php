@@ -10,6 +10,10 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\Customer\RentalController;
 use App\Http\Controllers\Api\Customer\ChatController;
 use App\Http\Controllers\Api\Customer\TransaksiController;
+use App\Http\Controllers\Api\Admin\KategoriController;
+use App\Http\Controllers\Api\Admin\DestinasiController;
+use App\Http\Controllers\Api\Admin\BarangController as AdminBarangController;
+use App\Http\Controllers\Api\NotifikasiController;
 use App\Http\Middleware\RoleMiddleware;
 
 /*
@@ -43,6 +47,11 @@ Route::middleware(['jwt.auth'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+
+    // 🔔 Notifikasi (semua role)
+    Route::get('/notifikasi', [NotifikasiController::class, 'index']);
+    Route::patch('/notifikasi/{id}/read', [NotifikasiController::class, 'markRead']);
+    Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy']);
 
     /*
     |--------------------------------------------------------------------------
@@ -108,6 +117,14 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/revenue', [AdminController::class, 'getRevenueStats']);
         Route::get('/transactions', [AdminController::class, 'getAllTransactions']);
         Route::get('/owner-earnings', [AdminController::class, 'getOwnerEarnings']);
+
+        // 🔥 Kategori & Destinasi
+        Route::apiResource('/kategori', KategoriController::class);
+        Route::apiResource('/destinasi', DestinasiController::class);
+
+        // 🔥 Manajemen Alat (Gears)
+        Route::get('/barang/stats', [AdminBarangController::class, 'stats']);
+        Route::apiResource('/barang', AdminBarangController::class);
 
         });
 

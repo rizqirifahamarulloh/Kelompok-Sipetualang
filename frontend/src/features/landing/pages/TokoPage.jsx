@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { chatService } from '@/features/customer/services/chatService';
 import Navbar from '@/features/landing/components/Navbar';
 import Footer from '@/features/landing/components/Footer';
+import { API_URL, BASE_URL } from '@/services/api';
+
 
 import {
   Store,
@@ -31,8 +33,6 @@ export default function TokoPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilter, setShowFilter] = useState(false);
-
-  const API_URL = 'http://127.0.0.1:8000/api';
 
   // =========================
 // FETCH DATA
@@ -139,7 +139,7 @@ useEffect(() => {
 
     if (foto.startsWith('http')) return foto;
 
-    return `${API_URL}/storage/${foto}`;
+    return `${BASE_URL}/storage/${foto}`;
   };
 
   // =========================

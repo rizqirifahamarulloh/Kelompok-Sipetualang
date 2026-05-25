@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { BASE_URL } from '@/services/api'
 import { useLanguage } from '@/contexts/LanguageContext'
 import ThemeToggle from '@/components/ThemeToggle'
 import LanguageToggle from '@/components/LanguageToggle'
@@ -148,7 +149,7 @@ export default function AdminLayout() {
 
   // Logika Foto Profil
   const photoUrl = user?.profile_photo 
-    ? `http://localhost:8000/storage/${user.profile_photo}` 
+    ? `${BASE_URL}/storage/${user.profile_photo}` 
     : null
 
   // Logika Inisial

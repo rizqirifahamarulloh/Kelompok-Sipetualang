@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
@@ -12,21 +12,25 @@ import LanguageToggle from '@/components/LanguageToggle'
 import { toast } from 'sonner'
 import { Loader2, Mountain, ArrowLeft } from 'lucide-react'
 import googleIcon from '@/assets/beranda/google.svg'
+import { BASE_URL } from '@/services/api'
+
 
 export default function Login() {
   const { login, isAuthenticated, role } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     if (isAuthenticated) {
       if (role === 'admin') {
         navigate('/admin/dashboard')
       } else {
-        navigate('/')
+        const from = location.state?.from || '/'
+        navigate(from, { replace: true })
       }
     }
-  }, [isAuthenticated, role, navigate])
+  }, [isAuthenticated, role, navigate, location])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,7 +52,7 @@ export default function Login() {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:8000/api/auth/google'
+    window.location.href = `${BASE_URL}/api/auth/google`
   }
 
   return (

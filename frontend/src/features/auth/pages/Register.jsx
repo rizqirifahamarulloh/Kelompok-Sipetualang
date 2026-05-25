@@ -12,6 +12,8 @@ import LanguageToggle from '@/components/LanguageToggle'
 import { toast } from 'sonner'
 import { Loader2, Mountain, ArrowLeft } from 'lucide-react'
 import googleIcon from '@/assets/beranda/google.svg'
+import { BASE_URL } from '@/services/api'
+
 
 export default function Register() {
   const { register, isAuthenticated, role } = useAuth()
@@ -67,7 +69,7 @@ export default function Register() {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:8000/api/auth/google'
+    window.location.href = `${BASE_URL}/api/auth/google`
   }
 
   return (

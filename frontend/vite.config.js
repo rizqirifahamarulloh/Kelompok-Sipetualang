@@ -10,4 +10,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // Pindahkan ke luar resolve, sejajar di sini:
+  server: {
+    allowedHosts: [
+      'petualang.fakerryugan.my.id'
+    ]
+  }
 })

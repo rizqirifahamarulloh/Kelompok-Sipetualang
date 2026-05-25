@@ -10,7 +10,11 @@ class KategoriController extends Controller
 {
     public function index()
     {
-        $kategori = Kategori::all();
+        $kategori = Kategori::withCount('barang')->get();
+        $kategori->transform(function ($item) {
+            $item->jumlah_barang = $item->barang_count;
+            return $item;
+        });
         return response()->json([
             'status' => 'success',
             'data' => $kategori

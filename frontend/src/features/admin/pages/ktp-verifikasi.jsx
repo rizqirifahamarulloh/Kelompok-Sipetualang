@@ -3,6 +3,8 @@ import { adminService } from "../services/adminService";
 import { Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BASE_URL } from "@/services/api";
+
 
 export default function KtpVerification() {
   const [data, setData] = useState([]);
@@ -108,7 +110,7 @@ export default function KtpVerification() {
                   <div>
                     <p className="text-xs mb-1">KTP</p>
                     <img
-                      src={`http://localhost:8000/storage/${item.foto_ktp}`}
+                      src={`${BASE_URL}/storage/${item.foto_ktp}`}
                       className="rounded-lg border w-full h-40 object-cover"
                     />
                   </div>
@@ -116,7 +118,7 @@ export default function KtpVerification() {
                   <div>
                     <p className="text-xs mb-1">Selfie</p>
                     <img
-                      src={`http://localhost:8000/storage/${item.foto_selfie_ktp}`}
+                      src={`${BASE_URL}/storage/${item.foto_selfie_ktp}`}
                       className="rounded-lg border w-full h-40 object-cover"
                     />
                   </div>
