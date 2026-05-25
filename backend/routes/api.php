@@ -95,6 +95,14 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::get('/messages/{conversationId}', [ChatController::class, 'getMessages']);
             Route::post('/message', [ChatController::class, 'sendMessage']);
         });
+
+        // 🚚 Customer Shipping Routes
+        Route::prefix('pengiriman')->group(function () {
+            Route::get('/list', [\App\Http\Controllers\Api\PengirimanController::class, 'getTrackingList']);
+            Route::get('/{id_transaksi}/tracking', [\App\Http\Controllers\Api\PengirimanController::class, 'getTracking']);
+            Route::post('/{id}/terima', [\App\Http\Controllers\Api\PengirimanController::class, 'konfirmasiDiterima']);
+            Route::post('/{id}/kembalikan', [\App\Http\Controllers\Api\PengirimanController::class, 'customerKembalikanBarang']);
+        });
     });
 
     /*
@@ -129,6 +137,12 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/barang/stats', [AdminBarangController::class, 'stats']);
         Route::apiResource('/barang', AdminBarangController::class);
 
+        // 🚚 Shipping & Delivery Routes
+        Route::get('/pengiriman', [\App\Http\Controllers\Api\PengirimanController::class, 'getAllPengiriman']);
+        Route::post('/pengiriman/{id}/kirim', [\App\Http\Controllers\Api\PengirimanController::class, 'kirimBarang']);
+        Route::put('/pengiriman/{id}/lokasi', [\App\Http\Controllers\Api\PengirimanController::class, 'updateLokasi']);
+        Route::get('/pengiriman/disewa', [\App\Http\Controllers\Api\PengirimanController::class, 'adminGetBarangDisewa']);
+        Route::post('/pengiriman/{id}/konfirmasi-kembali', [\App\Http\Controllers\Api\PengirimanController::class, 'adminKonfirmasiKembali']);
         });
 
     /*

@@ -41,6 +41,8 @@ import {
   MapPin,
   FolderOpen,
   Shield,
+  Truck,
+  Layers,
 } from 'lucide-react'
 
 function useMenuItems() {
@@ -53,6 +55,8 @@ function useMenuItems() {
     { label: t('admin.categories'), icon: FolderOpen, href: '/admin/categories' },
     { label: t('admin.destinations'), icon: MapPin, href: '/admin/destinations' },
     { label: t('admin.transactions'), icon: ShoppingCart, href: '/admin/revenue' },
+    { label: 'Status Pengiriman', icon: Truck, href: '/admin/pengiriman' },
+    { label: 'Barang Disewakan', icon: Layers, href: '/admin/disewa' },
     { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments' },
     { label: t('admin.ktpVerification'), icon: Shield, href: '/admin/ktp-verifikasi' },
   ]

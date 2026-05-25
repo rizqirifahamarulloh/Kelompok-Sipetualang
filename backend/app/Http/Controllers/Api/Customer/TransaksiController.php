@@ -50,12 +50,17 @@ class TransaksiController extends Controller
             $end = \Carbon\Carbon::parse($request->tanggal_selesai);
             $totalHari = $start->diffInDays($end) + 1;
 
-            // Hitung total biaya
+            // Hitung total biaya sewa
             $totalSewa = $barang->harga_sewa * $totalHari * $request->jumlah;
             $biayaPengiriman = $request->biaya_pengiriman ?? 0;
-            $totalBiaya = $totalSewa + $biayaPengiriman;
 
-            // Hitung fee admin (20%) dan pendapatan pemilik (80%)
+            // Ambil nominal deposit dari barang (per unit, dikalikan jumlah)
+            $nominalDeposit = ($barang->nominal_deposit ?? 0) * $request->jumlah;
+
+            // Total biaya = sewa + pengiriman + deposit
+            $totalBiaya = $totalSewa + $biayaPengiriman + $nominalDeposit;
+
+            // Hitung fee admin (20%) dan pendapatan pemilik (80%) — hanya dari biaya sewa
             $feeAdmin = $totalSewa * 0.2;
             $pendapatanPemilik = $totalSewa - $feeAdmin;
 
@@ -74,6 +79,7 @@ class TransaksiController extends Controller
                 'tanggal_selesai' => $request->tanggal_selesai,
                 'total_hari' => $totalHari,
                 'total_biaya' => $totalBiaya,
+                'nominal_deposit' => $nominalDeposit,
                 'fee_admin' => $feeAdmin,
                 'pendapatan_pemilik' => $pendapatanPemilik,
                 'metode_pengiriman' => $request->metode_pengiriman,
@@ -99,6 +105,16 @@ class TransaksiController extends Controller
                     'name' => 'Biaya Layanan SiPetualang (20%)',
                 ],
             ];
+
+            // Tambahkan item deposit jika ada
+            if ($nominalDeposit > 0) {
+                $items[] = [
+                    'id' => 'DEPOSIT',
+                    'price' => (int) $nominalDeposit,
+                    'quantity' => 1,
+                    'name' => 'Deposit Keamanan (Refundable)',
+                ];
+            }
 
             if ($biayaPengiriman > 0) {
                 $items[] = [

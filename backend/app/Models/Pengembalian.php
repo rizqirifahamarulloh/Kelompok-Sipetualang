@@ -16,6 +16,7 @@ class Pengembalian extends Model
         'jumlah_kembali',
         'denda_per_hari',
         'total_denda',
+        'denda_kerusakan',
         'status_pengembalian',
         'kondisi_barang',
         'catatan'

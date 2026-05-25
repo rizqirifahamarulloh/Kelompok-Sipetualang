@@ -70,6 +70,7 @@ class DummyRentalSeeder extends Seeder
                 'id_kategori' => $kategori1->id_kategori,
                 'deskripsi' => 'Tenda dome anti air, cocok untuk camping',
                 'harga_sewa' => 75000,
+                'nominal_deposit' => 50000,
                 'jumlah_stok' => 5,
                 'status_barang' => 'tersedia',
                 'status_approval' => 'disetujui',
@@ -85,6 +86,7 @@ class DummyRentalSeeder extends Seeder
                 'id_kategori' => $kategori1->id_kategori,
                 'deskripsi' => 'Kompor camping portable + gas',
                 'harga_sewa' => 35000,
+                'nominal_deposit' => 20000,
                 'jumlah_stok' => 4,
                 'status_barang' => 'tersedia',
                 'status_approval' => 'disetujui',
@@ -100,6 +102,7 @@ class DummyRentalSeeder extends Seeder
                 'id_kategori' => $kategori1->id_kategori,
                 'deskripsi' => 'Sleeping bag tahan dingin',
                 'harga_sewa' => 30000,
+                'nominal_deposit' => 15000,
                 'jumlah_stok' => 6,
                 'status_barang' => 'tersedia',
                 'status_approval' => 'disetujui',
@@ -226,6 +229,35 @@ class DummyRentalSeeder extends Seeder
             'status_pengembalian' => 'terlambat',
             'kondisi_barang' => 'baik',
             'catatan' => 'Terlambat mengembalikan selama 5 hari karena cuaca buruk di gunung.'
+        ]);
+
+        // Transaksi 5: Penyewa rental Tenda Dome via DELIVERY (Untuk Uji Coba Pengiriman)
+        $transaksi5 = Transaksi::create([
+            'id_penyewa' => $penyewa->id_pengguna,
+            'id_pemilik' => $perental->id_pengguna,
+            'id_barang' => $barang1->id_barang,
+            'nama_barang' => $barang1->nama_barang,
+            'jumlah' => 1,
+            'harga_per_hari' => $barang1->harga_sewa,
+            'tanggal_mulai' => '2026-06-01',
+            'tanggal_selesai' => '2026-06-03',
+            'total_hari' => 3,
+            'total_biaya' => 240000, // (75000 * 3) + 15000 biaya kirim
+            'nominal_deposit' => 100000,
+            'fee_admin' => 45000,
+            'pendapatan_pemilik' => 180000,
+            'metode_pengiriman' => 'delivery',
+            'alamat_pengiriman' => 'Jl. Merdeka No. 45, Coblong, Bandung',
+            'biaya_pengiriman' => 15000,
+            'status_sewa' => 'dibayar',
+            'status_pembayaran' => 'sukses',
+        ]);
+
+        DetailTransaksi::create([
+            'id_transaksi' => $transaksi5->id_transaksi,
+            'id_barang' => $barang1->id_barang,
+            'jumlah_pinjam' => 1,
+            'subtotal' => 225000,
         ]);
 
         // 6. CHAT ANTAR CUSTOMER (Penyewa <-> Perental)

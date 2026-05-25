@@ -27,7 +27,9 @@ import {
   Send,
   ArrowLeft,
   Loader2,
-  Search
+  Search,
+  Store,
+  Truck
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -80,9 +82,12 @@ export default function DashboardRental() {
     nama_barang: '',
     deskripsi: '',
     harga_sewa: '',
+    nominal_deposit: '',
     jumlah_stok: '',
     id_kategori: '',
-    foto_barang: null
+    foto_barang: null,
+    metode_penyerahan: 'pickup',
+    no_resi_penyerahan: ''
   })
   const [addPhotoPreview, setAddPhotoPreview] = useState(null)
   
@@ -91,9 +96,12 @@ export default function DashboardRental() {
     nama_barang: '',
     deskripsi: '',
     harga_sewa: '',
+    nominal_deposit: '',
     jumlah_stok: '',
     id_kategori: '',
-    foto_barang: null
+    foto_barang: null,
+    metode_penyerahan: 'pickup',
+    no_resi_penyerahan: ''
   })
   const [editPhotoPreview, setEditPhotoPreview] = useState(null)
 
@@ -414,8 +422,13 @@ export default function DashboardRental() {
       formData.append('nama_barang', addForm.nama_barang)
       formData.append('deskripsi', addForm.deskripsi)
       formData.append('harga_sewa', addForm.harga_sewa)
+      formData.append('nominal_deposit', addForm.nominal_deposit || 0)
       formData.append('jumlah_stok', addForm.jumlah_stok)
       formData.append('id_kategori', addForm.id_kategori)
+      formData.append('metode_penyerahan', addForm.metode_penyerahan || 'pickup')
+      if (addForm.no_resi_penyerahan) {
+        formData.append('no_resi_penyerahan', addForm.no_resi_penyerahan)
+      }
       if (addForm.foto_barang) {
         formData.append('foto_barang', addForm.foto_barang)
       }
@@ -431,9 +444,12 @@ export default function DashboardRental() {
           nama_barang: '',
           deskripsi: '',
           harga_sewa: '',
+          nominal_deposit: '',
           jumlah_stok: '',
           id_kategori: '',
-          foto_barang: null
+          foto_barang: null,
+          metode_penyerahan: 'pickup',
+          no_resi_penyerahan: ''
         })
         setAddPhotoPreview(null)
         fetchGears()
@@ -451,9 +467,12 @@ export default function DashboardRental() {
       nama_barang: gear.nama_barang || '',
       deskripsi: gear.deskripsi || '',
       harga_sewa: gear.harga_sewa || '',
+      nominal_deposit: gear.nominal_deposit || '',
       jumlah_stok: gear.jumlah_stok || '',
       id_kategori: gear.id_kategori || '',
-      foto_barang: null
+      foto_barang: null,
+      metode_penyerahan: gear.metode_penyerahan || 'pickup',
+      no_resi_penyerahan: gear.no_resi_penyerahan || ''
     })
     if (gear.foto_barang) {
       setEditPhotoPreview(
@@ -481,8 +500,13 @@ export default function DashboardRental() {
       formData.append('nama_barang', editForm.nama_barang)
       formData.append('deskripsi', editForm.deskripsi)
       formData.append('harga_sewa', editForm.harga_sewa)
+      formData.append('nominal_deposit', editForm.nominal_deposit || 0)
       formData.append('jumlah_stok', editForm.jumlah_stok)
       formData.append('id_kategori', editForm.id_kategori)
+      formData.append('metode_penyerahan', editForm.metode_penyerahan || 'pickup')
+      if (editForm.no_resi_penyerahan) {
+        formData.append('no_resi_penyerahan', editForm.no_resi_penyerahan)
+      }
       if (editForm.foto_barang) {
         formData.append('foto_barang', editForm.foto_barang)
       }
@@ -996,8 +1020,34 @@ export default function DashboardRental() {
                           className="col-span-3 rounded-lg"
                           required 
                           value={addForm.harga_sewa}
-                          onChange={(e) => setAddForm(prev => ({ ...prev, harga_sewa: e.target.value }))}
+                          onChange={(e) => {
+                            const harga = e.target.value;
+                            const deposit = harga ? Math.round(Number(harga) * 0.2) : '';
+                            setAddForm(prev => ({ 
+                              ...prev, 
+                              harga_sewa: harga,
+                              nominal_deposit: deposit
+                            }));
+                          }}
                         />
+                      </div>
+
+                      {/* Nominal Deposit */}
+                      <div className="grid grid-cols-4 items-start gap-4">
+                        <Label htmlFor="add_deposit" className="text-right font-medium mt-2">Deposit</Label>
+                        <div className="col-span-3">
+                          <Input 
+                            id="add_deposit" 
+                            type="number"
+                            placeholder="Otomatis 20% dari Harga" 
+                            className="rounded-lg bg-slate-50 border-slate-200 text-slate-500 font-semibold"
+                            value={addForm.nominal_deposit}
+                            readOnly
+                          />
+                          <p className="text-[11px] text-emerald-600 mt-1.5 leading-snug font-semibold">
+                            ✨ Deposit dihitung otomatis sebesar 20% dari Harga Sewa Harian (Refundable untuk customer).
+                          </p>
+                        </div>
                       </div>
 
                       {/* Jumlah Stok */}
@@ -1025,6 +1075,55 @@ export default function DashboardRental() {
                           value={addForm.deskripsi}
                           onChange={(e) => setAddForm(prev => ({ ...prev, deskripsi: e.target.value }))}
                         />
+                      </div>
+
+                      {/* Metode Penyerahan ke Gudang */}
+                      <div className="grid grid-cols-4 items-start gap-4">
+                        <Label className="text-right font-medium mt-2">Penyerahan Barang*</Label>
+                        <div className="col-span-3 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setAddForm(prev => ({ ...prev, metode_penyerahan: 'pickup', no_resi_penyerahan: '' }))}
+                              className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
+                                addForm.metode_penyerahan === 'pickup'
+                                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
+                                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              <Store className="size-4" /> Datang ke Gudang
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setAddForm(prev => ({ ...prev, metode_penyerahan: 'delivery' }))}
+                              className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
+                                addForm.metode_penyerahan === 'delivery'
+                                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
+                                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              <Truck className="size-4" /> Kirim via Kurir (Delivery)
+                            </button>
+                          </div>
+
+                          {addForm.metode_penyerahan === 'delivery' && (
+                            <div className="space-y-1.5 animate-fade-in">
+                              <Input
+                                type="text"
+                                placeholder="Masukkan nama kurir & nomor resi pengiriman (Contoh: JNE - 123456789)"
+                                className="rounded-lg text-xs"
+                                value={addForm.no_resi_penyerahan}
+                                onChange={(e) => setAddForm(prev => ({ ...prev, no_resi_penyerahan: e.target.value }))}
+                                required={addForm.metode_penyerahan === 'delivery'}
+                              />
+                            </div>
+                          )}
+
+                          <div className="bg-slate-50 p-3 rounded-xl text-[10px] text-slate-500 border border-dashed leading-relaxed">
+                            💡 <strong>Gudang SiPetualang:</strong> Jl. Petualang No. 100, Bandung. Barang harus diserahkan/dikirimkan ke gudang untuk diverifikasi admin sebelum alat sewa dipublikasikan secara live di katalog.
+                          </div>
+                        </div>
                       </div>
 
                       {/* Upload Foto */}
@@ -1696,14 +1795,6 @@ export default function DashboardRental() {
                                 <TableCell className="text-right pr-6">
                                   <div className="flex gap-2 justify-end">
                                     {/* Action Buttons based on status_sewa */}
-                                    {trx.status_sewa === 'sedang_disewa' && (
-                                      <Button 
-                                        onClick={() => handleUpdateStatusSewa(trx.id_transaksi, 'selesai')}
-                                        className="bg-emerald-600 text-white hover:bg-emerald-700 text-xs px-3 py-1 rounded-lg h-8 font-semibold"
-                                      >
-                                        Alat Kembali
-                                      </Button>
-                                    )}
                                     
                                     {['menunggu_pembayaran', 'dibayar'].includes(trx.status_sewa) && (
                                       <Button 
@@ -1788,8 +1879,34 @@ export default function DashboardRental() {
                   className="col-span-3 rounded-lg"
                   required 
                   value={editForm.harga_sewa}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, harga_sewa: e.target.value }))}
+                  onChange={(e) => {
+                    const harga = e.target.value;
+                    const deposit = harga ? Math.round(Number(harga) * 0.2) : '';
+                    setEditForm(prev => ({ 
+                      ...prev, 
+                      harga_sewa: harga,
+                      nominal_deposit: deposit
+                    }));
+                  }}
                 />
+              </div>
+
+              {/* Nominal Deposit */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit_deposit" className="text-right font-medium mt-2">Deposit</Label>
+                <div className="col-span-3">
+                  <Input 
+                    id="edit_deposit" 
+                    type="number"
+                    placeholder="Otomatis 20% dari Harga" 
+                    className="rounded-lg bg-slate-50 border-slate-200 text-slate-500 font-semibold"
+                    value={editForm.nominal_deposit}
+                    readOnly
+                  />
+                  <p className="text-[11px] text-emerald-600 mt-1.5 leading-snug font-semibold">
+                    ✨ Deposit dihitung otomatis sebesar 20% dari Harga Sewa Harian (Refundable untuk customer).
+                  </p>
+                </div>
               </div>
 
               {/* Jumlah Stok */}
@@ -1815,6 +1932,55 @@ export default function DashboardRental() {
                   value={editForm.deskripsi}
                   onChange={(e) => setEditForm(prev => ({ ...prev, deskripsi: e.target.value }))}
                 />
+              </div>
+
+              {/* Metode Penyerahan ke Gudang */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label className="text-right font-medium mt-2">Penyerahan Barang*</Label>
+                <div className="col-span-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditForm(prev => ({ ...prev, metode_penyerahan: 'pickup', no_resi_penyerahan: '' }))}
+                      className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
+                        editForm.metode_penyerahan === 'pickup'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Store className="size-4" /> Datang ke Gudang
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditForm(prev => ({ ...prev, metode_penyerahan: 'delivery' }))}
+                      className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
+                        editForm.metode_penyerahan === 'delivery'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Truck className="size-4" /> Kirim via Kurir (Delivery)
+                    </button>
+                  </div>
+
+                  {editForm.metode_penyerahan === 'delivery' && (
+                    <div className="space-y-1.5 animate-fade-in">
+                      <Input
+                        type="text"
+                        placeholder="Masukkan nama kurir & nomor resi pengiriman (Contoh: JNE - 123456789)"
+                        className="rounded-lg text-xs"
+                        value={editForm.no_resi_penyerahan}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, no_resi_penyerahan: e.target.value }))}
+                        required={editForm.metode_penyerahan === 'delivery'}
+                      />
+                    </div>
+                  )}
+
+                  <div className="bg-slate-50 p-3 rounded-xl text-[10px] text-slate-500 border border-dashed leading-relaxed">
+                    💡 <strong>Gudang SiPetualang:</strong> Jl. Petualang No. 100, Bandung. Barang harus diserahkan/dikirimkan ke gudang untuk diverifikasi admin sebelum alat sewa dipublikasikan secara live di katalog.
+                  </div>
+                </div>
               </div>
 
               {/* Upload Foto */}

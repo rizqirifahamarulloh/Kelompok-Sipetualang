@@ -169,6 +169,7 @@ export default function BarangShow() {
         id_barang: barang.id_barang,
         nama_barang: barang.nama_barang,
         harga_sewa: barang.harga_sewa,
+        nominal_deposit: barang.nominal_deposit || 0,
         jumlah: selectedJumlah,
         tanggal_mulai: tanggalMulai,
         tanggal_selesai: tanggalSelesai,
@@ -413,18 +414,27 @@ export default function BarangShow() {
                 {barang.nama_barang}
               </h1>
 
-              <div className="mt-5">
-                <span className="text-3xl font-black text-[#00A779]">
-                  Rp{' '}
-                  {Number(
-                    barang.harga_sewa
-                  ).toLocaleString()}
-                </span>
+              <div className="mt-5 flex flex-col gap-1">
+                <div>
+                  <span className="text-3xl font-black text-[#00A779]">
+                    Rp{' '}
+                    {Number(
+                      barang.harga_sewa
+                    ).toLocaleString()}
+                  </span>
 
-                <span className="text-sm text-gray-400">
-                  {' '}
-                  / hari
-                </span>
+                  <span className="text-sm text-gray-400">
+                    {' '}
+                    / hari
+                  </span>
+                </div>
+                {Number(barang.nominal_deposit) > 0 && (
+                  <div className="mt-2 text-sm text-slate-500 flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 self-start">
+                    <span className="font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded-md text-xs">Jaminan Deposit</span>
+                    <span>Rp {Number(barang.nominal_deposit).toLocaleString()}</span>
+                    <span className="text-[11px] text-slate-400">(Refundable)</span>
+                  </div>
+                )}
               </div>
 
               <div className="mt-8 border-t pt-5">
@@ -574,25 +584,34 @@ export default function BarangShow() {
                 </div>
               )}
 
-              <div className="bg-[#F8F9FA] rounded-2xl p-5 mt-6">
-                <div className="flex justify-between text-sm">
-                  <span>Durasi</span>
-                  <span>{totalHari} hari</span>
+              <div className="bg-[#F8F9FA] rounded-2xl p-5 mt-6 space-y-2">
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>Biaya Sewa ({selectedJumlah} barang x {totalHari} hari)</span>
+                  <span className="font-semibold text-slate-800">Rp {totalHarga.toLocaleString()}</span>
                 </div>
 
-                <div className="flex justify-between text-sm mt-2">
-                  <span>Jumlah</span>
-                  <span>{selectedJumlah}</span>
-                </div>
+                {Number(barang.nominal_deposit) > 0 && (
+                  <div className="flex justify-between text-sm text-slate-600">
+                    <span className="flex items-center gap-1">
+                      Deposit Jaminan <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Refundable</span>
+                    </span>
+                    <span className="font-semibold text-slate-800">Rp {(Number(barang.nominal_deposit) * selectedJumlah).toLocaleString()}</span>
+                  </div>
+                )}
 
-                <div className="flex justify-between text-lg font-black mt-4 border-t pt-4">
-                  <span>Total</span>
+                <div className="flex justify-between text-lg font-black mt-4 border-t pt-4 text-slate-900">
+                  <span>Total Pembayaran</span>
 
-                  <span className="text-[#00A779]">
+                  <span className="text-[#00A779] text-xl">
                     Rp{' '}
-                    {totalHarga.toLocaleString()}
+                    {(totalHarga + (Number(barang.nominal_deposit || 0) * selectedJumlah)).toLocaleString()}
                   </span>
                 </div>
+                {Number(barang.nominal_deposit) > 0 && (
+                  <p className="text-[11px] text-slate-400 leading-snug mt-2 pt-1 border-t border-dashed">
+                    💡 Deposit keamanan akan dikembalikan 100% setelah barang kembali dalam kondisi baik.
+                  </p>
+                )}
               </div>
 
               <div className="bg-[#F8F9FA] border rounded-2xl p-4 mt-5 flex items-center justify-between">

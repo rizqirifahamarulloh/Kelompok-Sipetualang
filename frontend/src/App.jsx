@@ -30,6 +30,8 @@ import Categories from '@/features/admin/pages/Categories'
 import Destinations from '@/features/admin/pages/Destinations'
 import Gears from '@/features/admin/pages/Gears'
 import Payment from '@/features/admin/pages/Payment'
+import ShippingStatus from '@/features/admin/pages/ShippingStatus'
+import RentedGears from '@/features/admin/pages/RentedGears'
 
 // Customer Profile - perbaiki pathnya
 import Profile from '@/profile/pages/Profile'
@@ -41,6 +43,7 @@ import CartPage from '@/features/customer/pages/cart';
 import TransactionsPage from '@/features/customer/pages/transactions';
 import VerifikasiCustomer from '@/features/customer/pages/verifikasi';
 import DashboardRental from '@/features/bukarental/components/DashboardRental';
+import ShippingPage from '@/features/customer/pages/ShippingPage'
 
 function Unauthorized() {
   return (
@@ -98,6 +101,8 @@ function App() {
                     <Route path="/admin/ktp-verifikasi" element={<KtpVerification />} />
                     <Route path="/admin/revenue" element={<Revenue />} />
                     <Route path="/admin/transactions" element={<Revenue />} />
+                    <Route path="/admin/pengiriman" element={<ShippingStatus />} />
+                    <Route path="/admin/disewa" element={<RentedGears />} />
                   </Route>
                 </Route>
 
@@ -114,6 +119,7 @@ function App() {
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/cart" element={<CartPage />} />
                   <Route path="/profile/rentals" element={<TransactionsPage />} />
+                  <Route path="/profile/pengiriman" element={<ShippingPage />} />
                 </Route>
 
                 {/* Unauthorized fallback */}

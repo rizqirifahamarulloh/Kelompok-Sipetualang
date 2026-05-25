@@ -162,6 +162,15 @@ export default function CartPage() {
     }, 0);
   }, [cart, selectedItems]);
 
+  const getSelectedDepositTotal = useMemo(() => {
+    return cart.reduce((total, item) => {
+      if (selectedItems[item.id_cart]) {
+        return total + (Number(item.nominal_deposit || 0) * Number(item.jumlah || 1));
+      }
+      return total;
+    }, 0);
+  }, [cart, selectedItems]);
+
   // CHECKOUT
   const handleCheckout = async () => {
     if (!user) {
@@ -430,9 +439,15 @@ export default function CartPage() {
                             ).toLocaleString("id-ID")}
                           </h3>
 
-                          <span className="text-sm text-gray-400">
+                          <span className="text-sm text-gray-400 block mb-1">
                             /hari
                           </span>
+
+                          {Number(item.nominal_deposit) > 0 && (
+                            <span className="text-xs bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded-lg font-medium inline-block">
+                              Deposit: Rp {Number(item.nominal_deposit).toLocaleString("id-ID")}
+                            </span>
+                          )}
                         </div>
 
                         {/* QTY */}
@@ -541,7 +556,7 @@ export default function CartPage() {
                 </div>
 
                 {/* SUMMARY */}
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-gray-500">
                       Total Barang
@@ -554,7 +569,7 @@ export default function CartPage() {
 
                   <div className="flex justify-between">
                     <span className="text-gray-500">
-                      Subtotal
+                      Subtotal Sewa
                     </span>
 
                     <span className="font-bold text-gray-900">
@@ -565,14 +580,29 @@ export default function CartPage() {
                     </span>
                   </div>
 
-                  <div className="border-t pt-5 flex justify-between items-center">
+                  {getSelectedDepositTotal > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 flex items-center gap-1">
+                        Total Deposit <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Refundable</span>
+                      </span>
+
+                      <span className="font-semibold text-gray-700">
+                        Rp{" "}
+                        {getSelectedDepositTotal.toLocaleString(
+                          "id-ID"
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="border-t pt-4 flex justify-between items-center">
                     <span className="text-lg font-black text-gray-900">
                       Total
                     </span>
 
                     <span className="text-3xl font-black text-emerald-500">
                       Rp{" "}
-                      {getSelectedTotal.toLocaleString(
+                      {(getSelectedTotal + getSelectedDepositTotal).toLocaleString(
                         "id-ID"
                       )}
                     </span>

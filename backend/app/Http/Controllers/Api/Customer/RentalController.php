@@ -65,9 +65,12 @@ class RentalController extends Controller
             'nama_barang' => 'required|string|max:100',
             'deskripsi' => 'nullable|string',
             'harga_sewa' => 'required|numeric|min:1000',
+            'nominal_deposit' => 'nullable|numeric|min:0',
             'jumlah_stok' => 'required|integer|min:1',
             'id_kategori' => 'required|exists:kategori,id_kategori',
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'metode_penyerahan' => 'nullable|in:pickup,delivery',
+            'no_resi_penyerahan' => 'nullable|string|max:100',
         ]);
 
         $photoPath = null;
@@ -75,17 +78,24 @@ class RentalController extends Controller
             $photoPath = $request->file('foto_barang')->store('barang', 'public');
         }
 
+        $metodePenyerahan = $request->metode_penyerahan ?? 'pickup';
+        $statusPenyerahan = ($metodePenyerahan === 'delivery' && $request->no_resi_penyerahan) ? 'dikirim' : 'belum_dikirim';
+
         $barang = Barang::create([
             'id_pemilik' => Auth::id(),
             'id_kategori' => $request->id_kategori,
             'nama_barang' => $request->nama_barang,
             'deskripsi' => $request->deskripsi,
             'harga_sewa' => $request->harga_sewa,
+            'nominal_deposit' => round($request->harga_sewa * 0.2),
             'jumlah_stok' => $request->jumlah_stok,
             'status_barang' => 'tersedia',
             'status_approval' => 'pending',
             'butuh_verifikasi' => true,
-            'foto_barang' => $photoPath
+            'foto_barang' => $photoPath,
+            'metode_penyerahan' => $metodePenyerahan,
+            'no_resi_penyerahan' => $request->no_resi_penyerahan,
+            'status_penyerahan' => $statusPenyerahan
         ]);
 
         return response()->json([
@@ -114,14 +124,28 @@ class RentalController extends Controller
             'nama_barang' => 'sometimes|string|max:100',
             'deskripsi' => 'nullable|string',
             'harga_sewa' => 'sometimes|numeric|min:1000',
+            'nominal_deposit' => 'nullable|numeric|min:0',
             'jumlah_stok' => 'sometimes|integer|min:1',
             'id_kategori' => 'sometimes|exists:kategori,id_kategori',
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'metode_penyerahan' => 'nullable|in:pickup,delivery',
+            'no_resi_penyerahan' => 'nullable|string|max:100',
         ]);
 
-        $barang->update($request->only([
-            'nama_barang', 'deskripsi', 'harga_sewa', 'jumlah_stok'
-        ]));
+        $updateData = $request->only([
+            'nama_barang', 'deskripsi', 'harga_sewa', 'jumlah_stok', 'metode_penyerahan', 'no_resi_penyerahan'
+        ]);
+
+        if ($request->has('harga_sewa')) {
+            $updateData['nominal_deposit'] = round($request->harga_sewa * 0.2);
+        }
+
+        if ($request->has('metode_penyerahan')) {
+            $metode = $request->metode_penyerahan;
+            $updateData['status_penyerahan'] = ($metode === 'delivery' && $request->no_resi_penyerahan) ? 'dikirim' : 'belum_dikirim';
+        }
+
+        $barang->update($updateData);
 
         if ($request->has('id_kategori')) {
             $barang->id_kategori = $request->id_kategori;

@@ -17,11 +17,13 @@ import {
   Clock,
   Truck,
   Store,
-  User
+  User,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL, BASE_URL } from '@/services/api';
+import { toast } from 'sonner';
 
 export default function TransactionsPage() {
   const { user } = useAuth();
@@ -31,23 +33,58 @@ export default function TransactionsPage() {
 
   const token = localStorage.getItem('token');
 
-  // ✅ FETCH TRANSACTIONS - LANGSUNG DI DALAM useEffect
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      setLoading(true);
-      try {
-        const response = await transactionService.getTransaksiSebagaiPenyewa();
-        setTransactions(response.data || []);
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-        setTransactions([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Return Gear States
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [selectedReturnTrx, setSelectedReturnTrx] = useState(null);
+  const [returnForm, setReturnForm] = useState({
+    metode_kembali: 'pickup',
+    no_resi_kembali: ''
+  });
+  const [submittingReturn, setSubmittingReturn] = useState(false);
 
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const response = await transactionService.getTransaksiSebagaiPenyewa();
+      setTransactions(response.data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ FETCH TRANSACTIONS
+  useEffect(() => {
     fetchTransactions();
   }, []);
+
+  const openReturnModal = (trx) => {
+    setSelectedReturnTrx(trx);
+    setReturnForm({
+      metode_kembali: 'pickup',
+      no_resi_kembali: ''
+    });
+    setIsReturnModalOpen(true);
+  };
+
+  const handleReturnSubmit = async (e) => {
+    e.preventDefault();
+    setSubmittingReturn(true);
+    try {
+      await transactionService.kembalikanBarang(selectedReturnTrx.id_transaksi, returnForm);
+      toast.success('Pengajuan pengembalian berhasil diajukan ke Admin!');
+      setIsReturnModalOpen(false);
+      setSelectedReturnTrx(null);
+      fetchTransactions();
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || err.message || 'Gagal mengajukan pengembalian');
+    } finally {
+      setSubmittingReturn(false);
+    }
+  };
 
   // ✅ FUNGSI BAYAR ULANG
   const handlePayment = async (trans) => {
@@ -220,6 +257,14 @@ export default function TransactionsPage() {
                                 Total: <span className="font-semibold text-emerald-600">Rp {Number(trans.total_biaya).toLocaleString()}</span>
                               </span>
                             </div>
+                            {Number(trans.nominal_deposit) > 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 bg-emerald-100 text-emerald-800 text-[9px] flex items-center justify-center rounded font-bold">D</span>
+                                <span className="text-xs text-slate-500">
+                                  Deposit Keamanan: <span className="font-semibold text-slate-700">Rp {Number(trans.nominal_deposit).toLocaleString()}</span> <span className="text-[10px] text-slate-400 font-normal">(Refundable)</span>
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -289,6 +334,44 @@ export default function TransactionsPage() {
                                 )}
                               </div>
                             </div>
+
+                            {/* Bagian Informasi Deposit & Denda Kerusakan */}
+                            {Number(trans.nominal_deposit) > 0 && (
+                              <div className="bg-emerald-50/30 dark:bg-emerald-950/5 rounded-2xl p-4 border border-emerald-100 dark:border-emerald-900/20 space-y-3">
+                                <h5 className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">Rincian Deposit & Denda Kerusakan</h5>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                  <div className="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-100">
+                                    <p className="text-gray-400 font-semibold mb-0.5">Deposit Awal</p>
+                                    <p className="font-bold text-gray-800 dark:text-gray-200">Rp {Number(trans.nominal_deposit).toLocaleString()}</p>
+                                  </div>
+                                  <div className="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-100">
+                                    <p className="text-gray-400 font-semibold mb-0.5">Denda Kerusakan</p>
+                                    <p className={`font-bold ${Number(trans.pengembalian?.denda_kerusakan || 0) > 0 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`}>
+                                      Rp {Number(trans.pengembalian?.denda_kerusakan || 0).toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <div className="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-100">
+                                    <p className="text-gray-400 font-semibold mb-0.5">Denda Terlambat</p>
+                                    <p className={`font-bold ${Number(trans.pengembalian?.total_denda || 0) > 0 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`}>
+                                      Rp {Number(trans.pengembalian?.total_denda || 0).toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-between items-center bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
+                                  <div className="text-xs">
+                                    <span className="font-bold text-emerald-800 dark:text-emerald-400 block">Sisa Uang Deposit Pengembalian</span>
+                                    <span className="text-[10px] text-slate-500">
+                                      * Dikembalikan ke Penyewa (Awal - Denda Kerusakan - Denda Terlambat)
+                                    </span>
+                                  </div>
+                                  <span className="text-lg font-black text-emerald-600 shrink-0">
+                                    Rp {Math.max(0, Number(trans.nominal_deposit) - Number(trans.pengembalian?.denda_kerusakan || 0) - Number(trans.pengembalian?.total_denda || 0)).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -305,6 +388,40 @@ export default function TransactionsPage() {
                             </Button>
                           </div>
                         )}
+
+                        {/* ✅ TOMBOL KEMBALIKAN BARANG */}
+                        {trans.status_sewa === 'sedang_disewa' && trans.status_kembali === 'belum' && (
+                          <div className="mt-4">
+                            <Button 
+                              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold flex items-center justify-center gap-1.5 h-10 rounded-xl"
+                              onClick={() => openReturnModal(trans)}
+                            >
+                              <Package className="w-4 h-4" />
+                              Kembalikan Barang
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* ✅ BANNER SEDANG DIKEMBALIKAN */}
+                        {trans.status_sewa === 'sedang_disewa' && trans.status_kembali === 'proses' && (
+                          <div className="mt-4 bg-amber-50/50 border border-amber-200/50 rounded-xl p-3.5 flex items-start gap-2.5">
+                            <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            <div className="text-xs space-y-1">
+                              <p className="font-bold text-amber-800">Barang Sedang Dikembalikan</p>
+                              <p className="text-slate-600">
+                                <span className="font-medium text-slate-500">Metode Pengembalian:</span> {trans.metode_kembali === 'delivery' ? 'Kirim via Kurir (Delivery)' : 'Datang Langsung ke Gudang SiPetualang'}
+                              </p>
+                              {trans.no_resi_kembali && (
+                                <p className="text-slate-600 font-mono">
+                                  <span className="font-medium text-slate-500 font-sans">No. Resi Pengembalian:</span> {trans.no_resi_kembali}
+                                </p>
+                              )}
+                              <p className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded w-fit mt-1.5 flex items-center gap-1">
+                                <Clock className="w-3 h-3 animate-spin" /> Menunggu Verifikasi Admin
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -314,6 +431,108 @@ export default function TransactionsPage() {
           </div>
         </div>
       </div>
+      
+      {/* Modal Pengembalian Barang */}
+      {isReturnModalOpen && selectedReturnTrx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white dark:bg-slate-900 z-10">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Package className="size-5 text-amber-600" />
+                Kembalikan Barang Sewaan
+              </h2>
+              <button 
+                onClick={() => { setIsReturnModalOpen(false); setSelectedReturnTrx(null); }} 
+                className="text-slate-400 hover:text-slate-600 rounded-lg p-1 hover:bg-slate-100 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleReturnSubmit} className="p-6 space-y-4">
+              <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-xl text-xs space-y-1 text-amber-800 dark:text-amber-400">
+                <p><strong>Peralatan:</strong> {selectedReturnTrx.nama_barang} ({selectedReturnTrx.jumlah} unit)</p>
+                <p><strong>Batas Waktu:</strong> {selectedReturnTrx.tanggal_selesai}</p>
+                <p className="text-[10px] mt-1 text-amber-700 italic">
+                  * Keterlambatan pengembalian dikenakan denda Rp 20.000 per hari.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Metode Pengembalian</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setReturnForm(prev => ({ ...prev, metode_kembali: "pickup" }))}
+                    className={`py-3 rounded-xl border text-sm font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
+                      returnForm.metode_kembali === "pickup"
+                        ? "border-amber-500 bg-amber-50/50 text-amber-700 font-bold"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Store className="size-4" /> Datang Langsung
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setReturnForm(prev => ({ ...prev, metode_kembali: "delivery" }))}
+                    className={`py-3 rounded-xl border text-sm font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
+                      returnForm.metode_kembali === "delivery"
+                        ? "border-amber-500 bg-amber-50/50 text-amber-700 font-bold"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Truck className="size-4" /> Kirim Delivery (Kurir)
+                  </button>
+                </div>
+              </div>
+
+              {returnForm.metode_kembali === "delivery" && (
+                <div className="animate-slide-down">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Nomor Resi / Kurir Pengembalian</label>
+                  <input
+                    type="text"
+                    placeholder="Masukkan nama kurir & nomor resi pengiriman"
+                    value={returnForm.no_resi_kembali}
+                    onChange={(e) => setReturnForm(prev => ({ ...prev, no_resi_kembali: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border rounded-xl text-xs focus:outline-none focus:border-amber-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                    required
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Kirimkan barang Anda ke alamat Gudang SiPetualang (Jl. Petualang No. 100, Bandung).
+                  </p>
+                </div>
+              )}
+
+              {returnForm.metode_kembali === "pickup" && (
+                <div className="bg-slate-50 p-3 rounded-xl text-[11px] text-slate-500 leading-normal border border-dashed">
+                  Silakan kembalikan barang sewaan Anda secara langsung ke petugas loket di **Gudang Utama SiPetualang** sebelum batas akhir waktu penyewaan berakhir.
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 justify-end pt-4 border-t mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setIsReturnModalOpen(false); setSelectedReturnTrx(null); }}
+                  className="rounded-xl border-slate-200"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submittingReturn}
+                  className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl"
+                >
+                  {submittingReturn ? "Mengirim..." : "Konfirmasi Pengembalian"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

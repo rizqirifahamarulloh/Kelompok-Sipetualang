@@ -69,5 +69,31 @@ export const adminService = {
   async getOwnerEarnings() {
     const response = await api.get('/admin/owner-earnings')
     return response.data
+  },
+  
+  // Shipping endpoints
+  async getPengiriman() {
+    const response = await api.get('/admin/pengiriman')
+    return response.data
+  },
+  
+  async kirimBarang(id, data) {
+    const response = await api.post(`/admin/pengiriman/${id}/kirim`, data)
+    return response.data
+  },
+  
+  async updateLokasi(idPengiriman, data) {
+    const response = await api.put(`/admin/pengiriman/${idPengiriman}/lokasi`, data)
+    return response.data
+  },
+  
+  async getBarangDisewa() {
+    const response = await api.get('/admin/pengiriman/disewa')
+    return response.data
+  },
+  
+  async konfirmasiKembali(id, data) {
+    const response = await api.post(`/admin/pengiriman/${id}/konfirmasi-kembali`, data)
+    return response.data
   }
 }

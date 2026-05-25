@@ -142,7 +142,12 @@ class BarangController extends Controller
             }
             if ($request->has('id_kategori')) $barang->id_kategori = $request->id_kategori;
             if ($request->has('status_barang')) $barang->status_barang = $request->status_barang;
-            if ($request->has('status_approval')) $barang->status_approval = $request->status_approval;
+            if ($request->has('status_approval')) {
+                $barang->status_approval = $request->status_approval;
+                if ($request->status_approval === 'disetujui') {
+                    $barang->status_penyerahan = 'diterima';
+                }
+            }
             if ($request->has('deskripsi')) $barang->deskripsi = $request->deskripsi;
 
             // Handle photo upload

@@ -46,6 +46,12 @@ export const transactionService = {
   // Batalkan transaksi
   async cancelTransaction(transactionId) {
     return await this.updateStatus(transactionId, 'dibatalkan');
+  },
+
+  // Kembalikan barang (Penyewa)
+  async kembalikanBarang(transactionId, data) {
+    const response = await api.post(`/customer/pengiriman/${transactionId}/kembalikan`, data);
+    return response.data;
   }
 };
 
