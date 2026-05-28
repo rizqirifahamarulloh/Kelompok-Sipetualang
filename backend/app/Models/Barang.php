@@ -13,9 +13,21 @@ class Barang extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_pemilik', 'id_kategori', 'nama_barang', 'deskripsi',
-        'foto_barang', 'harga_sewa', 'nominal_deposit', 'jumlah_stok', 'status_barang',
-        'status_approval', 'butuh_verifikasi', 'metode_penyerahan', 'no_resi_penyerahan', 'status_penyerahan'
+        'id_pemilik',
+        'id_kategori',
+        'nama_barang',
+        'deskripsi',
+        'foto_barang',
+        'harga_sewa',
+        'min_durasi_sewa',
+        'nominal_deposit',
+        'jumlah_stok',
+        'status_barang',
+        'status_approval',
+        'butuh_verifikasi',
+        'metode_penyerahan',
+        'no_resi_penyerahan',
+        'status_penyerahan'
     ];
 
     public function pemilik()

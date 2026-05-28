@@ -28,7 +28,7 @@ class PengirimanController extends Controller
         // Tampilkan transaksi yang berstatus sewa: dibayar, sedang_disewa, selesai, dibatalkan
         // yang pembayarannya sukses. Tentu, pickup juga tetap ditampilkan agar admin dapat melihatnya, 
         // tapi delivery memiliki aksi khusus.
-        $transactions = Transaksi::with(['penyewa', 'pengiriman'])
+        $transactions = Transaksi::with(['penyewa', 'pengiriman', 'detailTransaksi.barang'])
             ->where('status_pembayaran', 'sukses')
             ->orderBy('updated_at', 'desc')
             ->get();
@@ -190,7 +190,7 @@ class PengirimanController extends Controller
      */
     public function getTrackingList()
     {
-        $transactions = Transaksi::with(['pengiriman', 'pemilik', 'barang'])
+        $transactions = Transaksi::with(['pengiriman', 'pemilik', 'barang', 'detailTransaksi.barang.pemilik'])
             ->where('id_penyewa', Auth::id())
             ->where('metode_pengiriman', 'delivery')
             ->where('status_pembayaran', 'sukses')

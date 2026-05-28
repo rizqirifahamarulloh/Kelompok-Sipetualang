@@ -6,11 +6,11 @@ import Sidebar from "@/features/customer/components/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Package, 
-  Calendar, 
-  MapPin, 
-  CreditCard, 
+import {
+  Package,
+  Calendar,
+  MapPin,
+  CreditCard,
   DollarSign,
   CheckCircle,
   XCircle,
@@ -90,10 +90,10 @@ export default function TransactionsPage() {
   // ✅ FUNGSI BAYAR ULANG
   const handlePayment = async (trans) => {
     setProcessingId(trans.id_transaksi);
-    
+
     try {
       let snapToken = trans.snap_token;
-      
+
       // Jika snap_token tidak ada, request baru ke backend
       if (!snapToken) {
         const response = await axios.post(
@@ -103,7 +103,7 @@ export default function TransactionsPage() {
         );
         snapToken = response.data.snap_token;
       }
-      
+
       window.snap.pay(snapToken, {
         onSuccess: () => {
           alert('Pembayaran berhasil!');
@@ -126,7 +126,7 @@ export default function TransactionsPage() {
   };
 
   const getStatusBadge = (status) => {
-    switch(status) {
+    switch (status) {
       case 'menunggu_pembayaran':
         return <Badge className="bg-yellow-500"><Clock className="w-3 h-3 mr-1" /> Menunggu Pembayaran</Badge>;
       case 'dibayar':
@@ -143,7 +143,7 @@ export default function TransactionsPage() {
   };
 
   const getPaymentStatusBadge = (status) => {
-    switch(status) {
+    switch (status) {
       case 'pending':
         return <Badge variant="outline" className="text-yellow-600"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
       case 'sukses':
@@ -167,7 +167,7 @@ export default function TransactionsPage() {
 
       <div className="max-w-6xl mx-auto px-4 pt-24 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
+
           <Sidebar
             user={user}
             getPhotoUrl={getPhotoUrl}
@@ -182,7 +182,7 @@ export default function TransactionsPage() {
                   <CardTitle className="text-xl font-bold">Riwayat Transaksi</CardTitle>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="p-8">
                 {loading ? (
                   <div className="text-center py-10">
@@ -214,6 +214,42 @@ export default function TransactionsPage() {
                           </div>
                         </div>
 
+                        {/* Multi-item details */}
+                        {trans.detail_transaksi && trans.detail_transaksi.length > 0 && (
+                          <div className="mb-4 bg-slate-50 rounded-xl p-3 space-y-2 border border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Daftar Barang ({trans.detail_transaksi.length} item)</p>
+                            {trans.detail_transaksi.map((detail, idx) => (
+                              <div key={detail.id_detail || idx} className="flex items-center gap-3 bg-white rounded-lg p-2 border border-slate-100">
+                                {detail.barang?.foto_barang ? (
+                                  <img
+                                    src={getStorageUrl(detail.barang.foto_barang)}
+                                    alt={detail.nama_barang || detail.barang?.nama_barang}
+                                    className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                                    <Package className="w-4 h-4 text-slate-400" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800 truncate">
+                                    {detail.nama_barang || detail.barang?.nama_barang}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    {detail.jumlah_pinjam} unit × Rp {Number(detail.harga_per_hari || detail.barang?.harga_sewa || 0).toLocaleString()}/hari
+                                    {detail.barang?.pemilik && (
+                                      <span className="text-slate-400"> — {detail.barang.pemilik.nama}</span>
+                                    )}
+                                  </p>
+                                </div>
+                                <p className="text-xs font-bold text-slate-700 shrink-0">
+                                  Rp {Number(detail.subtotal).toLocaleString()}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 text-sm">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
@@ -221,10 +257,13 @@ export default function TransactionsPage() {
                               <span>{trans.tanggal_mulai} - {trans.tanggal_selesai}</span>
                               <span className="text-gray-500">({trans.total_hari} hari)</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Package className="w-4 h-4 text-gray-400" />
-                              <span>{trans.jumlah} x Rp {Number(trans.harga_per_hari).toLocaleString()}/hari</span>
-                            </div>
+                            {/* Only show single item info if no detail_transaksi */}
+                            {(!trans.detail_transaksi || trans.detail_transaksi.length === 0) && (
+                              <div className="flex items-center gap-2">
+                                <Package className="w-4 h-4 text-gray-400" />
+                                <span>{trans.jumlah} x Rp {Number(trans.harga_per_hari).toLocaleString()}/hari</span>
+                              </div>
+                            )}
                             <div className="flex items-center gap-2">
                               <Store className="w-4 h-4 text-gray-400" />
                               <span>Pemilik: {trans.pemilik?.nama || 'Tidak diketahui'}</span>
@@ -273,7 +312,7 @@ export default function TransactionsPage() {
                               <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
                                 <CheckCircle className="size-3.5" /> Informasi Pengembalian Barang
                               </h4>
-                              
+
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                                 <div>
                                   <p className="text-gray-400 font-semibold mb-0.5">Nama Barang</p>
@@ -336,7 +375,7 @@ export default function TransactionsPage() {
                             {Number(trans.nominal_deposit) > 0 && (
                               <div className="bg-emerald-50/30 dark:bg-emerald-950/5 rounded-2xl p-4 border border-emerald-100 dark:border-emerald-900/20 space-y-3">
                                 <h5 className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">Rincian Deposit & Denda Kerusakan</h5>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                                   <div className="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-100">
                                     <p className="text-gray-400 font-semibold mb-0.5">Deposit Awal</p>
@@ -375,7 +414,7 @@ export default function TransactionsPage() {
                         {/* ✅ TOMBOL BAYAR */}
                         {trans.status_sewa === 'menunggu_pembayaran' && (
                           <div className="mt-4">
-                            <Button 
+                            <Button
                               className="w-full bg-blue-600 hover:bg-blue-700"
                               onClick={() => handlePayment(trans)}
                               disabled={processingId === trans.id_transaksi}
@@ -389,7 +428,7 @@ export default function TransactionsPage() {
                         {/* ✅ TOMBOL KEMBALIKAN BARANG */}
                         {trans.status_sewa === 'sedang_disewa' && trans.status_kembali === 'belum' && (
                           <div className="mt-4">
-                            <Button 
+                            <Button
                               className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold flex items-center justify-center gap-1.5 h-10 rounded-xl"
                               onClick={() => openReturnModal(trans)}
                             >
@@ -428,7 +467,7 @@ export default function TransactionsPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Modal Pengembalian Barang */}
       {isReturnModalOpen && selectedReturnTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
@@ -439,8 +478,8 @@ export default function TransactionsPage() {
                 <Package className="size-5 text-amber-600" />
                 Kembalikan Barang Sewaan
               </h2>
-              <button 
-                onClick={() => { setIsReturnModalOpen(false); setSelectedReturnTrx(null); }} 
+              <button
+                onClick={() => { setIsReturnModalOpen(false); setSelectedReturnTrx(null); }}
                 className="text-slate-400 hover:text-slate-600 rounded-lg p-1 hover:bg-slate-100 transition"
               >
                 <X size={20} />
@@ -462,11 +501,10 @@ export default function TransactionsPage() {
                   <button
                     type="button"
                     onClick={() => setReturnForm(prev => ({ ...prev, metode_kembali: "pickup" }))}
-                    className={`py-3 rounded-xl border text-sm font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
-                      returnForm.metode_kembali === "pickup"
+                    className={`py-3 rounded-xl border text-sm font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${returnForm.metode_kembali === "pickup"
                         ? "border-amber-500 bg-amber-50/50 text-amber-700 font-bold"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
+                      }`}
                   >
                     <Store className="size-4" /> Datang Langsung
                   </button>
@@ -474,11 +512,10 @@ export default function TransactionsPage() {
                   <button
                     type="button"
                     onClick={() => setReturnForm(prev => ({ ...prev, metode_kembali: "delivery" }))}
-                    className={`py-3 rounded-xl border text-sm font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
-                      returnForm.metode_kembali === "delivery"
+                    className={`py-3 rounded-xl border text-sm font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${returnForm.metode_kembali === "delivery"
                         ? "border-amber-500 bg-amber-50/50 text-amber-700 font-bold"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
+                      }`}
                   >
                     <Truck className="size-4" /> Kirim Delivery (Kurir)
                   </button>

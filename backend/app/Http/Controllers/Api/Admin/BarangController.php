@@ -125,6 +125,7 @@ class BarangController extends Controller
             $request->validate([
                 'nama_barang' => 'sometimes|required|string|max:100',
                 'harga_sewa' => 'sometimes|required|numeric',
+                'min_durasi_sewa' => 'nullable|integer|min:1',
                 'jumlah_stok' => 'sometimes|required|integer',
                 'id_kategori' => 'sometimes|required|exists:kategori,id_kategori',
                 'status_barang' => 'sometimes|required|in:tersedia,habis',
@@ -136,6 +137,7 @@ class BarangController extends Controller
             // Update attributes if provided
             if ($request->has('nama_barang')) $barang->nama_barang = $request->nama_barang;
             if ($request->has('harga_sewa')) $barang->harga_sewa = $request->harga_sewa;
+            if ($request->has('min_durasi_sewa')) $barang->min_durasi_sewa = intval($request->min_durasi_sewa) ?: 1;
             if ($request->has('jumlah_stok')) {
                 $barang->jumlah_stok = $request->jumlah_stok;
                 $barang->status_barang = $request->jumlah_stok > 0 ? 'tersedia' : 'habis';

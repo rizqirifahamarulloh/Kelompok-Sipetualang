@@ -8,9 +8,11 @@ const getCartFromStorage = () => {
   return cart ? JSON.parse(cart) : [];
 };
 
-// Save cart to localStorage
+// Save cart to localStorage + dispatch event untuk update Navbar badge
 const saveCartToStorage = (cart) => {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  // Dispatch custom event agar Navbar badge langsung update
+  window.dispatchEvent(new CustomEvent('cart-updated'));
 };
 
 export const cartService = {

@@ -141,9 +141,33 @@ export default function ShippingPage() {
                               <h4 className="font-bold text-slate-800 text-sm">
                                 Transaksi #{item.id_transaksi}
                               </h4>
-                              <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                                Barang: <strong className="text-slate-700">{item.nama_barang}</strong> ({item.jumlah} unit)
-                              </p>
+                              {/* Multi-item display */}
+                              {item.detail_transaksi && item.detail_transaksi.length > 0 ? (
+                                <div className="mt-1.5 space-y-1">
+                                  {item.detail_transaksi.map((detail, idx) => (
+                                    <div key={detail.id_detail || idx} className="flex items-center gap-2">
+                                      {detail.barang?.foto_barang && (
+                                        <img
+                                          src={getStorageUrl(detail.barang.foto_barang)}
+                                          alt={detail.nama_barang || detail.barang?.nama_barang}
+                                          className="w-8 h-8 rounded-lg object-cover border border-slate-200"
+                                        />
+                                      )}
+                                      <p className="text-xs text-slate-500 font-medium">
+                                        <strong className="text-slate-700">{detail.nama_barang || detail.barang?.nama_barang}</strong>
+                                        {' '}({detail.jumlah_pinjam} unit)
+                                        {detail.barang?.pemilik && (
+                                          <span className="text-slate-400"> — dari {detail.barang.pemilik.nama}</span>
+                                        )}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                                  Barang: <strong className="text-slate-700">{item.nama_barang}</strong> ({item.jumlah} unit)
+                                </p>
+                              )}
                             </div>
                             <div className="text-right text-xs">
                               <span className="text-slate-400">Total Biaya:</span>

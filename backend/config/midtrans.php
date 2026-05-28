@@ -20,5 +20,5 @@ return [
     | Is Production Mode
     |--------------------------------------------------------------------------
     */
-    // 'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+    'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
 ];

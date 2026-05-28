@@ -20,7 +20,7 @@ const FILTER_CATEGORIES = {
   },
   barang: {
     label: 'Barang',
-    types: ['stock_warning', 'gear_approval'],
+    types: ['stock_warning', 'gear_approval', 'barang_status', 'barang_approval'],
     description: 'Stok, approval barang rental'
   },
 }

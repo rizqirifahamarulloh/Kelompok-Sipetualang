@@ -182,7 +182,8 @@ export default function ShippingStatus() {
   const filteredData = data.filter((item) => {
     // Search filter
     const matchesSearch = 
-      item.nama_barang.toLowerCase().includes(search.toLowerCase()) ||
+      item.nama_barang?.toLowerCase().includes(search.toLowerCase()) ||
+      (item.detail_transaksi || []).some(d => (d.nama_barang || d.barang?.nama_barang || '').toLowerCase().includes(search.toLowerCase())) ||
       item.id_transaksi.toString().includes(search) ||
       (item.penyewa?.nama || "").toLowerCase().includes(search.toLowerCase());
 
@@ -478,10 +479,26 @@ export default function ShippingStatus() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Peralatan Alat</p>
-                    <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">
-                      {item.nama_barang}
-                    </p>
-                    <p className="text-xs text-slate-500">Jumlah: {item.jumlah} unit</p>
+                    {item.detail_transaksi && item.detail_transaksi.length > 0 ? (
+                      <div className="space-y-1">
+                        {item.detail_transaksi.map((detail, idx) => (
+                          <div key={detail.id_detail || idx} className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">
+                              {detail.nama_barang || detail.barang?.nama_barang}
+                              <span className="text-xs text-slate-500 font-normal ml-1">({detail.jumlah_pinjam} unit)</span>
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">
+                          {item.nama_barang}
+                        </p>
+                        <p className="text-xs text-slate-500">Jumlah: {item.jumlah} unit</p>
+                      </>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-2 border-t pt-2">

@@ -65,6 +65,7 @@ class RentalController extends Controller
             'nama_barang' => 'required|string|max:100',
             'deskripsi' => 'nullable|string',
             'harga_sewa' => 'required|numeric|min:1000',
+            'min_durasi_sewa' => 'nullable|integer|min:1',
             'nominal_deposit' => 'nullable|numeric|min:0',
             'jumlah_stok' => 'required|integer|min:1',
             'id_kategori' => 'required|exists:kategori,id_kategori',
@@ -87,6 +88,7 @@ class RentalController extends Controller
             'nama_barang' => $request->nama_barang,
             'deskripsi' => $request->deskripsi,
             'harga_sewa' => $request->harga_sewa,
+            'min_durasi_sewa' => $request->min_durasi_sewa ?? 1,
             'nominal_deposit' => round($request->harga_sewa * 0.2),
             'jumlah_stok' => $request->jumlah_stok,
             'status_barang' => 'tersedia',
@@ -108,15 +110,15 @@ class RentalController extends Controller
     // Edit barang
     public function editBarang(Request $request, $id)
     {
+        // Allow editing ALL items owned by the authenticated user (including approved ones)
         $barang = Barang::where('id_barang', $id)
             ->where('id_pemilik', Auth::id())
-            ->whereIn('status_approval', ['pending', 'ditolak'])
             ->first();
 
         if (!$barang) {
             return response()->json([
                 'success' => false,
-                'message' => 'Barang tidak ditemukan atau sudah diverifikasi'
+                'message' => 'Barang tidak ditemukan'
             ], 404);
         }
 
@@ -124,47 +126,94 @@ class RentalController extends Controller
             'nama_barang' => 'sometimes|string|max:100',
             'deskripsi' => 'nullable|string',
             'harga_sewa' => 'sometimes|numeric|min:1000',
+            'min_durasi_sewa' => 'nullable|integer|min:1',
             'nominal_deposit' => 'nullable|numeric|min:0',
-            'jumlah_stok' => 'sometimes|integer|min:1',
+            'jumlah_stok' => 'sometimes|integer|min:0',
             'id_kategori' => 'sometimes|exists:kategori,id_kategori',
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
             'metode_penyerahan' => 'nullable|in:pickup,delivery',
             'no_resi_penyerahan' => 'nullable|string|max:100',
         ]);
 
-        $updateData = $request->only([
-            'nama_barang', 'deskripsi', 'harga_sewa', 'jumlah_stok', 'metode_penyerahan', 'no_resi_penyerahan'
-        ]);
+        // Track whether non-stock data fields changed on an approved item
+        $wasApproved = $barang->status_approval === 'disetujui';
+        $dataFieldsChanged = false;
 
-        if ($request->has('harga_sewa')) {
-            $updateData['nominal_deposit'] = round($request->harga_sewa * 0.2);
+        $updateData = [];
+
+        // Check each data field for changes
+        if ($request->has('nama_barang') && $request->nama_barang !== $barang->nama_barang) {
+            $updateData['nama_barang'] = $request->nama_barang;
+            $dataFieldsChanged = true;
         }
-
-        if ($request->has('metode_penyerahan')) {
+        if ($request->has('deskripsi') && $request->deskripsi !== $barang->deskripsi) {
+            $updateData['deskripsi'] = $request->deskripsi;
+            $dataFieldsChanged = true;
+        }
+        if ($request->has('harga_sewa') && floatval($request->harga_sewa) !== floatval($barang->harga_sewa)) {
+            $updateData['harga_sewa'] = $request->harga_sewa;
+            $updateData['nominal_deposit'] = round($request->harga_sewa * 0.2);
+            $dataFieldsChanged = true;
+        }
+        if ($request->has('id_kategori') && $request->id_kategori != $barang->id_kategori) {
+            $updateData['id_kategori'] = $request->id_kategori;
+            $dataFieldsChanged = true;
+        }
+        if ($request->has('metode_penyerahan') && $request->metode_penyerahan !== $barang->metode_penyerahan) {
+            $updateData['metode_penyerahan'] = $request->metode_penyerahan;
             $metode = $request->metode_penyerahan;
             $updateData['status_penyerahan'] = ($metode === 'delivery' && $request->no_resi_penyerahan) ? 'dikirim' : 'belum_dikirim';
+            $dataFieldsChanged = true;
+        }
+        if ($request->has('no_resi_penyerahan') && $request->no_resi_penyerahan !== $barang->no_resi_penyerahan) {
+            $updateData['no_resi_penyerahan'] = $request->no_resi_penyerahan;
+        }
+
+        // Stock changes are always allowed instantly (no re-approval needed)
+        if ($request->has('jumlah_stok')) {
+            $newStock = intval($request->jumlah_stok);
+            $updateData['jumlah_stok'] = $newStock;
+            $updateData['status_barang'] = $newStock > 0 ? 'tersedia' : 'habis';
+        }
+
+        // Min durasi sewa changes (no re-approval needed)
+        if ($request->has('min_durasi_sewa')) {
+            $updateData['min_durasi_sewa'] = intval($request->min_durasi_sewa) ?: 1;
+        }
+
+        // If data fields changed on an approved item, reset to pending for re-approval
+        if ($wasApproved && $dataFieldsChanged) {
+            $updateData['status_approval'] = 'pending';
+            $updateData['butuh_verifikasi'] = true;
         }
 
         $barang->update($updateData);
 
-        if ($request->has('id_kategori')) {
-            $barang->id_kategori = $request->id_kategori;
-            $barang->save();
-        }
-
+        // Handle photo upload (counts as data change)
         if ($request->hasFile('foto_barang')) {
             if ($barang->foto_barang && \Storage::disk('public')->exists($barang->foto_barang)) {
                 \Storage::disk('public')->delete($barang->foto_barang);
             }
             $path = $request->file('foto_barang')->store('barang', 'public');
             $barang->foto_barang = $path;
+
+            // Photo change on approved item also triggers re-approval
+            if ($wasApproved) {
+                $barang->status_approval = 'pending';
+                $barang->butuh_verifikasi = true;
+            }
             $barang->save();
+        }
+
+        $message = 'Barang berhasil diperbarui';
+        if ($wasApproved && ($dataFieldsChanged || $request->hasFile('foto_barang'))) {
+            $message = 'Barang berhasil diperbarui. Karena ada perubahan data, barang akan ditinjau ulang oleh admin.';
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Barang berhasil diupdate',
-            'data' => $barang
+            'message' => $message,
+            'data' => $barang->fresh()->load('kategori')
         ]);
     }
 

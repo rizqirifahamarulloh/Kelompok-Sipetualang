@@ -1,5 +1,6 @@
-import { Store, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Store, Search, Minus, Plus, X, ShoppingCart, Check } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function KatalogProduk({
   filteredBarang,
@@ -8,8 +9,29 @@ export default function KatalogProduk({
   setSelectedKategori,
   searchTerm,
   setSearchTerm,
-  getImageUrl
+  getImageUrl,
+  cartItems = [],
+  onAddToCart,
+  onRemoveFromCart,
+  onUpdateQuantity
 }) {
+  const navigate = useNavigate();
+  const [addedFeedback, setAddedFeedback] = useState(null);
+
+  // Check if item is already in cart
+  const isInCart = (idBarang) => {
+    return cartItems.some(item => item.id_barang === idBarang);
+  };
+
+  // Handle add to cart with visual feedback
+  const handleAddToCart = (barang) => {
+    if (onAddToCart) {
+      onAddToCart(barang);
+      setAddedFeedback(barang.id_barang);
+      setTimeout(() => setAddedFeedback(null), 1500);
+    }
+  };
+
   return (
     <section className="max-w-[1240px] mx-auto px-6 pt-12 pb-24 font-sans antialiased">
       {/* HEADER UTAMA SEKTOR */}
@@ -24,21 +46,20 @@ export default function KatalogProduk({
 
       {/* LAYOUT UTAMA: SIDEBAR (LEFT) + PRODUCT GRID (RIGHT) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* ================= LEFT SIDEBAR ================= */}
         <aside className="lg:col-span-3 flex flex-col gap-8">
-          
+
           {/* Box Kategori Menu */}
           <div className="bg-[#F8F9FA]/70 rounded-[20px] p-5 border border-gray-100">
             <h3 className="text-xs font-bold text-[#00A779] uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="text-sm">→</span> Kategori
             </h3>
             <div className="flex flex-col text-left">
-              <button 
+              <button
                 onClick={() => setSelectedKategori('')}
-                className={`w-full text-left text-xs py-2.5 px-2 font-bold rounded-lg transition-all ${
-                  selectedKategori === '' ? 'text-[#00A779] bg-emerald-50/50' : 'text-gray-700 hover:text-gray-950'
-                }`}
+                className={`w-full text-left text-xs py-2.5 px-2 font-bold rounded-lg transition-all ${selectedKategori === '' ? 'text-[#00A779] bg-emerald-50/50' : 'text-gray-700 hover:text-gray-950'
+                  }`}
               >
                 Semua Alat
               </button>
@@ -46,9 +67,8 @@ export default function KatalogProduk({
                 <button
                   key={kat.id_kategori}
                   onClick={() => setSelectedKategori(kat.id_kategori)}
-                  className={`w-full text-left text-xs py-2.5 px-2 font-bold border-t border-gray-100/70 transition-all ${
-                    selectedKategori === kat.id_kategori ? 'text-[#00A779] bg-emerald-50/50' : 'text-gray-600 hover:text-gray-950'
-                  }`}
+                  className={`w-full text-left text-xs py-2.5 px-2 font-bold border-t border-gray-100/70 transition-all ${selectedKategori === kat.id_kategori ? 'text-[#00A779] bg-emerald-50/50' : 'text-gray-600 hover:text-gray-950'
+                    }`}
                 >
                   {kat.nama_kategori}
                 </button>
@@ -95,14 +115,14 @@ export default function KatalogProduk({
 
         {/* ================= RIGHT MAIN CATALOG ================= */}
         <main className="lg:col-span-9">
-          
+
           {/* Top Bar Meta Grid (Jumlah baris & Search Input internal) */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <span className="text-[11px] font-semibold text-gray-400 self-start sm:self-auto">
               Showing 1–{filteredBarang.length} of {filteredBarang.length} results
             </span>
             <div className="relative w-full sm:w-64">
-              <input 
+              <input
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
@@ -121,55 +141,215 @@ export default function KatalogProduk({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10">
-             {filteredBarang.map((barang) => (
-  <div key={barang.id_barang} className="flex flex-col text-center relative group">
-    
-    {/* CONTAINER GAMBAR DENGAN CEKUNGAN PUTIH (Persis image_ea65c9.jpg) */}
-    <div className="relative aspect-[10/11] w-full rounded-[24px] bg-[#E9ECEF]/60 overflow-hidden flex items-center justify-center p-6 pb-8">
-      <img
-        src={getImageUrl(barang)}
-        alt={barang.nama_barang}
-        className="max-h-[80%] max-w-[85%] object-contain object-center transform group-hover:scale-105 transition-transform duration-500"
-      />
+              {filteredBarang.map((barang) => (
+                <div
+                  key={barang.id_barang}
+                  className="flex flex-col text-center relative group cursor-pointer"
+                  onClick={() => navigate(`/barang/${barang.id_barang}`)}
+                >
 
-      {/* Badge Rekomendasi */}
-      <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide">
-        Recomended
-      </span>
+                  {/* CONTAINER GAMBAR DENGAN CEKUNGAN PUTIH */}
+                  <div className="relative aspect-[10/11] w-full rounded-[24px] bg-[#E9ECEF]/60 overflow-hidden flex items-center justify-center p-6 pb-8">
+                    <img
+                      src={getImageUrl(barang)}
+                      alt={barang.nama_barang}
+                      className="max-h-[80%] max-w-[85%] object-contain object-center transform group-hover:scale-105 transition-transform duration-500"
+                    />
 
-      {/* CEKUNGAN PUTIH + TOMBOL KERANJANG DI TENGAH (Sudah rapi, tidak bocor keluar) */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white w-16 h-8 rounded-t-[20px] flex items-center justify-center">
-        <Link 
-          to={`/barang/${barang.id_barang}`}
-          className="absolute -top-3 w-10 h-10 bg-[#00A779] hover:bg-[#008f68] text-white rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,167,121,0.2)] transition-transform active:scale-95 no-underline"
-        >
-          <span className="text-sm">🛒</span>
-        </Link>
-      </div>
-    </div>
+                    {/* Badge Rekomendasi */}
+                    <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide">
+                      Recomended
+                    </span>
 
-    {/* DETAIL TEKS BAWAH (Harga & Nama Toko Tetap Ada!) */}
-    <div className="mt-4 flex flex-col items-center gap-1">
-      <h3 className="font-bold text-gray-900 text-sm tracking-tight">
-        {barang.nama_barang}
-      </h3>
-      <p className="text-xs font-semibold text-gray-500/90 mb-0.5">
-        Rp {Number(barang.harga_sewa).toLocaleString()} <span className="font-normal text-gray-400">/ Hari</span>
-      </p>
-      
-      {/* NAMA TOKO AMAN & TETAP DITAMPILKAN */}
-      <Link 
-        to={`/toko/${barang.id_pemilik}`} 
-        className="text-[10px] text-gray-400 font-medium flex items-center gap-1 no-underline hover:text-emerald-500 transition-colors"
-      >
-        <Store className="w-2.5 h-2.5" />
-        <span>{barang.pemilik?.nama || 'SiPetualang'}</span>
-      </Link>
-    </div>
+                    {/* Badge sudah di keranjang */}
+                    {isInCart(barang.id_barang) && (
+                      <span className="absolute top-4 right-4 bg-emerald-500 text-[9px] font-bold text-white px-2 py-1 rounded-full tracking-wide flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Di Keranjang
+                      </span>
+                    )}
 
-  </div>
-))} 
-</div>
+                    {/* CEKUNGAN PUTIH + TOMBOL KERANJANG DI TENGAH */}
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white w-16 h-8 rounded-t-[20px] flex items-center justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(barang);
+                        }}
+                        className={`absolute -top-3 w-10 h-10 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,167,121,0.2)] transition-all active:scale-95 border-none cursor-pointer ${
+                          addedFeedback === barang.id_barang
+                            ? 'bg-emerald-600 scale-110'
+                            : isInCart(barang.id_barang)
+                              ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                              : 'bg-[#00A779] hover:bg-[#008f68] text-white'
+                        }`}
+                      >
+                        {addedFeedback === barang.id_barang ? (
+                          <Check className="w-5 h-5 text-white" />
+                        ) : (
+                          <span className="text-sm">🛒</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* DETAIL TEKS BAWAH (Harga & Nama Toko Tetap Ada!) */}
+                  <div className="mt-4 flex flex-col items-center gap-1">
+                    <h3 className="font-bold text-gray-900 text-sm tracking-tight">
+                      {barang.nama_barang}
+                    </h3>
+                    <p className="text-xs font-semibold text-gray-500/90 mb-0.5">
+                      Rp {Number(barang.harga_sewa).toLocaleString()} <span className="font-normal text-gray-400">/ Hari</span>
+                    </p>
+
+                    {/* Badge minimum durasi sewa */}
+                    {(barang.min_durasi_sewa || 1) > 1 && (
+                      <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                        📅 Min. {barang.min_durasi_sewa} hari
+                      </span>
+                    )}
+
+                    {/* NAMA TOKO AMAN & TETAP DITAMPILKAN */}
+                    <Link
+                      to={`/toko/${barang.id_pemilik}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[10px] text-gray-400 font-medium flex items-center gap-1 no-underline hover:text-emerald-500 transition-colors"
+                    >
+                      <Store className="w-2.5 h-2.5" />
+                      <span>{barang.pemilik?.nama || 'SiPetualang'}</span>
+                    </Link>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ================= INLINE CART SUMMARY ================= */}
+          {cartItems.length > 0 && (
+            <div className="mt-16">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#00A779] rounded-full flex items-center justify-center">
+                    <ShoppingCart className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-extrabold text-gray-900">Keranjang Saya</h3>
+                    <p className="text-xs text-gray-400">{cartItems.length} item ditambahkan</p>
+                  </div>
+                </div>
+                <Link
+                  to="/customer/cart"
+                  className="text-xs font-bold text-[#00A779] hover:text-emerald-700 no-underline transition-colors"
+                >
+                  Lihat Keranjang →
+                </Link>
+              </div>
+
+              <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden">
+                {/* Table Header */}
+                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-[#F8F9FA] border-b border-gray-100">
+                  <div className="col-span-1"></div>
+                  <div className="col-span-1"></div>
+                  <div className="col-span-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Produk</div>
+                  <div className="col-span-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Harga</div>
+                  <div className="col-span-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Jumlah</div>
+                  <div className="col-span-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Subtotal</div>
+                </div>
+
+                {/* Cart Items */}
+                {cartItems.map((item, index) => (
+                  <div
+                    key={item.id_cart}
+                    className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-6 py-5 transition-colors hover:bg-gray-50/50 ${
+                      index < cartItems.length - 1 ? 'border-b border-gray-100' : ''
+                    }`}
+                  >
+                    {/* Remove Button */}
+                    <div className="md:col-span-1 flex items-center">
+                      <button
+                        onClick={() => onRemoveFromCart && onRemoveFromCart(item.id_cart)}
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-50 flex items-center justify-center transition-colors group/remove border-none cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5 text-gray-400 group-hover/remove:text-red-500 transition-colors" />
+                      </button>
+                    </div>
+
+                    {/* Product Image */}
+                    <div className="md:col-span-1">
+                      <div className="w-14 h-14 rounded-xl bg-[#F1F3F5] overflow-hidden flex items-center justify-center">
+                        <img
+                          src={getImageUrl(item)}
+                          alt={item.nama_barang}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = 'https://via.placeholder.com/60'; }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Product Name */}
+                    <div className="md:col-span-3">
+                      <h4 className="text-sm font-bold text-gray-800">{item.nama_barang}</h4>
+                    </div>
+
+                    {/* Price */}
+                    <div className="md:col-span-2 text-center">
+                      <p className="text-sm font-semibold text-gray-500">
+                        Rp {Number(item.harga_sewa).toLocaleString()}
+                      </p>
+                    </div>
+
+                    {/* Quantity Controls */}
+                    <div className="md:col-span-3 flex items-center justify-center">
+                      <div className="flex items-center border border-gray-200 rounded-full overflow-hidden">
+                        <button
+                          onClick={() => onUpdateQuantity && onUpdateQuantity(item.id_cart, item.jumlah - 1)}
+                          disabled={item.jumlah <= 1}
+                          className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 border-none bg-transparent cursor-pointer"
+                        >
+                          <Minus className="w-3 h-3 text-gray-500" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-bold text-gray-800">{item.jumlah}</span>
+                        <button
+                          onClick={() => onUpdateQuantity && onUpdateQuantity(item.id_cart, item.jumlah + 1)}
+                          className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 transition-colors border-none bg-transparent cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3 text-gray-500" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Subtotal */}
+                    <div className="md:col-span-2 text-right">
+                      <p className="text-sm font-extrabold text-gray-900">
+                        Rp {(Number(item.harga_sewa) * item.jumlah).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Cart Footer - Total */}
+                <div className="px-6 py-5 bg-[#F8F9FA] border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-gray-500">{cartItems.length} item</span>
+                      <Link
+                        to="/customer/cart"
+                        className="bg-[#00A779] hover:bg-[#008f68] text-white text-xs font-bold py-2.5 px-5 rounded-full no-underline transition-colors inline-flex items-center gap-2"
+                      >
+                        <ShoppingCart className="w-3.5 h-3.5" />
+                        Lihat Keranjang
+                      </Link>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400 mb-0.5">Total Sementara</p>
+                      <p className="text-xl font-extrabold text-gray-900">
+                        Rp {cartItems.reduce((sum, item) => sum + (Number(item.harga_sewa) * item.jumlah), 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* ================= PAGINATION NAV ================= */}

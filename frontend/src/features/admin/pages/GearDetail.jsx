@@ -186,6 +186,11 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
           <div>
             <h2 className="text-2xl font-bold mb-1">{gear.nama_barang}</h2>
             <p className="text-2xl font-bold text-emerald-700">{formatHarga(gear.harga_sewa)}<span className="text-sm font-normal text-gray-400"> / hari</span></p>
+            {(gear.min_durasi_sewa || 1) > 1 && (
+              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                📅 Minimum sewa: <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">{gear.min_durasi_sewa} hari</span>
+              </p>
+            )}
           </div>
 
           <p className="text-sm text-gray-500 leading-relaxed">{gear.deskripsi || "Tidak ada deskripsi."}</p>

@@ -21,6 +21,37 @@ export default function Navbar() {
   const location = useLocation()
 
   const [unreadChats, setUnreadChats] = useState(0)
+  const [cartCount, setCartCount] = useState(0)
+
+  // CART COUNT - membaca jumlah item dari localStorage
+  useEffect(() => {
+    const updateCartCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('rental_cart') || '[]')
+        setCartCount(cart.length)
+      } catch {
+        setCartCount(0)
+      }
+    }
+
+    // Initial load
+    updateCartCount()
+
+    // Listen for storage changes (cross-tab)
+    window.addEventListener('storage', updateCartCount)
+
+    // Listen for custom event (same-tab updates)
+    window.addEventListener('cart-updated', updateCartCount)
+
+    // Polling fallback setiap 2 detik
+    const interval = setInterval(updateCartCount, 2000)
+
+    return () => {
+      window.removeEventListener('storage', updateCartCount)
+      window.removeEventListener('cart-updated', updateCartCount)
+      clearInterval(interval)
+    }
+  }, [])
 
   // Chat Popup States
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -274,7 +305,7 @@ export default function Navbar() {
       is_read: false
     }
     setChatMessages(prev => [...prev, tempMsg])
-    
+
     setTimeout(() => {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, 50)
@@ -351,8 +382,13 @@ export default function Navbar() {
         </ul>
 
         <div className="flex gap-2 items-center max-md:hidden">
-          <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart" onClick={handleCartClick}>
+          <button className="relative bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart" onClick={handleCartClick}>
             <img src={cartIcon} alt="Cart" className="w-5 h-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] px-1 items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full border-2 border-black pointer-events-none shadow-lg">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
           </button>
           <NotificationBell variant="navbar" additionalNotifications={rentalNotifications} />
 
@@ -443,15 +479,14 @@ export default function Navbar() {
                               const myId = user.id || user.id_pengguna
                               const isMe = msg.id_sender === myId
                               return (
-                                <div 
-                                  key={msg.id_message} 
+                                <div
+                                  key={msg.id_message}
                                   className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                                 >
-                                  <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-xs shadow-sm ${
-                                    isMe 
-                                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-none' 
+                                  <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-xs shadow-sm ${isMe
+                                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-none'
                                       : 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-none'
-                                  }`}>
+                                    }`}>
                                     <p className="leading-relaxed break-words">{msg.message}</p>
                                     <span className={`text-[8px] block text-right mt-1 ${isMe ? 'text-emerald-100' : 'text-slate-400'}`}>
                                       {new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
@@ -470,8 +505,8 @@ export default function Navbar() {
                         {/* Search bar inside popup */}
                         <div className="p-3 border-b border-slate-100 dark:border-slate-900 bg-white dark:bg-slate-900 flex items-center relative">
                           <Search className="size-3.5 absolute left-6 text-slate-400" />
-                          <input 
-                            placeholder="Cari percakapan..." 
+                          <input
+                            placeholder="Cari percakapan..."
                             className="h-8 w-full rounded-lg pl-8 text-xs bg-slate-50 dark:bg-slate-950 border-none outline-none px-3 py-2"
                             value={chatSearch}
                             onChange={(e) => setChatSearch(e.target.value)}
@@ -525,19 +560,19 @@ export default function Navbar() {
 
                   {/* QUICK REPLY FOOTER */}
                   {activeChatId && (
-                    <form 
+                    <form
                       onSubmit={handleSendQuickMessage}
                       className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-2 items-center"
                     >
-                      <input 
+                      <input
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
-                        placeholder="Ketik pesan..." 
+                        placeholder="Ketik pesan..."
                         className="flex-1 h-9 rounded-xl text-xs bg-slate-50 border-none dark:bg-slate-950 px-3 py-2 outline-none"
                         disabled={sendingMsg}
                       />
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         disabled={sendingMsg || !chatInput.trim()}
                         className="size-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 shadow-md border-none flex items-center justify-center cursor-pointer disabled:opacity-50"
                       >
@@ -676,8 +711,13 @@ export default function Navbar() {
               ))}
             </ul>
             <div className="flex flex-wrap gap-4 px-[30px] pb-6">
-              <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart" onClick={handleCartClick}>
+              <button className="relative bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart" onClick={handleCartClick}>
                 <img src={cartIcon} alt="Cart" className="w-5 h-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] px-1 items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full border-2 border-black pointer-events-none shadow-lg">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
               </button>
               <NotificationBell variant="navbar" additionalNotifications={rentalNotifications} />
 

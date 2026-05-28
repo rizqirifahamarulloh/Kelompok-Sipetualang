@@ -8,7 +8,6 @@ import {
   Shield, 
   User,
   Package,
-  CreditCard,
   Mail,
   Phone,
   MapPin,
@@ -23,7 +22,6 @@ export default function Sidebar({ user, isKtpVerified, getPhotoUrl, getInitials 
   const menuItems = [
     { name: 'Profil Saya', path: '/profile', icon: <User size={16} /> },
     { name: 'Penyewaan Saya', path: '/profile/rentals', icon: <Package size={16} /> },
-    { name: 'Transaksi', path: '/profile/transactions', icon: <CreditCard size={16} /> },
     { name: 'Status Pengiriman', path: '/profile/pengiriman', icon: <Truck size={16} /> },
     { name: 'Verifikasi', path: '/customer/verification', icon: <Shield size={16} /> },
   ];

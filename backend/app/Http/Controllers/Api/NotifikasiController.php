@@ -118,6 +118,7 @@ class NotifikasiController extends Controller
     {
         $this->upsertVerificationNotification($user);
         $this->upsertTransactionNotifications($user);
+        $this->syncBarangNotifications($user);
     }
 
     private function syncAdminNotifications($user)
@@ -161,6 +162,100 @@ class NotifikasiController extends Controller
                 'data' => ['id_verifikasi' => $v->id_verifikasi],
             ]);
         }
+
+        // Barang pending approval — admin needs to review
+        $pendingBarang = Barang::with('pemilik')
+            ->where('status_approval', 'pending')
+            ->get();
+
+        foreach ($pendingBarang as $b) {
+            $namaPemilik = $b->pemilik ? $b->pemilik->nama : 'Perental';
+            $this->upsertNotification($user, 'admin_barang_pending_' . $b->id_barang, [
+                'type' => 'barang_approval',
+                'title' => 'Barang Baru Menunggu Persetujuan',
+                'message' => "Barang '{$b->nama_barang}' dari {$namaPemilik} menunggu peninjauan dan persetujuan Anda.",
+                'severity' => 'warning',
+                'data' => ['id_barang' => $b->id_barang, 'nama_barang' => $b->nama_barang],
+            ]);
+        }
+
+        // Remove admin pending notifications for barang that are no longer pending
+        $nonPendingKeys = Barang::whereIn('status_approval', ['disetujui', 'ditolak'])
+            ->pluck('id_barang')
+            ->map(fn($id) => 'admin_barang_pending_' . $id)->toArray();
+
+        if (!empty($nonPendingKeys)) {
+            Notifikasi::where('id_pengguna', $user->id_pengguna)
+                ->whereIn('unique_key', $nonPendingKeys)
+                ->where('is_dismissed', false)
+                ->delete();
+        }
+    }
+
+    /**
+     * Sync barang (item) notifications for rental owners (customers with rental role).
+     * Notifies when their items are approved, rejected, pending re-approval, etc.
+     */
+    private function syncBarangNotifications($user)
+    {
+        // Get all barang owned by this user
+        $myBarang = Barang::where('id_pemilik', $user->id_pengguna)->get();
+
+        foreach ($myBarang as $b) {
+            $uniqueKey = 'barang_status_' . $b->id_barang . '_' . $b->status_approval;
+
+            if ($b->status_approval === 'disetujui') {
+                $this->upsertNotification($user, $uniqueKey, [
+                    'type' => 'barang_status',
+                    'title' => '✅ Barang Disetujui Admin',
+                    'message' => "Barang '{$b->nama_barang}' telah disetujui oleh admin dan sekarang tampil di katalog sewa untuk disewa oleh customer.",
+                    'severity' => 'success',
+                    'data' => ['id_barang' => $b->id_barang, 'status_approval' => 'disetujui'],
+                ]);
+
+                // Clean up old pending/rejected notifications for this item
+                $this->cleanupOldBarangNotifications($user, $b->id_barang, ['pending', 'ditolak']);
+
+            } elseif ($b->status_approval === 'ditolak') {
+                $this->upsertNotification($user, $uniqueKey, [
+                    'type' => 'barang_status',
+                    'title' => '❌ Barang Ditolak Admin',
+                    'message' => "Barang '{$b->nama_barang}' ditolak oleh admin. Silakan perbarui data barang dan ajukan kembali melalui menu Kelola Barang.",
+                    'severity' => 'danger',
+                    'data' => ['id_barang' => $b->id_barang, 'status_approval' => 'ditolak'],
+                ]);
+
+                // Clean up old pending/approved notifications for this item
+                $this->cleanupOldBarangNotifications($user, $b->id_barang, ['pending', 'disetujui']);
+
+            } elseif ($b->status_approval === 'pending') {
+                $this->upsertNotification($user, $uniqueKey, [
+                    'type' => 'barang_status',
+                    'title' => '⏳ Barang Menunggu Peninjauan',
+                    'message' => "Barang '{$b->nama_barang}' sedang menunggu peninjauan admin. Anda akan diberitahu saat admin menyetujui atau menolaknya.",
+                    'severity' => 'warning',
+                    'data' => ['id_barang' => $b->id_barang, 'status_approval' => 'pending'],
+                ]);
+
+                // Clean up old approved/rejected notifications for this item
+                $this->cleanupOldBarangNotifications($user, $b->id_barang, ['disetujui', 'ditolak']);
+            }
+        }
+    }
+
+    /**
+     * Clean up outdated barang status notifications when status changes.
+     */
+    private function cleanupOldBarangNotifications($user, $idBarang, array $oldStatuses)
+    {
+        $keysToRemove = array_map(
+            fn($status) => 'barang_status_' . $idBarang . '_' . $status,
+            $oldStatuses
+        );
+
+        Notifikasi::where('id_pengguna', $user->id_pengguna)
+            ->whereIn('unique_key', $keysToRemove)
+            ->delete();
     }
 
     private function upsertVerificationNotification($user)

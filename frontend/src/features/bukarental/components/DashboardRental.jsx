@@ -84,6 +84,7 @@ export default function DashboardRental() {
     nama_barang: '',
     deskripsi: '',
     harga_sewa: '',
+    min_durasi_sewa: 1,
     nominal_deposit: '',
     jumlah_stok: '',
     id_kategori: '',
@@ -98,6 +99,7 @@ export default function DashboardRental() {
     nama_barang: '',
     deskripsi: '',
     harga_sewa: '',
+    min_durasi_sewa: 1,
     nominal_deposit: '',
     jumlah_stok: '',
     id_kategori: '',
@@ -472,6 +474,7 @@ export default function DashboardRental() {
       formData.append('nama_barang', addForm.nama_barang)
       formData.append('deskripsi', addForm.deskripsi)
       formData.append('harga_sewa', addForm.harga_sewa)
+      formData.append('min_durasi_sewa', addForm.min_durasi_sewa || 1)
       formData.append('nominal_deposit', addForm.nominal_deposit || 0)
       formData.append('jumlah_stok', addForm.jumlah_stok)
       formData.append('id_kategori', addForm.id_kategori)
@@ -494,6 +497,7 @@ export default function DashboardRental() {
           nama_barang: '',
           deskripsi: '',
           harga_sewa: '',
+          min_durasi_sewa: 1,
           nominal_deposit: '',
           jumlah_stok: '',
           id_kategori: '',
@@ -517,6 +521,7 @@ export default function DashboardRental() {
       nama_barang: gear.nama_barang || '',
       deskripsi: gear.deskripsi || '',
       harga_sewa: gear.harga_sewa || '',
+      min_durasi_sewa: gear.min_durasi_sewa || 1,
       nominal_deposit: gear.nominal_deposit || '',
       jumlah_stok: gear.jumlah_stok || '',
       id_kategori: gear.id_kategori || '',
@@ -539,8 +544,14 @@ export default function DashboardRental() {
   const handleEditSubmit = async (e) => {
     e.preventDefault()
     
-    if (!editForm.nama_barang || !editForm.harga_sewa || !editForm.jumlah_stok || !editForm.id_kategori) {
+    if (!editForm.nama_barang || !editForm.harga_sewa || !editForm.id_kategori) {
       toast.error('Harap isi semua kolom wajib!')
+      return
+    }
+
+    // Validate stock is non-negative
+    if (editForm.jumlah_stok === '' || Number(editForm.jumlah_stok) < 0) {
+      toast.error('Jumlah stok tidak boleh kosong atau negatif!')
       return
     }
 
@@ -550,6 +561,7 @@ export default function DashboardRental() {
       formData.append('nama_barang', editForm.nama_barang)
       formData.append('deskripsi', editForm.deskripsi)
       formData.append('harga_sewa', editForm.harga_sewa)
+      formData.append('min_durasi_sewa', editForm.min_durasi_sewa || 1)
       formData.append('nominal_deposit', editForm.nominal_deposit || 0)
       formData.append('jumlah_stok', editForm.jumlah_stok)
       formData.append('id_kategori', editForm.id_kategori)
@@ -566,7 +578,13 @@ export default function DashboardRental() {
       })
 
       if (res.data.success) {
-        toast.success('Barang berhasil diperbarui!')
+        // Show appropriate message based on backend response
+        const successMsg = res.data.message || 'Barang berhasil diperbarui!'
+        if (successMsg.includes('ditinjau ulang')) {
+          toast.warning(successMsg, { duration: 5000 })
+        } else {
+          toast.success(successMsg)
+        }
         setEditModalOpen(false)
         fetchGears()
       }
@@ -787,215 +805,6 @@ export default function DashboardRental() {
               <p className="text-sm text-muted-foreground">
                 Kelola barang sewa, transaksi customer, dan pantau performa bisnis Anda secara dinamis.
               </p>
-            </div>
-
-            {/* Action Controls */}
-            <div className="flex items-center gap-3">
-
-              {/* Tambah Barang Shortcut */}
-              <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-emerald-600 text-white px-5 h-11 rounded-xl font-medium hover:bg-emerald-700 transition shadow-md border-none flex items-center gap-2">
-                    <Plus className="size-4" />
-                    Tambah Barang
-                  </Button>
-                </DialogTrigger>
-                
-                {/* Form Tambah Barang */}
-                <DialogContent className="max-w-lg rounded-2xl bg-white dark:bg-slate-900 border">
-                  <form onSubmit={handleAddSubmit}>
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold">Ajukan Barang Baru</DialogTitle>
-                      <DialogDescription>
-                        Isi detail barang outdoor Anda. Admin akan meninjau dan menyetujuinya agar tampil di halaman pencarian sewa.
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="grid gap-4 py-4">
-                      {/* Nama Barang */}
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="add_nama" className="text-right font-medium">Nama Alat*</Label>
-                        <Input 
-                          id="add_nama" 
-                          placeholder="Contoh: Tenda Dome Eiger 4P" 
-                          className="col-span-3 rounded-lg"
-                          required 
-                          value={addForm.nama_barang}
-                          onChange={(e) => setAddForm(prev => ({ ...prev, nama_barang: e.target.value }))}
-                        />
-                      </div>
-
-                      {/* Kategori */}
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="add_kat" className="text-right font-medium">Kategori*</Label>
-                        <select 
-                          id="add_kat" 
-                          className="col-span-3 rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus:ring-1 focus:ring-emerald-500 dark:bg-slate-800"
-                          required
-                          value={addForm.id_kategori}
-                          onChange={(e) => setAddForm(prev => ({ ...prev, id_kategori: e.target.value }))}
-                        >
-                          <option value="">Pilih Kategori</option>
-                          {categories.map(c => (
-                            <option key={c.id_kategori} value={c.id_kategori}>
-                              {c.nama_kategori}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Harga Sewa */}
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="add_harga" className="text-right font-medium">Harga / Hari*</Label>
-                        <Input 
-                          id="add_harga" 
-                          type="number"
-                          placeholder="Contoh: 50000" 
-                          className="col-span-3 rounded-lg"
-                          required 
-                          value={addForm.harga_sewa}
-                          onChange={(e) => {
-                            const harga = e.target.value;
-                            const deposit = harga ? Math.round(Number(harga) * 0.2) : '';
-                            setAddForm(prev => ({ 
-                              ...prev, 
-                              harga_sewa: harga,
-                              nominal_deposit: deposit
-                            }));
-                          }}
-                        />
-                      </div>
-
-                      {/* Nominal Deposit */}
-                      <div className="grid grid-cols-4 items-start gap-4">
-                        <Label htmlFor="add_deposit" className="text-right font-medium mt-2">Deposit</Label>
-                        <div className="col-span-3">
-                          <Input 
-                            id="add_deposit" 
-                            type="number"
-                            placeholder="Otomatis 20% dari Harga" 
-                            className="rounded-lg bg-slate-50 border-slate-200 text-slate-500 font-semibold"
-                            value={addForm.nominal_deposit}
-                            readOnly
-                          />
-                          <p className="text-[11px] text-emerald-600 mt-1.5 leading-snug font-semibold">
-                            ✨ Deposit dihitung otomatis sebesar 20% dari Harga Sewa Harian (Refundable untuk customer).
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Jumlah Stok */}
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="add_stok" className="text-right font-medium">Jumlah Stok*</Label>
-                        <Input 
-                          id="add_stok" 
-                          type="number"
-                          placeholder="Contoh: 5" 
-                          className="col-span-3 rounded-lg"
-                          required 
-                          value={addForm.jumlah_stok}
-                          onChange={(e) => setAddForm(prev => ({ ...prev, jumlah_stok: e.target.value }))}
-                        />
-                      </div>
-
-                      {/* Deskripsi */}
-                      <div className="grid grid-cols-4 items-start gap-4">
-                        <Label htmlFor="add_desc" className="text-right font-medium mt-2">Deskripsi</Label>
-                        <textarea 
-                          id="add_desc" 
-                          placeholder="Jelaskan spesifikasi, kondisi, dan kelengkapan alat outdoor Anda..." 
-                          rows={3}
-                          className="col-span-3 rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus:ring-1 focus:ring-emerald-500"
-                          value={addForm.deskripsi}
-                          onChange={(e) => setAddForm(prev => ({ ...prev, deskripsi: e.target.value }))}
-                        />
-                      </div>
-
-                      {/* Metode Penyerahan ke Gudang */}
-                      <div className="grid grid-cols-4 items-start gap-4">
-                        <Label className="text-right font-medium mt-2">Penyerahan Barang*</Label>
-                        <div className="col-span-3 space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <button
-                              type="button"
-                              onClick={() => setAddForm(prev => ({ ...prev, metode_penyerahan: 'pickup', no_resi_penyerahan: '' }))}
-                              className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
-                                addForm.metode_penyerahan === 'pickup'
-                                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
-                                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                              }`}
-                            >
-                              <Store className="size-4" /> Datang ke Gudang
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => setAddForm(prev => ({ ...prev, metode_penyerahan: 'delivery' }))}
-                              className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
-                                addForm.metode_penyerahan === 'delivery'
-                                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
-                                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                              }`}
-                            >
-                              <Truck className="size-4" /> Kirim via Kurir (Delivery)
-                            </button>
-                          </div>
-
-                          {addForm.metode_penyerahan === 'delivery' && (
-                            <div className="space-y-1.5 animate-fade-in">
-                              <Input
-                                type="text"
-                                placeholder="Masukkan nama kurir & nomor resi pengiriman (Contoh: JNE - 123456789)"
-                                className="rounded-lg text-xs"
-                                value={addForm.no_resi_penyerahan}
-                                onChange={(e) => setAddForm(prev => ({ ...prev, no_resi_penyerahan: e.target.value }))}
-                                required={addForm.metode_penyerahan === 'delivery'}
-                              />
-                            </div>
-                          )}
-
-                          <div className="bg-slate-50 p-3 rounded-xl text-[10px] text-slate-500 border border-dashed leading-relaxed">
-                            💡 <strong>Gudang SiPetualang:</strong> Jl. Petualang No. 100, Bandung. Barang harus diserahkan/dikirimkan ke gudang untuk diverifikasi admin sebelum alat sewa dipublikasikan secara live di katalog.
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Upload Foto */}
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="add_foto" className="text-right font-medium">Foto Barang</Label>
-                        <div className="col-span-3 flex items-center gap-3">
-                          <label 
-                            htmlFor="add_foto"
-                            className="flex items-center gap-2 cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-lg border border-dashed border-gray-300 text-xs font-semibold transition"
-                          >
-                            <Upload className="size-4" />
-                            Pilih Foto
-                          </label>
-                          <input 
-                            id="add_foto" 
-                            type="file" 
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleAddPhotoChange}
-                          />
-                          {addPhotoPreview && (
-                            <img 
-                              src={addPhotoPreview} 
-                              alt="Preview" 
-                              className="size-12 rounded-lg object-cover border" 
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <DialogFooter>
-                      <Button type="button" variant="ghost" onClick={() => setAddModalOpen(false)}>Batal</Button>
-                      <Button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700">Kirim Pengajuan</Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
 
@@ -1359,7 +1168,17 @@ export default function DashboardRental() {
                                       {trx.penyewa?.nama || 'Customer'}
                                     </button>
                                   </TableCell>
-                                  <TableCell>{trx.nama_barang}</TableCell>
+                                  <TableCell>
+                                    {trx.detail_transaksi && trx.detail_transaksi.length > 0 ? (
+                                      <div className="space-y-0.5">
+                                        {trx.detail_transaksi.map((d, i) => (
+                                          <div key={d.id_detail || i} className="text-xs">
+                                            {d.nama_barang || d.barang?.nama_barang} ({d.jumlah_pinjam}x)
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : trx.nama_barang}
+                                  </TableCell>
                                   <TableCell className="text-xs">
                                     <div className="font-medium">{trx.total_hari} Hari</div>
                                     <div className="text-[10px] text-muted-foreground">{trx.tanggal_mulai} s/d {trx.tanggal_selesai}</div>
@@ -1443,6 +1262,7 @@ export default function DashboardRental() {
                               <TableHead className="font-bold">Nama Barang</TableHead>
                               <TableHead className="font-bold">Kategori</TableHead>
                               <TableHead className="font-bold">Harga Sewa / Hari</TableHead>
+                              <TableHead className="font-bold text-center">Min. Durasi</TableHead>
                               <TableHead className="font-bold text-center">Stok</TableHead>
                               <TableHead className="font-bold text-center">Status Barang</TableHead>
                               <TableHead className="font-bold text-center">Approval Admin</TableHead>
@@ -1479,6 +1299,11 @@ export default function DashboardRental() {
                                 <TableCell className="font-bold text-emerald-600">
                                   {formatRupiah(gear.harga_sewa)}
                                 </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline" className="text-xs font-bold">
+                                    {gear.min_durasi_sewa || 1} Hari
+                                  </Badge>
+                                </TableCell>
                                 <TableCell className="text-center font-bold">
                                   <span className={gear.jumlah_stok <= 1 ? 'text-red-500 font-extrabold' : ''}>
                                     {gear.jumlah_stok}
@@ -1500,14 +1325,13 @@ export default function DashboardRental() {
                                 </TableCell>
                                 <TableCell className="text-right pr-6 shrink-0">
                                   <div className="flex gap-2 justify-end">
-                                    {/* Edit hanya jika status barang belum disetujui / ditolak agar aman secara bisnis */}
+                                    {/* Edit diizinkan untuk semua status, perubahan data pada barang approved akan me-reset status ke pending */}
                                     <Button 
                                       onClick={() => openEditModal(gear)}
-                                      disabled={gear.status_approval === 'disetujui'}
                                       variant="outline" 
                                       size="icon" 
-                                      className="size-8 rounded-lg"
-                                      title={gear.status_approval === 'disetujui' ? 'Barang yang disetujui tidak dapat diubah' : 'Ubah Detail Barang'}
+                                      className="size-8 rounded-lg hover:border-emerald-500 hover:text-emerald-600"
+                                      title="Ubah Detail & Stok Barang"
                                     >
                                       <Edit className="size-3.5" />
                                     </Button>
@@ -1593,8 +1417,24 @@ export default function DashboardRental() {
                                   )}
                                 </TableCell>
                                 <TableCell>
-                                  <div className="font-semibold text-gray-800 leading-tight">{trx.nama_barang}</div>
-                                  <div className="text-[10px] text-muted-foreground mt-0.5">Jumlah Pinjam: {trx.jumlah} unit</div>
+                                  {trx.detail_transaksi && trx.detail_transaksi.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {trx.detail_transaksi.map((detail, idx) => (
+                                        <div key={detail.id_detail || idx} className="flex items-center gap-2">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                          <div>
+                                            <div className="font-semibold text-gray-800 leading-tight text-xs">{detail.nama_barang || detail.barang?.nama_barang}</div>
+                                            <div className="text-[10px] text-muted-foreground">{detail.jumlah_pinjam} unit × {formatRupiah(detail.harga_per_hari || detail.barang?.harga_sewa)}/hari</div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div className="font-semibold text-gray-800 leading-tight">{trx.nama_barang}</div>
+                                      <div className="text-[10px] text-muted-foreground mt-0.5">Jumlah Pinjam: {trx.jumlah} unit</div>
+                                    </>
+                                  )}
                                 </TableCell>
                                 <TableCell>
                                   <div className="font-bold">{trx.total_hari} Hari</div>
@@ -1661,16 +1501,250 @@ export default function DashboardRental() {
         </div>
       </div>
 
+      {/* Add Gear Modal */}
+      <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
+        <DialogContent className="max-w-lg rounded-2xl bg-white dark:bg-slate-900 border">
+          <form onSubmit={handleAddSubmit}>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">Ajukan Barang Baru</DialogTitle>
+              <DialogDescription>
+                Isi detail barang outdoor Anda. Admin akan meninjau dan menyetujuinya agar tampil di halaman pencarian sewa.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              {/* Nama Barang */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add_nama" className="text-right font-medium">Nama Alat*</Label>
+                <Input 
+                  id="add_nama" 
+                  placeholder="Contoh: Tenda Dome Eiger 4P" 
+                  className="col-span-3 rounded-lg"
+                  required 
+                  value={addForm.nama_barang}
+                  onChange={(e) => setAddForm(prev => ({ ...prev, nama_barang: e.target.value }))}
+                />
+              </div>
+
+              {/* Kategori */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add_kat" className="text-right font-medium">Kategori*</Label>
+                <select 
+                  id="add_kat" 
+                  className="col-span-3 rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus:ring-1 focus:ring-emerald-500 dark:bg-slate-800"
+                  required
+                  value={addForm.id_kategori}
+                  onChange={(e) => setAddForm(prev => ({ ...prev, id_kategori: e.target.value }))}
+                >
+                  <option value="">Pilih Kategori</option>
+                  {categories.map(c => (
+                    <option key={c.id_kategori} value={c.id_kategori}>
+                      {c.nama_kategori}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Harga Sewa */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add_harga" className="text-right font-medium">Harga / Hari*</Label>
+                <Input 
+                  id="add_harga" 
+                  type="number"
+                  placeholder="Contoh: 50000" 
+                  className="col-span-3 rounded-lg"
+                  required 
+                  value={addForm.harga_sewa}
+                  onChange={(e) => {
+                    const harga = e.target.value;
+                    const deposit = harga ? Math.round(Number(harga) * 0.2) : '';
+                    setAddForm(prev => ({ 
+                      ...prev, 
+                      harga_sewa: harga,
+                      nominal_deposit: deposit
+                    }));
+                  }}
+                />
+              </div>
+
+              {/* Nominal Deposit */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="add_deposit" className="text-right font-medium mt-2">Deposit</Label>
+                <div className="col-span-3">
+                  <Input 
+                    id="add_deposit" 
+                    type="number"
+                    placeholder="Otomatis 20% dari Harga" 
+                    className="rounded-lg bg-slate-50 border-slate-200 text-slate-500 font-semibold"
+                    value={addForm.nominal_deposit}
+                    readOnly
+                  />
+                  <p className="text-[11px] text-emerald-600 mt-1.5 leading-snug font-semibold">
+                    ✨ Deposit dihitung otomatis sebesar 20% dari Harga Sewa Harian (Refundable untuk customer).
+                  </p>
+                </div>
+              </div>
+
+              {/* Minimum Durasi Sewa */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="add_min_durasi" className="text-right font-medium mt-2">Min. Durasi Sewa*</Label>
+                <div className="col-span-3">
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      id="add_min_durasi" 
+                      type="number"
+                      min="1"
+                      placeholder="1" 
+                      className="rounded-lg w-24"
+                      required 
+                      value={addForm.min_durasi_sewa}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, min_durasi_sewa: parseInt(e.target.value) || 1 }))}
+                    />
+                    <span className="text-sm text-slate-500 font-medium">Hari</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
+                    📅 Customer harus menyewa minimal selama <strong className="text-emerald-600">{addForm.min_durasi_sewa || 1} hari</strong>. Set ke 1 jika tidak ada minimum.
+                  </p>
+                </div>
+              </div>
+
+              {/* Jumlah Stok */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add_stok" className="text-right font-medium">Jumlah Stok*</Label>
+                <Input 
+                  id="add_stok" 
+                  type="number"
+                  placeholder="Contoh: 5" 
+                  className="col-span-3 rounded-lg"
+                  required 
+                  value={addForm.jumlah_stok}
+                  onChange={(e) => setAddForm(prev => ({ ...prev, jumlah_stok: e.target.value }))}
+                />
+              </div>
+
+              {/* Deskripsi */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="add_desc" className="text-right font-medium mt-2">Deskripsi</Label>
+                <textarea 
+                  id="add_desc" 
+                  placeholder="Jelaskan spesifikasi, kondisi, dan kelengkapan alat outdoor Anda..." 
+                  rows={3}
+                  className="col-span-3 rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus:ring-1 focus:ring-emerald-500"
+                  value={addForm.deskripsi}
+                  onChange={(e) => setAddForm(prev => ({ ...prev, deskripsi: e.target.value }))}
+                />
+              </div>
+
+              {/* Metode Penyerahan ke Gudang */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label className="text-right font-medium mt-2">Penyerahan Barang*</Label>
+                <div className="col-span-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setAddForm(prev => ({ ...prev, metode_penyerahan: 'pickup', no_resi_penyerahan: '' }))}
+                      className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
+                        addForm.metode_penyerahan === 'pickup'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Store className="size-4" /> Datang ke Gudang
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setAddForm(prev => ({ ...prev, metode_penyerahan: 'delivery' }))}
+                      className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
+                        addForm.metode_penyerahan === 'delivery'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Truck className="size-4" /> Kirim via Kurir (Delivery)
+                    </button>
+                  </div>
+
+                  {addForm.metode_penyerahan === 'delivery' && (
+                    <div className="space-y-1.5 animate-fade-in">
+                      <Input
+                        type="text"
+                        placeholder="Masukkan nama kurir & nomor resi pengiriman (Contoh: JNE - 123456789)"
+                        className="rounded-lg text-xs"
+                        value={addForm.no_resi_penyerahan}
+                        onChange={(e) => setAddForm(prev => ({ ...prev, no_resi_penyerahan: e.target.value }))}
+                        required={addForm.metode_penyerahan === 'delivery'}
+                      />
+                    </div>
+                  )}
+
+                  <div className="bg-slate-50 p-3 rounded-xl text-[10px] text-slate-500 border border-dashed leading-relaxed">
+                    💡 <strong>Gudang SiPetualang:</strong> Jl. Petualang No. 100, Bandung. Barang harus diserahkan/dikirimkan ke gudang untuk diverifikasi admin sebelum alat sewa dipublikasikan secara live di katalog.
+                  </div>
+                </div>
+              </div>
+
+              {/* Upload Foto */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add_foto" className="text-right font-medium">Foto Barang</Label>
+                <div className="col-span-3 flex items-center gap-3">
+                  <label 
+                    htmlFor="add_foto"
+                    className="flex items-center gap-2 cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-lg border border-dashed border-gray-300 text-xs font-semibold transition"
+                  >
+                    <Upload className="size-4" />
+                    Pilih Foto
+                  </label>
+                  <input 
+                    id="add_foto" 
+                    type="file" 
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAddPhotoChange}
+                  />
+                  {addPhotoPreview && (
+                    <img 
+                      src={addPhotoPreview} 
+                      alt="Preview" 
+                      className="size-12 rounded-lg object-cover border" 
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setAddModalOpen(false)}>Batal</Button>
+              <Button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700">Kirim Pengajuan</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Gear Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="max-w-lg rounded-2xl bg-white dark:bg-slate-900 border">
           <form onSubmit={handleEditSubmit}>
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold">Ubah Detail Alat</DialogTitle>
+              <DialogTitle className="text-xl font-bold">Ubah Detail & Stok Alat</DialogTitle>
               <DialogDescription>
-                Sesuaikan informasi, harga sewa, atau unggah foto baru untuk peralatan Anda.
+                Sesuaikan informasi, harga sewa, stok barang, atau unggah foto baru untuk peralatan Anda.
               </DialogDescription>
             </DialogHeader>
+
+            {/* Warning for approved items */}
+            {selectedGear?.status_approval === 'disetujui' && (
+              <div className="mx-0 mt-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2">
+                <AlertCircle className="size-4 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-bold">Barang ini sudah disetujui admin</p>
+                  <p className="mt-0.5 text-amber-600 dark:text-amber-500 leading-relaxed">
+                    Mengubah <strong>stok</strong> tidak memerlukan persetujuan ulang.
+                    Namun jika Anda mengubah <strong>nama, harga, kategori, deskripsi, atau foto</strong>, barang akan kembali ke status <strong>"Pending"</strong> untuk ditinjau ulang oleh admin.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-4 py-4">
               {/* Nama Barang */}
@@ -1743,17 +1817,48 @@ export default function DashboardRental() {
                 </div>
               </div>
 
+              {/* Minimum Durasi Sewa */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit_min_durasi" className="text-right font-medium mt-2">Min. Durasi Sewa*</Label>
+                <div className="col-span-3">
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      id="edit_min_durasi" 
+                      type="number"
+                      min="1"
+                      placeholder="1" 
+                      className="rounded-lg w-24"
+                      required 
+                      value={editForm.min_durasi_sewa}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, min_durasi_sewa: parseInt(e.target.value) || 1 }))}
+                    />
+                    <span className="text-sm text-slate-500 font-medium">Hari</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
+                    📅 Customer harus menyewa minimal selama <strong className="text-emerald-600">{editForm.min_durasi_sewa || 1} hari</strong>. Set ke 1 jika tidak ada minimum.
+                  </p>
+                </div>
+              </div>
+
               {/* Jumlah Stok */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit_stok" className="text-right font-medium">Jumlah Stok*</Label>
-                <Input 
-                  id="edit_stok" 
-                  type="number"
-                  className="col-span-3 rounded-lg"
-                  required 
-                  value={editForm.jumlah_stok}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, jumlah_stok: e.target.value }))}
-                />
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit_stok" className="text-right font-medium mt-2">Jumlah Stok*</Label>
+                <div className="col-span-3">
+                  <Input 
+                    id="edit_stok" 
+                    type="number"
+                    min="0"
+                    className="rounded-lg"
+                    required 
+                    value={editForm.jumlah_stok}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, jumlah_stok: e.target.value }))}
+                  />
+                  {selectedGear?.status_approval === 'disetujui' && (
+                    <p className="text-[11px] text-emerald-600 mt-1.5 leading-snug font-semibold">
+                      ✅ Perubahan stok langsung tersimpan tanpa perlu persetujuan ulang admin.
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Deskripsi */}

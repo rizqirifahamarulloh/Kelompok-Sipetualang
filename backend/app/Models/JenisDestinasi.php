@@ -11,7 +11,8 @@ class JenisDestinasi extends Model
     protected $fillable = ['nama_destinasi'];
     public $timestamps = false;
 
-    public function standarAlat() {
+    public function standarAlat()
+    {
         return $this->hasMany(StandarAlat::class, 'id_destinasi', 'id_destinasi');
     }
 }

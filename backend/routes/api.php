@@ -111,7 +111,7 @@ Route::middleware(['jwt.auth'])->group(function () {
     | ADMIN ONLY
     |--------------------------------------------------------------------------
     */
-    Route::middleware([RoleMiddleware::class.':admin'])->prefix('admin')->group(function () {
+    Route::middleware([RoleMiddleware::class . ':admin'])->prefix('admin')->group(function () {
 
         Route::get('/dashboard', [AdminController::class, 'dashboard']);
         Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword']);
@@ -145,7 +145,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/pengiriman/disewa', [\App\Http\Controllers\Api\PengirimanController::class, 'adminGetBarangDisewa']);
         Route::post('/pengiriman/{id}/konfirmasi-kembali', [\App\Http\Controllers\Api\PengirimanController::class, 'adminKonfirmasiKembali']);
         Route::post('/pengiriman/{id}/pickup-diambil', [\App\Http\Controllers\Api\PengirimanController::class, 'pickupBarangDiambil']);
-        });
+    });
 
     /*
     |--------------------------------------------------------------------------

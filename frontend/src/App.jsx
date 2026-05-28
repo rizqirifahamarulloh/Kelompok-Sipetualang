@@ -106,7 +106,7 @@ function App() {
                   </Route>
                 </Route>
 
-                  {/* Customer routes — customer only */}
+                {/* Customer routes — customer only */}
                 <Route element={<ProtectedRoute roles={['customer']} />}>
                   <Route path="/customer/chat" element={<ChatPage />} />
                   <Route path="/customer/cart" element={<CartPage />} />
@@ -114,7 +114,7 @@ function App() {
                   <Route path="/customer/transactions" element={<TransactionsPage />} />
                   <Route path="/customer/verification" element={<VerifikasiCustomer />} />
                   <Route path="/rental-dashboard" element={<DashboardRental />} />
-                  
+
                   {/* Fallback routes untuk keselarasan link template */}
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/cart" element={<CartPage />} />

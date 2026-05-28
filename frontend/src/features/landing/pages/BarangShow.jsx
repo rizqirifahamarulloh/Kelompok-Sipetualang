@@ -35,7 +35,7 @@ const saveCartToStorage = (cart) => {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 };
 
-const MIDTRANS_CLIENT_KEY = 'SB-Mid-client-xxxxx';
+const MIDTRANS_CLIENT_KEY = 'Mid-client-4bv4cHzWqRv44v7s';
 
 export default function BarangShow() {
   const { id } = useParams();
@@ -45,14 +45,9 @@ export default function BarangShow() {
   const token = localStorage.getItem('token');
 
 
+
   const today = useMemo(() => {
     return new Date().toISOString().split('T')[0];
-  }, []);
-
-  const defaultEndDate = useMemo(() => {
-    const next = new Date();
-    next.setDate(next.getDate() + 3);
-    return next.toISOString().split('T')[0];
   }, []);
 
   const [barang, setBarang] = useState(null);
@@ -64,8 +59,7 @@ export default function BarangShow() {
 
   const [tanggalMulai, setTanggalMulai] = useState(today);
 
-  const [tanggalSelesai, setTanggalSelesai] =
-    useState(defaultEndDate);
+  const [tanggalSelesai, setTanggalSelesai] = useState('');
 
   const [deliveryMethod, setDeliveryMethod] =
     useState('pickup');
@@ -76,6 +70,23 @@ export default function BarangShow() {
 
   const [showMap, setShowMap] = useState(false);
   const [isKtpModalOpen, setIsKtpModalOpen] = useState(false);
+
+  // Min durasi from barang data (default 1)
+  const minDurasi = barang?.min_durasi_sewa || 1;
+
+  // Auto-set tanggalSelesai when tanggalMulai or barang changes
+  useEffect(() => {
+    if (!tanggalMulai) return;
+    const start = new Date(tanggalMulai);
+    const minEnd = new Date(start);
+    minEnd.setDate(minEnd.getDate() + (minDurasi - 1));
+    const minEndStr = minEnd.toISOString().split('T')[0];
+    
+    // If current tanggalSelesai is before minimum, auto-adjust
+    if (!tanggalSelesai || tanggalSelesai < minEndStr) {
+      setTanggalSelesai(minEndStr);
+    }
+  }, [tanggalMulai, minDurasi]);
 
   const totalHari = useMemo(() => {
     if (!tanggalMulai || !tanggalSelesai) return 0;
@@ -215,10 +226,12 @@ export default function BarangShow() {
       setLoadingAction(true);
 
       const checkoutData = {
-        id_barang: barang.id_barang,
-        jumlah: selectedJumlah,
-        tanggal_mulai: tanggalMulai,
-        tanggal_selesai: tanggalSelesai,
+        items: [{
+          id_barang: barang.id_barang,
+          jumlah: selectedJumlah,
+          tanggal_mulai: tanggalMulai,
+          tanggal_selesai: tanggalSelesai,
+        }],
         metode_pengiriman: deliveryMethod,
         alamat_pengiriman: deliveryAddress,
         biaya_pengiriman: 0,
@@ -435,6 +448,12 @@ export default function BarangShow() {
                     <span className="text-[11px] text-slate-400">(Refundable)</span>
                   </div>
                 )}
+                {minDurasi > 1 && (
+                  <div className="mt-2 text-sm text-amber-700 flex items-center gap-1.5 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200 self-start">
+                    <span className="font-bold text-amber-800 bg-amber-200 px-2 py-0.5 rounded-md text-xs">Min. Durasi</span>
+                    <span className="font-semibold">{minDurasi} hari</span>
+                  </div>
+                )}
               </div>
 
               <div className="mt-8 border-t pt-5">
@@ -504,15 +523,33 @@ export default function BarangShow() {
                   <input
                     type="date"
                     value={tanggalSelesai}
-                    onChange={(e) =>
-                      setTanggalSelesai(
-                        e.target.value
-                      )
-                    }
+                    min={(() => {
+                      if (!tanggalMulai) return '';
+                      const d = new Date(tanggalMulai);
+                      d.setDate(d.getDate() + (minDurasi - 1));
+                      return d.toISOString().split('T')[0];
+                    })()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const start = new Date(tanggalMulai);
+                      const minEnd = new Date(start);
+                      minEnd.setDate(minEnd.getDate() + (minDurasi - 1));
+                      const minEndStr = minEnd.toISOString().split('T')[0];
+                      setTanggalSelesai(val < minEndStr ? minEndStr : val);
+                    }}
                     className="w-full mt-2 px-4 py-3 rounded-xl border"
                   />
                 </div>
               </div>
+
+              {minDurasi > 1 && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                  <span className="text-amber-600 text-sm">📅</span>
+                  <p className="text-xs text-amber-700 font-medium">
+                    Minimum durasi sewa: <strong className="text-amber-800">{minDurasi} hari</strong>
+                  </p>
+                </div>
+              )}
 
               <div className="mt-6">
                 <label className="text-sm font-semibold">

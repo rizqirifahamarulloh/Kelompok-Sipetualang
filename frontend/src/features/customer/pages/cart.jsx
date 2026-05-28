@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cartService } from "../services/cartService";
+import api from "@/services/api";
+import { getStorageUrl } from "@/utils/storageUrl";
 import Navbar from "@/features/landing/components/Navbar";
 import Footer from "@/features/landing/components/Footer";
 import KtpVerificationModal from "@/components/KtpVerificationModal";
@@ -35,6 +37,17 @@ export default function CartPage() {
   const [isKtpModalOpen, setIsKtpModalOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState("pickup");
   const [deliveryAddress, setDeliveryAddress] = useState(user?.alamat || "");
+
+  // Load Midtrans Snap.js
+  useEffect(() => {
+    if (!window.snap) {
+      const script = document.createElement('script');
+      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+      script.setAttribute('data-client-key', 'Mid-client-4bv4cHzWqRv44v7s');
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
   // LOAD CART
   const loadCart = async () => {
@@ -171,7 +184,7 @@ export default function CartPage() {
     }, 0);
   }, [cart, selectedItems]);
 
-  // CHECKOUT
+  // CHECKOUT - Proses pembayaran melalui Midtrans
   const handleCheckout = async () => {
     if (!user) {
       alert("Silakan login terlebih dahulu");
@@ -194,23 +207,75 @@ export default function CartPage() {
       return;
     }
 
+    if (!window.snap) {
+      alert("Midtrans belum siap, silakan coba lagi dalam beberapa detik.");
+      return;
+    }
+
     setProcessing(true);
 
     try {
-      await cartService.checkoutMulti({
-        cart_ids: selected.map((item) => item.id_cart),
-        payment_method: "midtrans",
+      // Build batch checkout payload — all items in 1 request
+      const checkoutData = {
+        items: selected.map((item) => ({
+          id_barang: item.id_barang,
+          jumlah: item.jumlah,
+          tanggal_mulai: item.tanggal_mulai,
+          tanggal_selesai: item.tanggal_selesai,
+        })),
         metode_pengiriman: deliveryMethod,
         alamat_pengiriman: deliveryMethod === "delivery" ? deliveryAddress : null,
+        biaya_pengiriman: 0,
+      };
+
+      // Single API call for all items → 1 transaksi + 1 snap token
+      const response = await api.post('/customer/transaksi/checkout', checkoutData);
+      const snapToken = response.data.snap_token;
+
+      if (!snapToken) {
+        alert("Gagal mendapatkan token pembayaran");
+        setProcessing(false);
+        return;
+      }
+
+      // Single Midtrans popup for all items
+      await new Promise((resolve, reject) => {
+        window.snap.pay(snapToken, {
+          onSuccess: async () => {
+            // Remove all checked-out items from localStorage cart
+            for (const item of selected) {
+              await cartService.removeFromCart(item.id_cart);
+            }
+            resolve();
+          },
+          onPending: async () => {
+            // Still remove from cart on pending
+            for (const item of selected) {
+              await cartService.removeFromCart(item.id_cart);
+            }
+            resolve();
+          },
+          onError: (err) => {
+            console.error("Pembayaran gagal:", err);
+            reject(new Error("Pembayaran gagal"));
+          },
+          onClose: () => {
+            resolve();
+          },
+        });
       });
 
-      alert("Checkout berhasil!");
+      // Reload cart after checkout
+      await loadCart();
 
-      navigate("/sewa-alat");
+      // Navigate to transactions page
+      navigate("/customer/transactions");
+
     } catch (error) {
+      console.error("Checkout error:", error);
       alert(
-        "Gagal checkout : " +
-          (error.response?.data?.message || error.message)
+        "Gagal checkout: " +
+          (error.response?.data?.message || error.response?.data?.error || error.message)
       );
     } finally {
       setProcessing(false);
@@ -370,10 +435,10 @@ export default function CartPage() {
                       className="w-full lg:w-44 h-44 bg-[#f7f7f7] rounded-[28px] overflow-hidden flex items-center justify-center hover:opacity-90 transition-opacity"
                     >
                       <img
-                        src={
-                          item.gambar ||
+                        src={getStorageUrl(
+                          item.foto_barang,
                           "https://via.placeholder.com/300"
-                        }
+                        )}
                         alt={item.nama_barang}
                         className="w-full h-full object-cover"
                       />

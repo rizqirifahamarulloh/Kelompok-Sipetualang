@@ -4,7 +4,7 @@ import { X, ImageIcon, CheckCircle2 } from "lucide-react";
 export default function EditGearModal({ isOpen, onClose, gear, categories = [], destinations = [], onSave }) {
   const [formData, setFormData] = useState({
     nama_barang: "", deskripsi: "", id_kategori: "", harga_sewa: "",
-    jumlah_stok: "", status_barang: "tersedia", status_approval: "pending", destinasi_ids: [],
+    min_durasi_sewa: 1, jumlah_stok: "", status_barang: "tersedia", status_approval: "pending", destinasi_ids: [],
   });
   const [errors, setErrors] = useState({});
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -18,6 +18,7 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
       deskripsi: gear.deskripsi || "",
       id_kategori: gear.id_kategori ? String(gear.id_kategori) : "",
       harga_sewa: gear.harga_sewa || "",
+      min_durasi_sewa: gear.min_durasi_sewa || 1,
       jumlah_stok: gear.jumlah_stok || "",
       status_barang: gear.status_barang || "tersedia",
       status_approval: gear.status_approval || "pending",
@@ -131,14 +132,22 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Status Approval</label>
-            <select name="status_approval" value={formData.status_approval} onChange={handleChange}
-              className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm bg-white">
-              <option value="pending">Pending</option>
-              <option value="disetujui">Disetujui</option>
-              <option value="ditolak">Ditolak</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Min. Durasi Sewa (Hari)</label>
+              <input type="number" name="min_durasi_sewa" value={formData.min_durasi_sewa} onChange={handleChange} min={1}
+                className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm" />
+              <p className="text-[10px] text-gray-400 mt-1">Customer harus sewa minimal {formData.min_durasi_sewa || 1} hari</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Status Approval</label>
+              <select name="status_approval" value={formData.status_approval} onChange={handleChange}
+                className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm bg-white">
+                <option value="pending">Pending</option>
+                <option value="disetujui">Disetujui</option>
+                <option value="ditolak">Ditolak</option>
+              </select>
+            </div>
           </div>
 
           <div>

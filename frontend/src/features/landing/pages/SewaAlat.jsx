@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Calendar, Search, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL, BASE_URL } from '@/services/api';
-
+import { cartService } from '@/features/customer/services/cartService';
 
 import Navbar from '@/features/landing/components/Navbar';
 import Footer from '@/features/landing/components/Footer';
@@ -144,6 +144,9 @@ export default function SewaAlat() {
   const [durasi, setDurasi] = useState(1);
   const [recommendedGears, setRecommendedGears] = useState([]);
 
+  // CART STATE
+  const [cartItems, setCartItems] = useState([]);
+
   // Filter destinasi berdasarkan pencarian
   const filteredDestinations = useMemo(() => {
     if (!destinasiSearch) return [];
@@ -193,13 +196,24 @@ export default function SewaAlat() {
     }
   };
 
+  // LOAD CART dari localStorage
+  const loadCart = useCallback(async () => {
+    try {
+      const response = await cartService.getCart();
+      setCartItems(response.data || []);
+    } catch (err) {
+      console.error('Gagal load cart:', err);
+    }
+  }, []);
+
   // LOAD DATA
   useEffect(() => {
     const loadData = async () => {
       await Promise.all([fetchBarang(), fetchKategori()]);
+      loadCart();
     };
     loadData();
-  }, []);
+  }, [loadCart]);
 
   // Pilih destinasi
   const handleSelectDestinasi = (destinasi) => {
@@ -271,6 +285,56 @@ export default function SewaAlat() {
       return `${BASE_URL}/storage/${barang.foto_barang}`;
     }
     return 'https://via.placeholder.com/400x300';
+  };
+
+  // CART HANDLERS
+  const handleAddToCart = async (barang) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const nextDay = new Date();
+      nextDay.setDate(nextDay.getDate() + 1);
+      const tomorrow = nextDay.toISOString().split('T')[0];
+
+      const cartItem = {
+        id_cart: Date.now(),
+        id_barang: barang.id_barang,
+        nama_barang: barang.nama_barang,
+        harga_sewa: barang.harga_sewa,
+        nominal_deposit: barang.nominal_deposit || 0,
+        jumlah: 1,
+        tanggal_mulai: tanggalMulai || today,
+        tanggal_selesai: tanggalMulai ? (new Date(new Date(tanggalMulai).getTime() + durasi * 86400000)).toISOString().split('T')[0] : tomorrow,
+        total_hari: durasi || 1,
+        total_harga: barang.harga_sewa * (durasi || 1),
+        foto_barang: barang.foto_barang,
+        pemilik: barang.pemilik,
+        id_pemilik: barang.id_pemilik,
+      };
+
+      await cartService.addToCart(cartItem);
+      await loadCart();
+    } catch (err) {
+      console.error('Gagal menambahkan ke keranjang:', err);
+    }
+  };
+
+  const handleRemoveFromCart = async (cartId) => {
+    try {
+      await cartService.removeFromCart(cartId);
+      await loadCart();
+    } catch (err) {
+      console.error('Gagal menghapus dari keranjang:', err);
+    }
+  };
+
+  const handleUpdateQuantity = async (cartId, newQuantity) => {
+    if (newQuantity < 1) return;
+    try {
+      await cartService.updateCartItem(cartId, { jumlah: newQuantity });
+      await loadCart();
+    } catch (err) {
+      console.error('Gagal update jumlah:', err);
+    }
   };
 
   if (isLoading) {
@@ -444,6 +508,10 @@ export default function SewaAlat() {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           getImageUrl={getImageUrl}
+          cartItems={cartItems}
+          onAddToCart={handleAddToCart}
+          onRemoveFromCart={handleRemoveFromCart}
+          onUpdateQuantity={handleUpdateQuantity}
         />
       </div>
 
