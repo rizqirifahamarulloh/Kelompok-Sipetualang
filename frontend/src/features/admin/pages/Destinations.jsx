@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import TablePagination, { paginateArray } from "@/components/TablePagination";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,8 @@ export default function Destinations() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 10;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -232,10 +235,10 @@ export default function Destinations() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((item, index) => (
+                filtered.length === 0 ? <></> : paginateArray(filtered, currentPage, PER_PAGE).map((item, index) => (
                   <TableRow key={item.id_destinasi}>
                     <TableCell className="text-center">
-                      {index + 1}
+                      {(currentPage - 1) * PER_PAGE + index + 1}
                     </TableCell>
 
                     <TableCell>
@@ -320,10 +323,13 @@ export default function Destinations() {
           </Table>
         </div>
 
-        <div className="p-4 border-t text-sm text-muted-foreground">
-          Showing {filtered.length} of{" "}
-          {destinationList.length} destinations
-        </div>
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={filtered.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="destinasi"
+        />
       </Card>
 
       {/* Add Modal */}

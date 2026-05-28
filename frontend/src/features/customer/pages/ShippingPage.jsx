@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import api, { BASE_URL } from "@/services/api";
+import { getStorageUrl } from "@/utils/storageUrl";
 import { 
   Truck, 
   MapPin, 
@@ -23,11 +24,7 @@ export default function ShippingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getPhotoUrl = () => {
-    if (!user?.profile_photo) return null;
-    if (user.profile_photo.startsWith("http")) return user.profile_photo;
-    return `${BASE_URL}/storage/${user.profile_photo}`;
-  };
+  const getPhotoUrl = () => getStorageUrl(user?.profile_photo);
 
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || "U";
 

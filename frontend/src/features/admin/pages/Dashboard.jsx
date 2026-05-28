@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import TablePagination, { paginateArray } from '@/components/TablePagination'
 import { dashboardService } from '@/features/admin/services/dashboardService'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,7 +14,17 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { Users, Package, ShoppingCart, Banknote, AlertTriangle } from 'lucide-react'
+import { Users, Package, ShoppingCart, Banknote, AlertTriangle, TrendingUp } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts'
 
 const statusVariants = {
   pending_payment: 'outline',
@@ -32,6 +43,168 @@ function formatCurrency(amount) {
   }).format(amount)
 }
 
+function formatCompact(amount) {
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}jt`
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}rb`
+  return amount.toString()
+}
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des']
+
+/* ====== Custom Tooltip ====== */
+function CustomTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+
+  return (
+    <div style={{
+      background: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '0.5rem',
+      padding: '0.75rem 1rem',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+      fontSize: '0.8rem',
+    }}>
+      <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#1f2937' }}>{label}</p>
+      {payload.map((entry, idx) => (
+        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: entry.color, flexShrink: 0 }} />
+          <span style={{ color: '#6b7280', flex: 1 }}>{entry.name}:</span>
+          <span style={{ fontWeight: 600, fontFamily: 'monospace', color: '#111827' }}>
+            {formatCurrency(entry.value)}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/* ====== Monthly Revenue Chart ====== */
+function MonthlyRevenueChart({ monthlyData }) {
+  const chartData = useMemo(() => {
+    const months = []
+    const now = new Date()
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      months.push({
+        bulan: key,
+        label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`,
+        'Total Pendapatan': 0,
+        'Fee Admin': 0,
+        'Pendapatan Pemilik': 0,
+      })
+    }
+
+    if (monthlyData?.length) {
+      monthlyData.forEach((item) => {
+        const found = months.find((m) => m.bulan === item.bulan)
+        if (found) {
+          found['Total Pendapatan'] = Number(item.total) || 0
+          found['Fee Admin'] = Number(item.fee_admin) || 0
+          found['Pendapatan Pemilik'] = Number(item.pendapatan_pemilik) || 0
+        }
+      })
+    }
+
+    return months
+  }, [monthlyData])
+
+  const totalPeriode = chartData.reduce((sum, m) => sum + m['Total Pendapatan'], 0)
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="size-5 text-emerald-600" />
+              Pendapatan Bulanan
+            </CardTitle>
+            <CardDescription>Grafik pendapatan 12 bulan terakhir</CardDescription>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Total Periode</p>
+            <p className="text-lg font-bold text-emerald-700">{formatCurrency(totalPeriode)}</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div style={{ width: '100%', height: 320 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <defs>
+                <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gradAdmin" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gradPemilik" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+              <XAxis
+                dataKey="label"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: '#9ca3af' }}
+                tickMargin={8}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: '#9ca3af' }}
+                tickFormatter={formatCompact}
+                width={55}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: '0.75rem', color: '#6b7280' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="Total Pendapatan"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                fill="url(#gradTotal)"
+                dot={false}
+                activeDot={{ r: 5, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+              />
+              <Area
+                type="monotone"
+                dataKey="Fee Admin"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                fill="url(#gradAdmin)"
+                dot={false}
+                activeDot={{ r: 4, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+              />
+              <Area
+                type="monotone"
+                dataKey="Pendapatan Pemilik"
+                stroke="#8b5cf6"
+                strokeWidth={2}
+                fill="url(#gradPemilik)"
+                dot={false}
+                activeDot={{ r: 4, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ====== Stats Cards ====== */
 function StatsCards({ stats, t }) {
   const cards = [
     { title: t('admin.totalUsers'), value: stats?.total_users ?? 0, icon: Users, desc: t('admin.registeredUsers') },
@@ -58,7 +231,11 @@ function StatsCards({ stats, t }) {
   )
 }
 
+/* ====== Recent Transactions ====== */
 function RecentTransactions({ transactions, t }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 10;
+
   if (!transactions?.length) {
     return (
       <Card>
@@ -88,7 +265,7 @@ function RecentTransactions({ transactions, t }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((trx) => (
+            {paginateArray(transactions, currentPage, PER_PAGE).map((trx) => (
               <TableRow key={trx.id}>
                 <TableCell className="font-mono text-sm">{trx.transaction_code}</TableCell>
                 <TableCell>{trx.customer?.name ?? '-'}</TableCell>
@@ -103,11 +280,19 @@ function RecentTransactions({ transactions, t }) {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={transactions.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="transaksi"
+        />
       </CardContent>
     </Card>
   )
 }
 
+/* ====== Low Stock Alerts ====== */
 function LowStockAlerts({ alerts, t }) {
   if (!alerts?.length) return null
 
@@ -137,6 +322,7 @@ function LowStockAlerts({ alerts, t }) {
   )
 }
 
+/* ====== Skeleton ====== */
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
@@ -152,6 +338,10 @@ function DashboardSkeleton() {
         ))}
       </div>
       <Card>
+        <CardHeader><Skeleton className="h-5 w-48" /></CardHeader>
+        <CardContent><Skeleton className="h-[320px] w-full" /></CardContent>
+      </Card>
+      <Card>
         <CardHeader><Skeleton className="h-5 w-40" /></CardHeader>
         <CardContent><Skeleton className="h-48 w-full" /></CardContent>
       </Card>
@@ -159,6 +349,7 @@ function DashboardSkeleton() {
   )
 }
 
+/* ====== Main Dashboard ====== */
 export default function Dashboard() {
   const { t } = useLanguage()
   const [data, setData] = useState(null)
@@ -189,6 +380,9 @@ export default function Dashboard() {
       </div>
 
       <StatsCards stats={data?.stats} t={t} />
+
+      {/* Grafik Pendapatan Bulanan */}
+      <MonthlyRevenueChart monthlyData={data?.monthly_revenue} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

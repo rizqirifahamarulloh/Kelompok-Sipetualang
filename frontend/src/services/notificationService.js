@@ -17,4 +17,9 @@ export const notificationService = {
     const response = await api.patch(`/notifikasi/${id}/read`);
     return response.data;
   },
+
+  async clearAllNotifications() {
+    const response = await api.delete('/notifikasi');
+    return response.data;
+  },
 };

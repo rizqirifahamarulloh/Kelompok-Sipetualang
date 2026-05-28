@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import TablePagination, { paginateArray } from "@/components/TablePagination";
 import { adminService } from "../services/adminService";
 import { 
   Truck, 
@@ -13,7 +14,8 @@ import {
   Package,
   Navigation,
   ArrowRight,
-  Eye
+  Eye,
+  HandMetal
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,11 +28,14 @@ export default function ShippingStatus() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("semua");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 5;
 
   // State Modals
   const [selectedTrx, setSelectedTrx] = useState(null);
   const [isShipModalOpen, setIsShipModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
 
   // Form States
   const [shipForm, setShipForm] = useState({
@@ -42,6 +47,12 @@ export default function ShippingStatus() {
   const [updateForm, setUpdateForm] = useState({
     lokasi_terakhir: "",
     status_pengiriman: "dikirim"
+  });
+
+  const [returnForm, setReturnForm] = useState({
+    kondisi_barang: "baik",
+    catatan: "",
+    denda_kerusakan: 0
   });
 
   const getData = async () => {
@@ -109,6 +120,50 @@ export default function ShippingStatus() {
     }
   };
 
+  // Handle pickup: Barang sudah diambil
+  const handlePickupDiambil = async (trx) => {
+    if (!confirm(`Konfirmasi bahwa customer "${trx.penyewa?.nama}" telah mengambil barang "${trx.nama_barang}"?`)) return;
+    
+    try {
+      await adminService.pickupBarangDiambil(trx.id_transaksi);
+      toast.success("Barang berhasil ditandai sebagai diambil! Status sewa aktif.");
+      getData();
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Gagal memperbarui status pengambilan");
+    }
+  };
+
+  // Handle return confirmation (for both pickup and delivery)
+  const openReturnModal = (trx) => {
+    setSelectedTrx(trx);
+    setReturnForm({
+      kondisi_barang: "baik",
+      catatan: "",
+      denda_kerusakan: 0
+    });
+    setIsReturnModalOpen(true);
+  };
+
+  const handleReturnSubmit = async (e) => {
+    e.preventDefault();
+    if (!returnForm.kondisi_barang) {
+      toast.error("Kondisi barang wajib diisi!");
+      return;
+    }
+
+    try {
+      await adminService.konfirmasiKembali(selectedTrx.id_transaksi, returnForm);
+      toast.success("Pengembalian barang berhasil dikonfirmasi & transaksi selesai!");
+      setIsReturnModalOpen(false);
+      setSelectedTrx(null);
+      getData();
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Gagal mengonfirmasi pengembalian");
+    }
+  };
+
   const openShipModal = (trx) => {
     setSelectedTrx(trx);
     setIsShipModalOpen(true);
@@ -149,7 +204,24 @@ export default function ShippingStatus() {
       return item.metode_pengiriman === "delivery" && item.pengiriman?.status_pengiriman === "sampai";
     }
     if (activeTab === "diterima") {
-      return item.metode_pengiriman === "delivery" && item.pengiriman?.status_pengiriman === "diterima";
+      return (item.metode_pengiriman === "delivery" && item.pengiriman?.status_pengiriman === "diterima") ||
+             (item.metode_pengiriman === "pickup" && item.status_sewa === "sedang_disewa");
+    }
+
+    // Pickup specific filters
+    if (activeTab === "pickup_menunggu") {
+      return item.metode_pengiriman === "pickup" && item.status_sewa === "dibayar";
+    }
+    if (activeTab === "pickup_disewa") {
+      return item.metode_pengiriman === "pickup" && item.status_sewa === "sedang_disewa" && item.status_kembali === "belum";
+    }
+    if (activeTab === "pickup_kembali") {
+      return item.metode_pengiriman === "pickup" && item.status_kembali === "proses";
+    }
+
+    // General return filter
+    if (activeTab === "proses_kembali") {
+      return item.status_kembali === "proses";
     }
 
     return true;
@@ -157,6 +229,35 @@ export default function ShippingStatus() {
 
   const getStatusBadge = (trx) => {
     if (trx.metode_pengiriman === "pickup") {
+      // Dynamic pickup badges
+      if (trx.status_sewa === "dibayar") {
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1.5 w-fit">
+            <Package className="size-3.5" /> Menunggu Diambil
+          </span>
+        );
+      }
+      if (trx.status_sewa === "sedang_disewa" && trx.status_kembali === "proses") {
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 flex items-center gap-1.5 w-fit animate-pulse">
+            <Package className="size-3.5" /> Proses Pengembalian
+          </span>
+        );
+      }
+      if (trx.status_sewa === "sedang_disewa") {
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1.5 w-fit">
+            <CheckCircle2 className="size-3.5" /> Sedang Disewa
+          </span>
+        );
+      }
+      if (trx.status_sewa === "selesai") {
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1.5 w-fit">
+            <CheckCircle2 className="size-3.5" /> Selesai
+          </span>
+        );
+      }
       return (
         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1.5 w-fit">
           <Package className="size-3.5" /> Pick Up
@@ -211,7 +312,7 @@ export default function ShippingStatus() {
       </div>
 
       {/* Stats Card Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-amber-100 text-amber-700 rounded-2xl dark:bg-amber-900/20">
@@ -242,13 +343,27 @@ export default function ShippingStatus() {
 
         <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 bg-indigo-100 text-indigo-700 rounded-2xl dark:bg-indigo-900/20">
-              <MapPin className="size-5" />
+            <div className="p-3 bg-purple-100 text-purple-700 rounded-2xl dark:bg-purple-900/20">
+              <HandMetal className="size-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Tiba di Tujuan</p>
+              <p className="text-xs text-slate-500 font-medium">Pickup Menunggu</p>
               <h3 className="text-xl font-bold text-slate-800">
-                {data.filter(t => t.metode_pengiriman === 'delivery' && t.pengiriman?.status_pengiriman === 'sampai').length}
+                {data.filter(t => t.metode_pengiriman === 'pickup' && t.status_sewa === 'dibayar').length}
+              </h3>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-3 bg-orange-100 text-orange-700 rounded-2xl dark:bg-orange-900/20">
+              <Package className="size-5" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-medium">Proses Kembali</p>
+              <h3 className="text-xl font-bold text-slate-800">
+                {data.filter(t => t.status_kembali === 'proses').length}
               </h3>
             </div>
           </CardContent>
@@ -262,7 +377,10 @@ export default function ShippingStatus() {
             <div>
               <p className="text-xs text-slate-500 font-medium">Selesai/Diterima</p>
               <h3 className="text-xl font-bold text-slate-800">
-                {data.filter(t => t.metode_pengiriman === 'delivery' && t.pengiriman?.status_pengiriman === 'diterima').length}
+                {data.filter(t => 
+                  (t.metode_pengiriman === 'delivery' && t.pengiriman?.status_pengiriman === 'diterima') ||
+                  (t.metode_pengiriman === 'pickup' && t.status_sewa === 'sedang_disewa')
+                ).length}
               </h3>
             </div>
           </CardContent>
@@ -288,10 +406,11 @@ export default function ShippingStatus() {
           {[
             { id: "semua", label: "Semua" },
             { id: "pickup", label: "Pick Up" },
-            { id: "delivery", label: "Delivery (Semua)" },
+            { id: "pickup_menunggu", label: "Pickup Menunggu" },
+            { id: "delivery", label: "Delivery" },
             { id: "perlu_dikirim", label: "Perlu Dikirim" },
             { id: "dikirim", label: "Dalam Perjalanan" },
-            { id: "sampai", label: "Sampai" },
+            { id: "proses_kembali", label: "Proses Kembali" },
             { id: "diterima", label: "Diterima" }
           ].map((tab) => (
             <button
@@ -329,8 +448,9 @@ export default function ShippingStatus() {
           <p className="text-sm font-medium">Tidak ada data transaksi pengiriman yang sesuai filter.</p>
         </div>
       ) : (
+        <>
         <div className="grid gap-4">
-          {filteredData.map((item) => (
+          {paginateArray(filteredData, currentPage, PER_PAGE).map((item) => (
             <Card key={item.id_transaksi} className="border shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-white dark:bg-slate-900">
               <div className="border-b bg-slate-50/50 dark:bg-slate-800/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -401,13 +521,30 @@ export default function ShippingStatus() {
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-1 text-xs">
+                    <div className="space-y-2 text-xs">
                       <p className="text-slate-600 dark:text-slate-400">
-                        Customer memilih metode **Ambil di Tempat (Pick Up)**.
+                        Customer memilih metode <strong>Ambil di Tempat (Pick Up)</strong>.
                       </p>
                       <p className="text-slate-600 dark:text-slate-400">
-                        Status Sewa: <span className="font-semibold text-slate-700 dark:text-slate-300 capitalize">{item.status_sewa}</span>
+                        Status Sewa: <span className="font-semibold text-slate-700 dark:text-slate-300 capitalize">{item.status_sewa?.replace('_', ' ')}</span>
                       </p>
+                      {item.status_kembali && item.status_kembali !== 'belum' && (
+                        <p className="text-slate-600 dark:text-slate-400">
+                          Status Pengembalian: <span className={`font-semibold capitalize ${item.status_kembali === 'proses' ? 'text-orange-600' : item.status_kembali === 'diterima' ? 'text-green-600' : 'text-slate-700'}`}>
+                            {item.status_kembali}
+                          </span>
+                        </p>
+                      )}
+                      {item.metode_kembali && (
+                        <p className="text-slate-600 dark:text-slate-400">
+                          Metode Kembali: <span className="font-medium">{item.metode_kembali === 'delivery' ? 'Kirim via Kurir' : 'Datang Langsung'}</span>
+                        </p>
+                      )}
+                      {item.no_resi_kembali && (
+                        <p className="text-slate-600 dark:text-slate-400 font-mono">
+                          <span className="font-medium font-sans">No. Resi Kembali:</span> {item.no_resi_kembali}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -451,34 +588,104 @@ export default function ShippingStatus() {
                         </div>
                       )}
 
-                      {/* Kasus 4: Sudah diterima customer */}
+                      {/* Kasus 4: Sudah diterima customer — check return status */}
                       {item.pengiriman?.status_pengiriman === "diterima" && (
-                        <div className="text-center p-3 rounded-lg bg-green-50 border border-green-100 dark:bg-green-950/10 dark:border-green-900/30">
-                          <p className="text-xs text-green-700 dark:text-green-400 font-semibold flex items-center justify-center gap-1.5">
-                            <CheckCircle2 className="size-3.5" /> Selesai Diterima
+                        <>
+                          {item.status_kembali === "proses" ? (
+                            <Button 
+                              className="bg-orange-600 hover:bg-orange-700 text-white w-full gap-2 py-5 text-sm"
+                              onClick={() => openReturnModal(item)}
+                            >
+                              <CheckCircle2 className="size-4" />
+                              Konfirmasi Barang Diterima
+                            </Button>
+                          ) : item.status_sewa === "selesai" ? (
+                            <div className="text-center p-3 rounded-lg bg-green-50 border border-green-100 dark:bg-green-950/10 dark:border-green-900/30">
+                              <p className="text-xs text-green-700 dark:text-green-400 font-semibold flex items-center justify-center gap-1.5">
+                                <CheckCircle2 className="size-3.5" /> Transaksi Selesai
+                              </p>
+                              <p className="text-[10px] text-slate-400 mt-1">
+                                Barang sudah dikembalikan & diverifikasi.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="text-center p-3 rounded-lg bg-green-50 border border-green-100 dark:bg-green-950/10 dark:border-green-900/30">
+                              <p className="text-xs text-green-700 dark:text-green-400 font-semibold flex items-center justify-center gap-1.5">
+                                <CheckCircle2 className="size-3.5" /> Selesai Diterima
+                              </p>
+                              <p className="text-[10px] text-slate-400 mt-1">
+                                Barang sudah seutuhnya di tangan customer.
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    /* ===== PICKUP SECTION — Dynamic Action Buttons ===== */
+                    <>
+                      {/* Kasus 1: Dibayar, menunggu customer ambil */}
+                      {item.status_sewa === "dibayar" && (
+                        <Button 
+                          className="bg-purple-600 hover:bg-purple-700 text-white w-full gap-2 py-5 text-sm"
+                          onClick={() => handlePickupDiambil(item)}
+                        >
+                          <HandMetal className="size-4" />
+                          Barang Sudah Diambil
+                        </Button>
+                      )}
+
+                      {/* Kasus 2: Sedang disewa, belum dikembalikan */}
+                      {item.status_sewa === "sedang_disewa" && item.status_kembali === "belum" && (
+                        <div className="text-center p-4 rounded-xl border bg-blue-50 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900/30">
+                          <p className="text-xs text-blue-700 dark:text-blue-400 font-semibold flex items-center justify-center gap-1.5">
+                            <CheckCircle2 className="size-3.5" /> Sedang Disewa
                           </p>
                           <p className="text-[10px] text-slate-400 mt-1">
-                            Barang sudah seutuhnya di tangan customer.
+                            Menunggu customer mengembalikan barang.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Kasus 3: Customer sudah ajukan pengembalian */}
+                      {item.status_sewa === "sedang_disewa" && item.status_kembali === "proses" && (
+                        <Button 
+                          className="bg-orange-600 hover:bg-orange-700 text-white w-full gap-2 py-5 text-sm"
+                          onClick={() => openReturnModal(item)}
+                        >
+                          <CheckCircle2 className="size-4" />
+                          Konfirmasi Barang Diterima
+                        </Button>
+                      )}
+
+                      {/* Kasus 4: Selesai */}
+                      {item.status_sewa === "selesai" && (
+                        <div className="text-center p-4 rounded-xl border bg-green-50 dark:bg-green-950/10 border-green-100 dark:border-green-900/30">
+                          <p className="text-xs text-green-700 dark:text-green-400 font-semibold flex items-center justify-center gap-1.5">
+                            <CheckCircle2 className="size-3.5" /> Transaksi Selesai
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            Barang sudah dikembalikan & diverifikasi.
                           </p>
                         </div>
                       )}
                     </>
-                  ) : (
-                    // PICKUP - Menampilkan status sewa saja
-                    <div className="text-center p-4 rounded-xl border bg-slate-50 dark:bg-slate-800/30">
-                      <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                        Metode Ambil Sendiri
-                      </p>
-                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-1 uppercase">
-                        {item.status_sewa}
-                      </p>
-                    </div>
                   )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Pagination */}
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={filteredData.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="transaksi"
+        />
+        </>
       )}
 
       {/* Modal 1: Kirim Barang */}
@@ -644,6 +851,108 @@ export default function ShippingStatus() {
                   className="bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl"
                 >
                   Perbarui Posisi
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 3: Konfirmasi Pengembalian Barang (Admin terima kembali) */}
+      {isReturnModalOpen && selectedTrx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white dark:bg-slate-900 z-10">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <CheckCircle2 className="size-5 text-orange-600" />
+                Konfirmasi Pengembalian Barang
+              </h2>
+              <button 
+                onClick={() => { setIsReturnModalOpen(false); setSelectedTrx(null); }} 
+                className="text-slate-400 hover:text-slate-600 rounded-lg p-1 hover:bg-slate-100 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleReturnSubmit} className="p-6 space-y-4">
+              <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-xl text-xs space-y-1.5 text-orange-800 dark:text-orange-400">
+                <p><strong>Alat Sewaan:</strong> {selectedTrx.nama_barang} ({selectedTrx.jumlah} unit)</p>
+                <p><strong>Penyewa:</strong> {selectedTrx.penyewa?.nama}</p>
+                <p><strong>Metode Pengiriman:</strong> {selectedTrx.metode_pengiriman === 'pickup' ? 'Ambil di Tempat' : 'Delivery'}</p>
+                {selectedTrx.metode_kembali && (
+                  <p><strong>Metode Kembali:</strong> {selectedTrx.metode_kembali === 'delivery' ? 'Kirim via Kurir' : 'Datang Langsung'}</p>
+                )}
+                {selectedTrx.no_resi_kembali && (
+                  <p><strong>No. Resi Kembali:</strong> {selectedTrx.no_resi_kembali}</p>
+                )}
+                <p><strong>Batas Waktu Sewa:</strong> {new Date(selectedTrx.tanggal_selesai).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Kondisi Barang Saat Diterima</label>
+                <select
+                  value={returnForm.kondisi_barang}
+                  onChange={(e) => setReturnForm(prev => ({ ...prev, kondisi_barang: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                >
+                  <option value="baik">Baik (Tidak Ada Kerusakan)</option>
+                  <option value="rusak_ringan">Rusak Ringan</option>
+                  <option value="rusak_berat">Rusak Berat</option>
+                  <option value="hilang_komponen">Hilang Komponen</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Denda Kerusakan (Rp)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={returnForm.denda_kerusakan}
+                  onChange={(e) => setReturnForm(prev => ({ ...prev, denda_kerusakan: Number(e.target.value) }))}
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  placeholder="0"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Isi 0 jika tidak ada kerusakan. Denda otomatis dipotong dari deposit.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Catatan Admin (Opsional)</label>
+                <textarea
+                  value={returnForm.catatan}
+                  onChange={(e) => setReturnForm(prev => ({ ...prev, catatan: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-white dark:bg-slate-800 dark:border-slate-700 resize-none"
+                  rows={3}
+                  placeholder="Catatan tentang kondisi barang, kerusakan, dll..."
+                />
+              </div>
+
+              {/* Deposit Info */}
+              {Number(selectedTrx.nominal_deposit) > 0 && (
+                <div className="bg-emerald-50 dark:bg-emerald-950/10 p-3 rounded-xl border border-emerald-100 text-xs space-y-1">
+                  <p className="font-bold text-emerald-800 dark:text-emerald-400">Informasi Deposit:</p>
+                  <p className="text-emerald-700">Deposit Awal: <strong>Rp {Number(selectedTrx.nominal_deposit).toLocaleString()}</strong></p>
+                  <p className="text-emerald-700">Denda Kerusakan: <strong>Rp {Number(returnForm.denda_kerusakan).toLocaleString()}</strong></p>
+                  <p className="text-[10px] text-emerald-600 italic">* Denda keterlambatan dihitung otomatis oleh sistem berdasarkan tanggal pengembalian.</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 justify-end pt-4 border-t mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setIsReturnModalOpen(false); setSelectedTrx(null); }}
+                  className="rounded-xl border-slate-200"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl"
+                >
+                  Konfirmasi & Selesaikan
                 </Button>
               </div>
             </form>

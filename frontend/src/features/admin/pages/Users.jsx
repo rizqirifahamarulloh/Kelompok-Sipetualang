@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import TablePagination, { paginateArray } from "@/components/TablePagination";
 import { useNavigate } from "react-router-dom";
 import { adminService } from "../services/adminService";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,8 @@ export default function Users() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 10;
   const [editingUser, setEditingUser] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
@@ -192,9 +195,9 @@ export default function Users() {
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user, index) => (
+                paginateArray(users, currentPage, PER_PAGE).map((user, index) => (
                   <TableRow key={user.id_pengguna}>
-                    <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
+                    <TableCell className="text-center text-muted-foreground">{(currentPage - 1) * PER_PAGE + index + 1}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -263,32 +266,13 @@ export default function Users() {
           </Table>
         </div>
 
-        <div className="p-4 border-t flex items-center justify-between text-sm text-muted-foreground">
-          <div>
-            Showing 1-{users.length} of {stats.total_users.toLocaleString()} users
-          </div>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled>
-              <ChevronLeft size={14} />
-            </Button>
-            <Button variant="default" size="icon" className="h-8 w-8 bg-emerald-700 hover:bg-emerald-800">
-              1
-            </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8">
-              2
-            </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8">
-              3
-            </Button>
-            <span className="px-2">...</span>
-            <Button variant="outline" size="sm" className="h-8 px-3">
-              248
-            </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8">
-              <ChevronRight size={14} />
-            </Button>
-          </div>
-        </div>
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={users.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="pengguna"
+        />
       </Card>
       <EditUserModal 
         isOpen={isEditModalOpen} 

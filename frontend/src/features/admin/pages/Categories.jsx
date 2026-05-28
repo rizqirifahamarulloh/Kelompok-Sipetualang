@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import TablePagination, { paginateArray } from "@/components/TablePagination";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,8 @@ export default function Categories() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 10;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -237,10 +240,10 @@ export default function Categories() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((item, index) => (
+                filtered.length === 0 ? <></> : paginateArray(filtered, currentPage, PER_PAGE).map((item, index) => (
                   <TableRow key={item.id_kategori}>
                     <TableCell className="text-center">
-                      {index + 1}
+                      {(currentPage - 1) * PER_PAGE + index + 1}
                     </TableCell>
 
                     <TableCell>
@@ -325,9 +328,13 @@ export default function Categories() {
           </Table>
         </div>
 
-        <div className="p-4 border-t text-sm text-muted-foreground">
-          Showing {filtered.length} of {categoryList.length} categories
-        </div>
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={filtered.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="kategori"
+        />
       </Card>
 
       {/* Add Modal */}

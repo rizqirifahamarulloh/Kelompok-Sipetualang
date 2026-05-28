@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import TablePagination, { paginateArray } from "@/components/TablePagination";
 import { adminService } from "../services/adminService";
 import { 
   Package, 
@@ -28,6 +29,8 @@ export default function RentedGears() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("semua");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 5;
 
   // State Modals
   const [selectedTrx, setSelectedTrx] = useState(null);
@@ -287,8 +290,9 @@ export default function RentedGears() {
           <p className="text-sm font-medium">Tidak ada data penyewaan yang sesuai filter.</p>
         </div>
       ) : (
+        <>
         <div className="grid gap-4">
-          {filteredData.map((item) => (
+          {paginateArray(filteredData, currentPage, PER_PAGE).map((item) => (
             <Card key={item.id_transaksi} className="border shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-white dark:bg-slate-900">
               {/* Header Box */}
               <div className="border-b bg-slate-50/50 dark:bg-slate-800/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -432,6 +436,16 @@ export default function RentedGears() {
             </Card>
           ))}
         </div>
+
+        {/* Pagination */}
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={filteredData.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="transaksi"
+        />
+        </>
       )}
 
       {/* Modal Konfirmasi Alat Dikembalikan */}

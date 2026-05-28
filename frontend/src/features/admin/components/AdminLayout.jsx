@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { BASE_URL } from '@/services/api'
+import { getStorageUrl } from '@/utils/storageUrl'
 import { useLanguage } from '@/contexts/LanguageContext'
 import ThemeToggle from '@/components/ThemeToggle'
 import LanguageToggle from '@/components/LanguageToggle'
@@ -45,20 +46,40 @@ import {
   Layers,
 } from 'lucide-react'
 
-function useMenuItems() {
+function useMenuGroups() {
   const { t } = useLanguage()
 
   return [
-    { label: t('admin.dashboard'), icon: LayoutDashboard, href: '/admin/dashboard' },
-    { label: t('admin.users'), icon: Users, href: '/admin/users' },
-    { label: t('admin.gears'), icon: Package, href: '/admin/gears' },
-    { label: t('admin.categories'), icon: FolderOpen, href: '/admin/categories' },
-    { label: t('admin.destinations'), icon: MapPin, href: '/admin/destinations' },
-    { label: t('admin.transactions'), icon: ShoppingCart, href: '/admin/revenue' },
-    { label: 'Status Pengiriman', icon: Truck, href: '/admin/pengiriman' },
-    { label: 'Barang Disewakan', icon: Layers, href: '/admin/disewa' },
-    { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments' },
-    { label: t('admin.ktpVerification'), icon: Shield, href: '/admin/ktp-verifikasi' },
+    {
+      label: 'Dashboard',
+      items: [
+        { label: t('admin.dashboard'), icon: LayoutDashboard, href: '/admin/dashboard' },
+      ],
+    },
+    {
+      label: 'Manajemen',
+      items: [
+        { label: t('admin.users'), icon: Users, href: '/admin/users' },
+        { label: t('admin.gears'), icon: Package, href: '/admin/gears' },
+        { label: t('admin.categories'), icon: FolderOpen, href: '/admin/categories' },
+        { label: t('admin.destinations'), icon: MapPin, href: '/admin/destinations' },
+      ],
+    },
+    {
+      label: 'Transaksi',
+      items: [
+        { label: t('admin.transactions'), icon: ShoppingCart, href: '/admin/revenue' },
+        { label: 'Status Pengiriman', icon: Truck, href: '/admin/pengiriman' },
+        { label: 'Barang Disewakan', icon: Layers, href: '/admin/disewa' },
+        { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments' },
+      ],
+    },
+    {
+      label: 'Verifikasi',
+      items: [
+        { label: t('admin.ktpVerification'), icon: Shield, href: '/admin/ktp-verifikasi' },
+      ],
+    },
   ]
 }
 
@@ -66,7 +87,7 @@ function AdminSidebar() {
   const { user, logout } = useAuth()
   const { t } = useLanguage()
   const location = useLocation()
-  const menuItems = useMenuItems()
+  const menuGroups = useMenuGroups()
 
   const initials = user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -93,23 +114,25 @@ function AdminSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.href}>
-                    <Link to={item.href}>
-                      <item.icon className="size-4" />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {menuGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={location.pathname === item.href}>
+                      <Link to={item.href}>
+                        <item.icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
@@ -152,9 +175,7 @@ export default function AdminLayout() {
   const { user } = useAuth() // Hanya ambil user
 
   // Logika Foto Profil
-  const photoUrl = user?.profile_photo 
-    ? `${BASE_URL}/storage/${user.profile_photo}` 
-    : null
+  const photoUrl = getStorageUrl(user?.profile_photo)
 
   // Logika Inisial
   const initials = user?.name

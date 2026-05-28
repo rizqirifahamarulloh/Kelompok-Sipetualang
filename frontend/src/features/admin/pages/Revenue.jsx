@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import TablePagination, { paginateArray } from '@/components/TablePagination'
 // import { useLanguage } from '@/contexts/LanguageContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -146,6 +147,9 @@ function RevenueChart({ data }) {
 }
 
 function TransactionList({ transactions }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 10;
+
   if (!transactions?.length) {
     return (
       <Card>
@@ -167,7 +171,6 @@ function TransactionList({ transactions }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
               <TableHead>Barang</TableHead>
               <TableHead>Penyewa</TableHead>
               <TableHead>Pemilik</TableHead>
@@ -179,9 +182,8 @@ function TransactionList({ transactions }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((trx) => (
+            {paginateArray(transactions, currentPage, PER_PAGE).map((trx) => (
               <TableRow key={trx.id_transaksi}>
-                <TableCell className="font-mono text-xs">{trx.id_transaksi}</TableCell>
                 <TableCell className="font-medium">{trx.nama_barang}</TableCell>
                 <TableCell>{trx.penyewa?.nama || '-'}</TableCell>
                 <TableCell>{trx.pemilik?.nama || '-'}</TableCell>
@@ -198,12 +200,22 @@ function TransactionList({ transactions }) {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={transactions.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="transaksi"
+        />
       </CardContent>
     </Card>
   )
 }
 
 function OwnerEarningsList({ earnings }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 10;
+
   if (!earnings?.length) return null
 
   return (
@@ -223,7 +235,7 @@ function OwnerEarningsList({ earnings }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {earnings.map((owner) => (
+            {paginateArray(earnings, currentPage, PER_PAGE).map((owner) => (
               <TableRow key={owner.id_pengguna}>
                 <TableCell className="font-medium">{owner.nama}</TableCell>
                 <TableCell>{owner.email}</TableCell>
@@ -235,6 +247,13 @@ function OwnerEarningsList({ earnings }) {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={earnings.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="pemilik"
+        />
       </CardContent>
     </Card>
   )

@@ -9,6 +9,7 @@ import EditGearModal from "../components/Gears/EditGearModal";
 import DeleteGearModal from "../components/Gears/DeleteGearModal";
 import { gearService } from "../services/GearService";
 import { BASE_URL } from "@/services/api";
+import { getStorageUrl } from "@/utils/storageUrl";
 import { toast } from "sonner";
 
 
@@ -330,7 +331,7 @@ export default function Gears() {
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center border border-gray-100 shrink-0 overflow-hidden">
                           {gear.foto_barang ? (
-                            <img src={`${BASE_URL}/storage/${gear.foto_barang}`} alt={gear.nama_barang} className="w-full h-full object-cover" />
+                            <img src={getStorageUrl(gear.foto_barang)} alt={gear.nama_barang} className="w-full h-full object-cover" />
                           ) : (
                             <Package size={16} className="text-emerald-600" />
                           )}

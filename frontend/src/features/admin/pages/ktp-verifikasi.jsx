@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
+import TablePagination, { paginateArray } from "@/components/TablePagination";
 import { adminService } from "../services/adminService";
 import { Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BASE_URL } from "@/services/api";
+import { getStorageUrl } from "@/utils/storageUrl";
 
 
 export default function KtpVerification() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 5;
 
   const getData = async () => {
     setLoading(true);
@@ -79,8 +83,9 @@ export default function KtpVerification() {
           Tidak ada permintaan verifikasi KTP saat ini.
         </div>
       ) : (
+        <>
         <div className="grid gap-4">
-          {data.map((item) => {
+          {paginateArray(data, currentPage, PER_PAGE).map((item) => {
             const isRentalRequest = item.catatan_admin === '[PENDAFTARAN_RENTAL]';
             
             return (
@@ -110,7 +115,7 @@ export default function KtpVerification() {
                   <div>
                     <p className="text-xs mb-1">KTP</p>
                     <img
-                      src={`${BASE_URL}/storage/${item.foto_ktp}`}
+                      src={getStorageUrl(item.foto_ktp)}
                       className="rounded-lg border w-full h-40 object-cover"
                     />
                   </div>
@@ -118,7 +123,7 @@ export default function KtpVerification() {
                   <div>
                     <p className="text-xs mb-1">Selfie</p>
                     <img
-                      src={`${BASE_URL}/storage/${item.foto_selfie_ktp}`}
+                      src={getStorageUrl(item.foto_selfie_ktp)}
                       className="rounded-lg border w-full h-40 object-cover"
                     />
                   </div>
@@ -157,6 +162,16 @@ export default function KtpVerification() {
             );
           })}
         </div>
+
+        {/* Pagination */}
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={data.length}
+          perPage={PER_PAGE}
+          onPageChange={setCurrentPage}
+          label="verifikasi"
+        />
+        </>
       )}
     </div>
   );

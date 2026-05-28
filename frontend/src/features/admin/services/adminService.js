@@ -95,5 +95,10 @@ export const adminService = {
   async konfirmasiKembali(id, data) {
     const response = await api.post(`/admin/pengiriman/${id}/konfirmasi-kembali`, data)
     return response.data
+  },
+
+  async pickupBarangDiambil(id) {
+    const response = await api.post(`/admin/pengiriman/${id}/pickup-diambil`)
+    return response.data
   }
 }

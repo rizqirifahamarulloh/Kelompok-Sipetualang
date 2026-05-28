@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { toast } from 'sonner'
 import NotificationBell from '@/components/NotificationBell'
-import { User, LogOut } from 'lucide-react'
+import { User, LogOut, X, ArrowLeft, Send, Loader2, Search, MessageCircle } from 'lucide-react'
 import logo from '@/assets/beranda/Logo.png'
 import cartIcon from '@/assets/beranda/icon-simple-cart.svg'
 import arrowRight from '@/assets/beranda/icon-arrow-right.svg'
@@ -21,6 +21,20 @@ export default function Navbar() {
   const location = useLocation()
 
   const [unreadChats, setUnreadChats] = useState(0)
+
+  // Chat Popup States
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [activeChatId, setActiveChatId] = useState(null)
+  const [activeChatUser, setActiveChatUser] = useState(null)
+  const [chatConversations, setChatConversations] = useState([])
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatSearch, setChatSearch] = useState('')
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  const [sendingMsg, setSendingMsg] = useState(false)
+
+  const chatEndRef = useRef(null)
+  const chatContainerRef = useRef(null)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -43,6 +57,74 @@ export default function Navbar() {
     const interval = setInterval(fetchUnreadChats, 15000)
     return () => clearInterval(interval)
   }, [isAuthenticated])
+
+  // === Rental Notifications for Perental Users ===
+  const [rentalNotifications, setRentalNotifications] = useState([])
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.rental !== 'true') {
+      setRentalNotifications([])
+      return
+    }
+
+    const fetchRentalData = async () => {
+      try {
+        const [gearsRes, trxRes] = await Promise.all([
+          api.get('/customer/rental/barang'),
+          api.get('/customer/transaksi/pemilik')
+        ])
+        const gears = gearsRes.data?.data || gearsRes.data || []
+        const transactions = trxRes.data?.data || trxRes.data || []
+        const now = new Date().toISOString()
+        const newNotifications = []
+
+        // Stock warnings (< 5 units)
+        const criticalItems = Array.isArray(gears) ? gears.filter(g => g.jumlah_stok < 5) : []
+        criticalItems.forEach((item) => {
+          const severityLevel = item.jumlah_stok <= 2 ? 'danger' : 'warning'
+          const stockLabel = item.jumlah_stok <= 0 ? 'HABIS' : `tinggal ${item.jumlah_stok} stok`
+          newNotifications.push({
+            id_notifikasi: `local-stock-${item.id_barang}`,
+            type: 'stock_warning',
+            severity: severityLevel,
+            title: item.jumlah_stok <= 0 ? `🚨 Stok Habis: ${item.nama_barang}` : `⚠️ Stok Kritis: ${item.nama_barang}`,
+            message: `Barang "${item.nama_barang}" ${stockLabel}. Segera tambahkan stok untuk menghindari kehabisan.`,
+            created_at: now,
+            is_read: false
+          })
+        })
+
+        // Incoming rentals (paid but not yet rented)
+        const incomingRentals = Array.isArray(transactions)
+          ? transactions.filter(t => t.status_pembayaran === 'sukses' && t.status_sewa === 'dibayar')
+          : []
+        if (incomingRentals.length > 0) {
+          const newestOrder = incomingRentals.reduce((latest, t) => {
+            const tDate = new Date(t.created_at || t.updated_at || now)
+            return tDate > new Date(latest.created_at || latest.updated_at || now) ? t : latest
+          }, incomingRentals[0])
+
+          newNotifications.push({
+            id_notifikasi: 'local-incoming-rentals',
+            type: 'transaction',
+            severity: 'info',
+            title: `📦 ${incomingRentals.length} Penyewaan Baru Masuk`,
+            message: `Anda memiliki ${incomingRentals.length} penyewaan yang sudah dibayar dan siap diambil customer.`,
+            created_at: newestOrder.created_at || newestOrder.updated_at || now,
+            is_read: false
+          })
+        }
+
+        setRentalNotifications(newNotifications)
+      } catch (err) {
+        console.error('Gagal fetch data rental untuk notifikasi:', err)
+      }
+    }
+
+    fetchRentalData()
+    const interval = setInterval(fetchRentalData, 30000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated, user?.rental])
 
   // Nav links
   const navLinks = [
@@ -71,6 +153,17 @@ export default function Navbar() {
     return () => document.removeEventListener('click', handleClickOutside)
   }, [dropdownOpen])
 
+  // Click outside to close chat popup
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (chatContainerRef.current && !chatContainerRef.current.contains(event.target)) {
+        setIsChatOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [chatContainerRef])
+
   const handleLogout = async () => {
     setDropdownOpen(false)
     setMobileOpen(false)
@@ -87,6 +180,18 @@ export default function Navbar() {
     }
   }
 
+  const handleChatClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+    const nextOpen = !isChatOpen
+    setIsChatOpen(nextOpen)
+    if (nextOpen) {
+      fetchConversationsList()
+    }
+  }
+
   // Ambil inisial nama (MAX 2 huruf)
   const getUserInitials = () => {
     if (!user?.nama) return '?'
@@ -100,6 +205,117 @@ export default function Navbar() {
     if (href === '/') return location.pathname === '/'
     return location.pathname === href
   }
+
+  // === Chat Popup Helpers ===
+  const getOtherUserInConv = (conv) => {
+    if (!user) return null
+    const myId = user.id || user.id_pengguna
+    return Number(conv.id_user_a) === Number(myId) ? conv.user_b : conv.user_a
+  }
+
+  const fetchConversationsList = async () => {
+    try {
+      const res = await api.get('/customer/chat/conversations')
+      setChatConversations(res.data.data || [])
+    } catch (err) {
+      console.error("Gagal memuat percakapan:", err)
+    }
+  }
+
+  const fetchChatMessages = async (conversationId, silent = false) => {
+    if (!conversationId) return
+    try {
+      if (!silent) setChatLoading(true)
+      const res = await api.get(`/customer/chat/messages/${conversationId}`)
+      const messagesData = res.data.data?.messages || []
+      setChatMessages(messagesData)
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    } catch (err) {
+      console.error("Gagal memuat pesan:", err)
+    } finally {
+      if (!silent) setChatLoading(false)
+    }
+  }
+
+  const fetchUnreadChatsCount = async () => {
+    try {
+      const res = await api.get('/customer/chat/conversations')
+      const convs = res.data.data || []
+      const totalUnread = convs.reduce((sum, item) => sum + (item.unread_count || 0), 0)
+      setUnreadChats(totalUnread)
+    } catch (err) {
+      console.error('Gagal mengambil data chat:', err)
+    }
+  }
+
+  const handleOpenConversation = (conv) => {
+    const otherUser = getOtherUserInConv(conv)
+    setActiveChatId(conv.id_conversation)
+    setActiveChatUser(otherUser)
+    fetchChatMessages(conv.id_conversation)
+  }
+
+  const handleSendQuickMessage = async (e) => {
+    e.preventDefault()
+    if (!chatInput.trim() || !activeChatId || sendingMsg) return
+
+    const text = chatInput.trim()
+    setChatInput('')
+    setSendingMsg(true)
+
+    const myId = user.id || user.id_pengguna
+    const tempMsg = {
+      id_message: Date.now(),
+      id_sender: myId,
+      message: text,
+      created_at: new Date().toISOString(),
+      is_read: false
+    }
+    setChatMessages(prev => [...prev, tempMsg])
+    
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 50)
+
+    try {
+      await api.post('/customer/chat/message', {
+        id_conversation: activeChatId,
+        message: text
+      })
+      await fetchChatMessages(activeChatId, true)
+      fetchConversationsList()
+      fetchUnreadChatsCount()
+    } catch (err) {
+      console.error("Gagal mengirim pesan:", err)
+      setChatMessages(prev => prev.filter(m => m.id_message !== tempMsg.id_message))
+    } finally {
+      setSendingMsg(false)
+    }
+  }
+
+  // Polling for active chat messages
+  useEffect(() => {
+    if (!isChatOpen) return
+
+    const interval = setInterval(() => {
+      fetchConversationsList()
+      if (activeChatId) {
+        fetchChatMessages(activeChatId, true)
+      }
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [isChatOpen, activeChatId])
+
+  const filteredChatConvs = useMemo(() => {
+    if (!chatSearch.trim()) return chatConversations
+    return chatConversations.filter(conv => {
+      const otherUser = getOtherUserInConv(conv)
+      return otherUser?.nama?.toLowerCase().includes(chatSearch.toLowerCase())
+    })
+  }, [chatConversations, chatSearch, user])
 
   return (
     <motion.nav
@@ -138,22 +354,205 @@ export default function Navbar() {
           <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart" onClick={handleCartClick}>
             <img src={cartIcon} alt="Cart" className="w-5 h-5" />
           </button>
-          <NotificationBell variant="navbar" />
+          <NotificationBell variant="navbar" additionalNotifications={rentalNotifications} />
 
-          {/* Tombol CHAT */}
-          <Link
-             to="/customer/chat" 
-            className="relative bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10"
-          >
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            {unreadChats > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full border border-black animate-bounce pointer-events-none">
-                {unreadChats}
-              </span>
-            )}
-          </Link>
+          {/* Chat Popup Button */}
+          <div className="relative" ref={chatContainerRef}>
+            <button
+              onClick={handleChatClick}
+              className="relative bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              {unreadChats > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full border border-black animate-bounce pointer-events-none">
+                  {unreadChats}
+                </span>
+              )}
+            </button>
+
+            {/* FLOATING MINI CHAT WIDGET */}
+            <AnimatePresence>
+              {isChatOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 mt-3 w-[360px] h-[480px] rounded-2xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col z-[1100]"
+                >
+                  {/* HEADER */}
+                  <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex items-center gap-3">
+                    {activeChatId ? (
+                      <>
+                        <button
+                          onClick={() => {
+                            setActiveChatId(null)
+                            setActiveChatUser(null)
+                            setChatMessages([])
+                          }}
+                          className="size-8 hover:bg-white/10 rounded-lg text-white flex items-center justify-center bg-transparent border-none cursor-pointer"
+                        >
+                          <ArrowLeft className="size-4" />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm truncate">{activeChatUser?.nama}</h4>
+                          <p className="text-[10px] text-emerald-100 truncate">{activeChatUser?.kota || 'Pengguna'}</p>
+                        </div>
+                        <button
+                          onClick={() => setIsChatOpen(false)}
+                          className="size-8 hover:bg-white/10 rounded-lg text-white flex items-center justify-center bg-transparent border-none cursor-pointer"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-sm">Pesan</h4>
+                          <p className="text-[10px] text-emerald-100">Chat dengan pengguna lain</p>
+                        </div>
+                        <button
+                          onClick={() => setIsChatOpen(false)}
+                          className="size-8 hover:bg-white/10 rounded-lg text-white flex items-center justify-center bg-transparent border-none cursor-pointer"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* BODY CONTENT */}
+                  <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 flex flex-col">
+                    {activeChatId ? (
+                      /* CHAT THREAD VIEW */
+                      chatLoading ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-gray-500 text-xs gap-2">
+                          <Loader2 className="size-6 animate-spin text-emerald-600" />
+                          <span>Memuat obrolan...</span>
+                        </div>
+                      ) : (
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                          {chatMessages.length === 0 ? (
+                            <div className="text-center text-xs text-gray-500 py-8">
+                              Belum ada pesan. Mulai kirim pesan di bawah!
+                            </div>
+                          ) : (
+                            chatMessages.map((msg) => {
+                              const myId = user.id || user.id_pengguna
+                              const isMe = msg.id_sender === myId
+                              return (
+                                <div 
+                                  key={msg.id_message} 
+                                  className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                                >
+                                  <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-xs shadow-sm ${
+                                    isMe 
+                                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-none' 
+                                      : 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-none'
+                                  }`}>
+                                    <p className="leading-relaxed break-words">{msg.message}</p>
+                                    <span className={`text-[8px] block text-right mt-1 ${isMe ? 'text-emerald-100' : 'text-slate-400'}`}>
+                                      {new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            })
+                          )}
+                          <div ref={chatEndRef} />
+                        </div>
+                      )
+                    ) : (
+                      /* CONVERSATIONS LIST VIEW */
+                      <>
+                        {/* Search bar inside popup */}
+                        <div className="p-3 border-b border-slate-100 dark:border-slate-900 bg-white dark:bg-slate-900 flex items-center relative">
+                          <Search className="size-3.5 absolute left-6 text-slate-400" />
+                          <input 
+                            placeholder="Cari percakapan..." 
+                            className="h-8 w-full rounded-lg pl-8 text-xs bg-slate-50 dark:bg-slate-950 border-none outline-none px-3 py-2"
+                            value={chatSearch}
+                            onChange={(e) => setChatSearch(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-900">
+                          {filteredChatConvs.length === 0 ? (
+                            <div className="p-8 text-center text-xs text-gray-500 flex flex-col items-center justify-center gap-2">
+                              <MessageCircle className="size-8 text-slate-300" />
+                              <span>Belum ada obrolan</span>
+                            </div>
+                          ) : (
+                            filteredChatConvs.map((conv) => {
+                              const otherUser = getOtherUserInConv(conv)
+                              return (
+                                <button
+                                  key={conv.id_conversation}
+                                  onClick={() => handleOpenConversation(conv)}
+                                  className="w-full p-3.5 flex gap-3 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition items-start bg-transparent border-none cursor-pointer"
+                                >
+                                  <div className="size-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm shrink-0">
+                                    <span className="text-white text-xs font-bold">
+                                      {otherUser?.nama?.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-baseline gap-2">
+                                      <h5 className="font-bold text-xs text-slate-800 dark:text-slate-200 truncate">{otherUser?.nama}</h5>
+                                      <span className="text-[9px] text-slate-400 font-semibold shrink-0">
+                                        {conv.last_message_at ? new Date(conv.last_message_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : ''}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                      {conv.last_message || 'Belum ada pesan'}
+                                    </p>
+                                    {conv.unread_count > 0 && (
+                                      <span className="inline-block bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full mt-1.5">
+                                        {conv.unread_count} Pesan Baru
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+                              )
+                            })
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* QUICK REPLY FOOTER */}
+                  {activeChatId && (
+                    <form 
+                      onSubmit={handleSendQuickMessage}
+                      className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-2 items-center"
+                    >
+                      <input 
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Ketik pesan..." 
+                        className="flex-1 h-9 rounded-xl text-xs bg-slate-50 border-none dark:bg-slate-950 px-3 py-2 outline-none"
+                        disabled={sendingMsg}
+                      />
+                      <button 
+                        type="submit" 
+                        disabled={sendingMsg || !chatInput.trim()}
+                        className="size-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 shadow-md border-none flex items-center justify-center cursor-pointer disabled:opacity-50"
+                      >
+                        {sendingMsg ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Send className="size-4" />
+                        )}
+                      </button>
+                    </form>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Auth section */}
           {isLoading ? (
@@ -192,16 +591,18 @@ export default function Navbar() {
 
                     <div className="py-1">
                       {/* Chat di dropdown */}
-                      <Link
-                        to="/customer/chat"
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors no-underline"
-                        onClick={() => setDropdownOpen(false)}
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false)
+                          handleChatClick()
+                        }}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors w-full bg-transparent border-none cursor-pointer"
                       >
                         <svg className="size-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                         Chat
-                      </Link>
+                      </button>
 
                       {/* Lihat Profile */}
                       <Link
@@ -278,13 +679,12 @@ export default function Navbar() {
               <button className="bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10" aria-label="Cart" onClick={handleCartClick}>
                 <img src={cartIcon} alt="Cart" className="w-5 h-5" />
               </button>
-              <NotificationBell variant="navbar" />
+              <NotificationBell variant="navbar" additionalNotifications={rentalNotifications} />
 
-              {/* Chat di Mobile */}
-              <Link
-                to="/customer/chat"
+              {/* Chat di Mobile - popup instead of navigate */}
+              <button
+                onClick={handleChatClick}
                 className="relative bg-transparent p-2 flex items-center justify-center rounded border-none cursor-pointer transition-colors duration-300 ease-in-out hover:bg-white/10"
-                onClick={() => setMobileOpen(false)}
               >
                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -294,7 +694,7 @@ export default function Navbar() {
                     {unreadChats}
                   </span>
                 )}
-              </Link>
+              </button>
 
               {/* Mobile Auth Section */}
               {isAuthenticated ? (
@@ -314,17 +714,19 @@ export default function Navbar() {
                     </div>
                   </Link>
 
-                  {/* Lihat Profile - mobile */}
-                  <Link
-                    to="/customer/chat"
-                    className="flex items-center gap-2 bg-white/10 text-white py-2.5 px-4 rounded-full text-sm font-semibold w-full hover:bg-white/20 no-underline"
-                    onClick={() => setMobileOpen(false)}
+                  {/* Chat - mobile popup */}
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false)
+                      handleChatClick()
+                    }}
+                    className="flex items-center gap-2 bg-white/10 text-white py-2.5 px-4 rounded-full text-sm font-semibold w-full hover:bg-white/20 border-none cursor-pointer"
                   >
                     <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                     Chat
-                  </Link>
+                  </button>
 
                   <Link
                     to="/profile"

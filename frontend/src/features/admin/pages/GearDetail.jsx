@@ -5,6 +5,7 @@ import DeleteGearModal from "../components/Gears/DeleteGearModal";
 import { gearService } from "../services/GearService";
 import { toast } from "sonner";
 import { BASE_URL } from "@/services/api";
+import { getStorageUrl } from "@/utils/storageUrl";
 
 // Config & Dummy data logic specific to the Detail View
 const STATUS_CONFIG = {
@@ -143,7 +144,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-xs">
           <div className="relative rounded-xl overflow-hidden bg-gray-50 border border-gray-100 mb-4 h-64 flex items-center justify-center">
             {gear.foto_barang ? (
-              <img src={`${BASE_URL}/storage/${gear.foto_barang}`} alt={gear.nama_barang} className="w-full h-full object-cover" />
+              <img src={getStorageUrl(gear.foto_barang)} alt={gear.nama_barang} className="w-full h-full object-cover" />
             ) : (
               <div className="flex flex-col items-center text-gray-300">
                 <Package size={48} className="mb-3" />
