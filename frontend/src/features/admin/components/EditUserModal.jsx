@@ -66,11 +66,11 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+      <div className="bg-card rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-card z-10">
           <h2 className="text-xl font-bold text-gray-800">Edit Data Pengguna</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X size={20} />
           </button>
         </div>
@@ -81,7 +81,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
             <h3 className="text-lg font-semibold text-emerald-800 border-b pb-2 mb-4">1. Informasi Dasar</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Nama Lengkap</label>
+                <label className="block text-xs font-medium text-foreground mb-1">Nama Lengkap</label>
                 <input
                   type="text"
                   name="nama"
@@ -93,7 +93,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                  <label className="block text-xs font-medium text-foreground mb-1">Email</label>
                   <input
                     type="email"
                     name="email"
@@ -103,7 +103,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
                   />
                 </div>
                 <div>
-                  <label className={`block text-xs font-medium mb-1 ${errors.telepon ? 'text-red-500' : 'text-gray-600'}`}>Telepon</label>
+                  <label className={`block text-xs font-medium mb-1 ${errors.telepon ? 'text-red-500' : 'text-foreground'}`}>Telepon</label>
                   <input
                     type="text"
                     name="telepon"
@@ -118,7 +118,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Lahir</label>
+                <label className="block text-xs font-medium text-foreground mb-1">Tanggal Lahir</label>
                 <input
                   type="date"
                   name="tanggal_lahir"
@@ -129,7 +129,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Alamat</label>
+                <label className="block text-xs font-medium text-foreground mb-1">Alamat</label>
                 <textarea
                   name="alamat"
                   value={formData.alamat}
@@ -146,7 +146,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
             <h3 className="text-lg font-semibold text-emerald-800 border-b pb-2 mb-4">2. Pengaturan Akun</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">Peran (Role)</label>
+                <label className="block text-xs font-medium text-foreground mb-2">Peran (Role)</label>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
@@ -173,12 +173,12 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Status Akun</label>
+                <label className="block text-xs font-medium text-foreground mb-1">Status Akun</label>
                 <select
                   name="status_akun"
                   value={formData.status_akun}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm bg-white"
+                  className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm bg-card"
                 >
                   <option value="aktif">Aktif</option>
                   <option value="nonaktif">Nonaktif</option>
@@ -193,12 +193,12 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
             <h3 className="text-lg font-semibold text-emerald-800 border-b pb-2 mb-4">3. Status KTP</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Status Verifikasi KTP</label>
+                <label className="block text-xs font-medium text-foreground mb-1">Status Verifikasi KTP</label>
                 <select
                   name="status_ktp"
                   value={formData.status_ktp}
                   onChange={handleChange}
-                  className="w-1/2 px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm bg-white"
+                  className="w-1/2 px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm bg-card"
                 >
                   <option value="terverifikasi">Terverifikasi</option>
                   <option value="menunggu">Menunggu Verifikasi</option>
@@ -206,25 +206,25 @@ export default function EditUserModal({ isOpen, onClose, user, onSave }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Catatan Admin (Opsional)</label>
+                <label className="block text-xs font-medium text-foreground mb-1">Catatan Admin (Opsional)</label>
                 <textarea
                   name="catatan"
                   value={formData.catatan}
                   onChange={handleChange}
                   placeholder="Tambahkan catatan khusus mengenai verifikasi pengguna ini..."
                   rows="2"
-                  className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm resize-none placeholder:text-gray-400"
+                  className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm resize-none placeholder:text-muted-foreground"
                 ></textarea>
               </div>
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2 bg-slate-50 -mx-6 px-6 pb-2">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border mt-2 bg-muted -mx-6 px-6 pb-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition"
+              className="px-5 py-2 text-sm font-medium text-foreground bg-card border border-gray-300 rounded hover:bg-muted transition"
             >
               Batal
             </button>

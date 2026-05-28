@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from '@/contexts/AuthContext';
 import { customerService } from '../services/customerService';
 import api, { BASE_URL } from '@/services/api';
@@ -16,6 +16,10 @@ export default function Verifikasi() {
   const [ktp, setKtp] = useState(null);
   const [selfie, setSelfie] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [ktpPreview, setKtpPreview] = useState(null);
+  const [selfiePreview, setSelfiePreview] = useState(null);
+  const ktpInputRef = useRef(null);
+  const selfieInputRef = useRef(null);
 
   const verificationStatus = user?.verification_status;
   const verificationNote = user?.verification_note;
@@ -42,6 +46,22 @@ export default function Verifikasi() {
 
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
 
+  const handleKtpChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setKtp(file);
+      setKtpPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSelfieChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelfie(file);
+      setSelfiePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async () => {
     if (!ktp || !selfie) {
       toast.warning("Upload KTP & selfie terlebih dahulu!");
@@ -66,6 +86,8 @@ export default function Verifikasi() {
       
       setKtp(null);
       setSelfie(null);
+      setKtpPreview(null);
+      setSelfiePreview(null);
     } catch (err) {
       console.error('Upload verifikasi error:', err);
       const message = err?.response?.data?.message || err?.message || 'Gagal upload dokumen';
@@ -128,35 +150,89 @@ export default function Verifikasi() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* KTP */}
-          <div className="p-6 border-2 border-dashed rounded-xl text-center hover:bg-accent/50 transition-colors">
-            <Upload className="mx-auto mb-3 text-primary size-8" />
-            <p className="text-sm font-semibold">Foto KTP Asli</p>
+          <div
+            onClick={() => ktpInputRef.current?.click()}
+            className={`group p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all duration-200 ${
+              ktp
+                ? 'border-green-400 bg-green-50/50 dark:bg-green-950/20 hover:border-green-500'
+                : 'border-muted-foreground/30 hover:border-primary hover:bg-accent/50'
+            }`}
+          >
+            {ktpPreview ? (
+              <div className="space-y-3">
+                <img
+                  src={ktpPreview}
+                  alt="Preview KTP"
+                  className="w-full h-40 object-cover rounded-lg border"
+                />
+                <p className="text-xs text-green-600 dark:text-green-400 font-semibold flex items-center justify-center gap-1">
+                  <CheckCircle2 className="size-3.5" /> {ktp.name}
+                </p>
+                <p className="text-[11px] text-muted-foreground">Klik untuk mengganti foto</p>
+              </div>
+            ) : (
+              <>
+                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+                  <Upload className="text-primary size-6" />
+                </div>
+                <p className="text-sm font-semibold mb-1">Foto KTP Asli</p>
+                <p className="text-xs text-muted-foreground">Klik untuk upload foto KTP</p>
+                <p className="text-[11px] text-muted-foreground/60 mt-1">JPG, PNG, maks 5MB</p>
+              </>
+            )}
             <input
+              ref={ktpInputRef}
               type="file"
               accept="image/*"
-              onChange={(e) => setKtp(e.target.files[0])}
-              className="mt-3 text-xs w-full"
+              onChange={handleKtpChange}
+              className="hidden"
             />
-            {ktp && <p className="text-xs mt-2 text-green-600 font-medium">✓ {ktp.name}</p>}
           </div>
 
           {/* SELFIE */}
-          <div className="p-6 border-2 border-dashed rounded-xl text-center hover:bg-accent/50 transition-colors">
-            <Camera className="mx-auto mb-3 text-primary size-8" />
-            <p className="text-sm font-semibold">Selfie + KTP</p>
+          <div
+            onClick={() => selfieInputRef.current?.click()}
+            className={`group p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all duration-200 ${
+              selfie
+                ? 'border-green-400 bg-green-50/50 dark:bg-green-950/20 hover:border-green-500'
+                : 'border-muted-foreground/30 hover:border-primary hover:bg-accent/50'
+            }`}
+          >
+            {selfiePreview ? (
+              <div className="space-y-3">
+                <img
+                  src={selfiePreview}
+                  alt="Preview Selfie"
+                  className="w-full h-40 object-cover rounded-lg border"
+                />
+                <p className="text-xs text-green-600 dark:text-green-400 font-semibold flex items-center justify-center gap-1">
+                  <CheckCircle2 className="size-3.5" /> {selfie.name}
+                </p>
+                <p className="text-[11px] text-muted-foreground">Klik untuk mengganti foto</p>
+              </div>
+            ) : (
+              <>
+                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+                  <Camera className="text-primary size-6" />
+                </div>
+                <p className="text-sm font-semibold mb-1">Selfie + KTP</p>
+                <p className="text-xs text-muted-foreground">Klik untuk upload selfie bersama KTP</p>
+                <p className="text-[11px] text-muted-foreground/60 mt-1">JPG, PNG, maks 5MB</p>
+              </>
+            )}
             <input
+              ref={selfieInputRef}
               type="file"
               accept="image/*"
-              onChange={(e) => setSelfie(e.target.files[0])}
-              className="mt-3 text-xs w-full"
+              onChange={handleSelfieChange}
+              className="hidden"
             />
-            {selfie && <p className="text-xs mt-2 text-green-600 font-medium">✓ {selfie.name}</p>}
           </div>
         </div>
 
         <Separator />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/50 p-4 rounded-lg">
           <div className="space-y-2">
             <p className="text-sm font-bold flex items-center gap-2">
               <CheckCircle2 className="size-4 text-green-500" /> Panduan Foto KTP

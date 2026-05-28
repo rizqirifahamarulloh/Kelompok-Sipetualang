@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\PengajuanPengembalian;
 use App\Models\Transaksi;
+use App\Models\DetailTransaksi;
 use App\Models\Notifikasi;
 use App\Models\Pengguna;
 use Illuminate\Http\Request;
@@ -96,6 +97,22 @@ class PengajuanPengembalianController extends Controller
                 ]);
             }
 
+            // Notify perental (item owner) about the return request
+            if ($transaksi->id_pemilik) {
+                Notifikasi::create([
+                    'id_pengguna' => $transaksi->id_pemilik,
+                    'unique_key' => 'retur_owner_request_' . $pengajuan->id_pengajuan . '_' . time(),
+                    'type' => 'return_request',
+                    'title' => 'Customer Mengajukan Pengembalian Barang 📦',
+                    'message' => "Customer {$user->nama} mengajukan pengembalian barang \"{$transaksi->nama_barang}\" milik Anda. Alasan: " . substr($request->alasan, 0, 100) . ". Menunggu keputusan admin.",
+                    'severity' => 'warning',
+                    'data' => [
+                        'id_pengajuan' => $pengajuan->id_pengajuan,
+                        'id_transaksi' => $transaksi->id_transaksi,
+                    ]
+                ]);
+            }
+
             DB::commit();
 
             return response()->json([
@@ -122,6 +139,36 @@ class PengajuanPengembalianController extends Controller
 
         $requests = PengajuanPengembalian::where('id_customer', $user->id_pengguna)
             ->with(['transaksi.barang', 'transaksi.pemilik'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $requests
+        ]);
+    }
+
+    /**
+     * Perental: Get return requests for items I own
+     */
+    public function getByPemilik()
+    {
+        $userId = Auth::id();
+
+        // Find transaksi IDs where this user is the owner
+        $transaksiIdsFromDetail = DetailTransaksi::where('id_pemilik', $userId)
+            ->pluck('id_transaksi')
+            ->unique()
+            ->toArray();
+
+        $transaksiIdsDirect = Transaksi::where('id_pemilik', $userId)
+            ->pluck('id_transaksi')
+            ->toArray();
+
+        $allIds = array_unique(array_merge($transaksiIdsFromDetail, $transaksiIdsDirect));
+
+        $requests = PengajuanPengembalian::whereIn('id_transaksi', $allIds)
+            ->with(['transaksi.barang', 'transaksi.penyewa', 'customer'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -195,6 +242,23 @@ class PengajuanPengembalianController extends Controller
                 ]
             ]);
 
+            // Notify perental (owner) about the refund on their item
+            if ($transaksi->id_pemilik) {
+                Notifikasi::create([
+                    'id_pengguna' => $transaksi->id_pemilik,
+                    'unique_key' => 'retur_owner_approved_' . $pengajuan->id_pengajuan . '_' . time(),
+                    'type' => 'return_approved',
+                    'title' => 'Pengembalian Barang Disetujui oleh Admin 📦',
+                    'message' => "Pengajuan pengembalian barang \"{$transaksi->nama_barang}\" telah disetujui admin. Refund Rp " . number_format($jumlahRefund, 0, ',', '.') . " akan diproses dan mengurangi pendapatan Anda.",
+                    'severity' => 'warning',
+                    'data' => [
+                        'id_pengajuan' => $pengajuan->id_pengajuan,
+                        'id_transaksi' => $pengajuan->id_transaksi,
+                        'jumlah_refund' => $jumlahRefund,
+                    ]
+                ]);
+            }
+
             DB::commit();
 
             return response()->json([
@@ -262,6 +326,24 @@ class PengajuanPengembalianController extends Controller
                 ]
             ]);
 
+            // Notify perental that refund is confirmed
+            $transaksi = $pengajuan->transaksi;
+            if ($transaksi && $transaksi->id_pemilik) {
+                Notifikasi::create([
+                    'id_pengguna' => $transaksi->id_pemilik,
+                    'unique_key' => 'refund_owner_completed_' . $pengajuan->id_pengajuan . '_' . time(),
+                    'type' => 'refund_completed',
+                    'title' => 'Refund Telah Dikonfirmasi 💸',
+                    'message' => "Admin telah mengirim refund Rp " . number_format($pengajuan->jumlah_refund, 0, ',', '.') . " untuk barang \"{$transaksi->nama_barang}\". Pendapatan Anda telah disesuaikan.",
+                    'severity' => 'info',
+                    'data' => [
+                        'id_pengajuan' => $pengajuan->id_pengajuan,
+                        'id_transaksi' => $pengajuan->id_transaksi,
+                        'jumlah_refund' => $pengajuan->jumlah_refund,
+                    ]
+                ]);
+            }
+
             DB::commit();
 
             return response()->json([
@@ -288,7 +370,7 @@ class PengajuanPengembalianController extends Controller
             'catatan_admin' => 'required|string|min:5',
         ]);
 
-        $pengajuan = PengajuanPengembalian::findOrFail($id);
+        $pengajuan = PengajuanPengembalian::with('transaksi')->findOrFail($id);
 
         if ($pengajuan->status !== 'pending') {
             return response()->json([
@@ -302,19 +384,37 @@ class PengajuanPengembalianController extends Controller
             'catatan_admin' => $request->catatan_admin,
         ]);
 
+        $transaksi = $pengajuan->transaksi;
+
         // Notify customer
         Notifikasi::create([
             'id_pengguna' => $pengajuan->id_customer,
             'unique_key' => 'retur_rejected_' . $pengajuan->id_pengajuan . '_' . time(),
             'type' => 'return_rejected',
             'title' => 'Pengajuan Pengembalian Ditolak ❌',
-            'message' => "Pengajuan pengembalian barang Anda ditolak. Alasan: {$request->catatan_admin}",
+            'message' => "Pengajuan pengembalian barang \"{$transaksi->nama_barang}\" Anda ditolak oleh admin. Alasan: {$request->catatan_admin}",
             'severity' => 'error',
             'data' => [
                 'id_pengajuan' => $pengajuan->id_pengajuan,
                 'id_transaksi' => $pengajuan->id_transaksi,
             ]
         ]);
+
+        // Notify perental (item owner) that return is rejected
+        if ($transaksi && $transaksi->id_pemilik) {
+            Notifikasi::create([
+                'id_pengguna' => $transaksi->id_pemilik,
+                'unique_key' => 'retur_owner_rejected_' . $pengajuan->id_pengajuan . '_' . time(),
+                'type' => 'return_rejected',
+                'title' => 'Pengajuan Pengembalian Ditolak oleh Admin ✅',
+                'message' => "Pengajuan pengembalian barang \"{$transaksi->nama_barang}\" oleh customer telah ditolak admin. Pendapatan Anda tidak terpengaruh.",
+                'severity' => 'info',
+                'data' => [
+                    'id_pengajuan' => $pengajuan->id_pengajuan,
+                    'id_transaksi' => $pengajuan->id_transaksi,
+                ]
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',

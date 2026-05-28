@@ -41,14 +41,14 @@ export default function PaymentDetail({ activeId, setActiveId }) {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setActiveId(null)} 
-            className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-600 border border-gray-100 bg-white shadow-sm bg-transparent border-none cursor-pointer"
+            className="p-2 rounded-xl hover:bg-gray-100 transition text-foreground border border-border bg-card shadow-sm bg-transparent border-none cursor-pointer"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Detail Invoice</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Detail Invoice</p>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-slate-900">{data.id_pembayaran}</h1>
+              <h1 className="text-2xl font-black text-foreground">{data.id_pembayaran}</h1>
               <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase border ${
                 data.status === "Lunas" 
                   ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
@@ -61,7 +61,7 @@ export default function PaymentDetail({ activeId, setActiveId }) {
         </div>
 
         <div className="flex gap-2 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-gray-50 transition cursor-pointer">
+          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-xl text-xs font-bold bg-card text-foreground hover:bg-muted transition cursor-pointer">
             <Printer size={15} /> Cetak Struk
           </button>
           <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-emerald-800 text-white rounded-xl text-xs font-bold hover:bg-emerald-900 transition shadow-sm cursor-pointer">
@@ -77,27 +77,27 @@ export default function PaymentDetail({ activeId, setActiveId }) {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Info Pembayaran */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
               <Receipt size={18} className="text-emerald-700" /> Informasi Pembayaran
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
-                <p className="text-xs text-gray-400 font-medium">Metode Pembayaran</p>
-                <div className="flex items-center gap-2 text-slate-900 font-bold">
+                <p className="text-xs text-muted-foreground font-medium">Metode Pembayaran</p>
+                <div className="flex items-center gap-2 text-foreground font-bold">
                   <Landmark size={16} className="text-emerald-600" />
                   {data.metode}
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-gray-400 font-medium">Tanggal & Waktu Bayar</p>
-                <div className="flex items-center gap-2 text-slate-900 font-bold">
+                <p className="text-xs text-muted-foreground font-medium">Tanggal & Waktu Bayar</p>
+                <div className="flex items-center gap-2 text-foreground font-bold">
                   <Calendar size={16} className="text-emerald-600" />
                   {data.tanggal_bayar}
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-gray-400 font-medium">ID Transaksi Terkait</p>
+                <p className="text-xs text-muted-foreground font-medium">ID Transaksi Terkait</p>
                 <div className="text-emerald-700 font-black hover:underline cursor-pointer">
                   {data.id_transaksi}
                 </div>
@@ -106,8 +106,8 @@ export default function PaymentDetail({ activeId, setActiveId }) {
           </div>
 
           {/* Info Pelanggan */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
               <User size={18} className="text-emerald-700" /> Data Pengirim / Penyewa
             </h3>
             <div className="flex items-center gap-4">
@@ -115,27 +115,27 @@ export default function PaymentDetail({ activeId, setActiveId }) {
                 {data.penyewa.nama.charAt(0)}
               </div>
               <div>
-                <h4 className="font-bold text-slate-900">{data.penyewa.nama}</h4>
-                <p className="text-xs text-gray-500">{data.penyewa.telepon} • {data.penyewa.email}</p>
+                <h4 className="font-bold text-foreground">{data.penyewa.nama}</h4>
+                <p className="text-xs text-muted-foreground">{data.penyewa.telepon} • {data.penyewa.email}</p>
               </div>
             </div>
           </div>
 
           {/* Bukti Bayar (Besar) */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
               <ImageIcon size={18} className="text-emerald-700" /> Lampiran Bukti Transfer
             </h3>
-            <div className="border-2 border-dashed border-gray-100 rounded-2xl p-4 flex justify-center bg-gray-50">
+            <div className="border-2 border-dashed border-border rounded-2xl p-4 flex justify-center bg-muted">
                {/* Simulasi Gambar Bukti Bayar */}
-               <div className="bg-white p-4 shadow-xl border border-gray-200 rounded-lg max-w-xs w-full text-center space-y-4">
+               <div className="bg-card p-4 shadow-xl border border-border rounded-lg max-w-xs w-full text-center space-y-4">
                   <div className="border-b border-dashed pb-2">
                     <p className="text-[10px] font-black text-emerald-700">M-BANKING SUCCESS</p>
-                    <p className="text-[8px] text-gray-400 uppercase">{data.tanggal_bayar}</p>
+                    <p className="text-[8px] text-muted-foreground uppercase">{data.tanggal_bayar}</p>
                   </div>
                   <div className="space-y-1 text-left py-2">
-                    <div className="flex justify-between text-[9px]"><span className="text-gray-400">Ke:</span><span className="font-bold">CAMP-GEAR</span></div>
-                    <div className="flex justify-between text-[9px]"><span className="text-gray-400">Dari:</span><span className="font-bold uppercase">{data.penyewa.nama}</span></div>
+                    <div className="flex justify-between text-[9px]"><span className="text-muted-foreground">Ke:</span><span className="font-bold">CAMP-GEAR</span></div>
+                    <div className="flex justify-between text-[9px]"><span className="text-muted-foreground">Dari:</span><span className="font-bold uppercase">{data.penyewa.nama}</span></div>
                     <div className="flex justify-between text-[11px] pt-2 border-t border-gray-50">
                       <span className="font-bold">Total:</span>
                       <span className="font-black text-emerald-800">{formatHarga(data.rincian.jumlah_dibayar)}</span>
@@ -187,11 +187,11 @@ export default function PaymentDetail({ activeId, setActiveId }) {
           </div>
 
           {/* Tombol Aksi Verifikasi */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm space-y-3">
+          <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-3">
              <button className="w-full py-3 bg-emerald-100 text-emerald-800 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-200 transition border-none cursor-pointer">
                <CheckCircle2 size={18} /> Verifikasi Lunas
              </button>
-             <button className="w-full py-3 bg-white text-rose-600 border border-rose-100 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-rose-50 transition border-rose-100 cursor-pointer">
+             <button className="w-full py-3 bg-card text-rose-600 border border-rose-100 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-rose-50 transition border-rose-100 cursor-pointer">
                <XCircle size={18} /> Batalkan Pembayaran
              </button>
           </div>

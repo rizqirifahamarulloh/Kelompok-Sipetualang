@@ -260,7 +260,7 @@ export default function ShippingStatus() {
         );
       }
       return (
-        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1.5 w-fit">
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted text-foreground dark:text-muted-foreground flex items-center gap-1.5 w-fit">
           <Package className="size-3.5" /> Pick Up
         </span>
       );
@@ -302,11 +302,11 @@ export default function ShippingStatus() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Truck className="size-6 text-emerald-600" />
             Status Pengiriman Barang
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Kelola pengiriman barang sewaan dengan kurir pengantar, lokasi pos, dan pelacakan customer.
           </p>
         </div>
@@ -314,70 +314,70 @@ export default function ShippingStatus() {
 
       {/* Stats Card Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+        <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/30">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-amber-100 text-amber-700 rounded-2xl dark:bg-amber-900/20">
               <Package className="size-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Perlu Dikirim</p>
-              <h3 className="text-xl font-bold text-slate-800">
+              <p className="text-xs text-muted-foreground font-medium">Perlu Dikirim</p>
+              <h3 className="text-xl font-bold text-foreground">
                 {data.filter(t => t.metode_pengiriman === 'delivery' && (!t.pengiriman || t.pengiriman.status_pengiriman === 'pending')).length}
               </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+        <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/30">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-blue-100 text-blue-700 rounded-2xl dark:bg-blue-900/20">
               <Truck className="size-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Dalam Perjalanan</p>
-              <h3 className="text-xl font-bold text-slate-800">
+              <p className="text-xs text-muted-foreground font-medium">Dalam Perjalanan</p>
+              <h3 className="text-xl font-bold text-foreground">
                 {data.filter(t => t.metode_pengiriman === 'delivery' && t.pengiriman?.status_pengiriman === 'dikirim').length}
               </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+        <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/30">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-purple-100 text-purple-700 rounded-2xl dark:bg-purple-900/20">
               <HandMetal className="size-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Pickup Menunggu</p>
-              <h3 className="text-xl font-bold text-slate-800">
+              <p className="text-xs text-muted-foreground font-medium">Pickup Menunggu</p>
+              <h3 className="text-xl font-bold text-foreground">
                 {data.filter(t => t.metode_pengiriman === 'pickup' && t.status_sewa === 'dibayar').length}
               </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+        <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/30">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-orange-100 text-orange-700 rounded-2xl dark:bg-orange-900/20">
               <Package className="size-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Proses Kembali</p>
-              <h3 className="text-xl font-bold text-slate-800">
+              <p className="text-xs text-muted-foreground font-medium">Proses Kembali</p>
+              <h3 className="text-xl font-bold text-foreground">
                 {data.filter(t => t.status_kembali === 'proses').length}
               </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+        <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/30">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-green-100 text-green-700 rounded-2xl dark:bg-green-900/20">
               <CheckCircle2 className="size-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Selesai/Diterima</p>
-              <h3 className="text-xl font-bold text-slate-800">
+              <p className="text-xs text-muted-foreground font-medium">Selesai/Diterima</p>
+              <h3 className="text-xl font-bold text-foreground">
                 {data.filter(t => 
                   (t.metode_pengiriman === 'delivery' && t.pengiriman?.status_pengiriman === 'diterima') ||
                   (t.metode_pengiriman === 'pickup' && t.status_sewa === 'sedang_disewa')
@@ -389,16 +389,16 @@ export default function ShippingStatus() {
       </div>
 
       {/* Filter Tabs & Search */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-xl border">
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-3 rounded-xl border">
         {/* Search */}
         <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
+          <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Cari transaksi, customer, barang..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 w-full text-sm border rounded-lg focus:outline-none focus:border-emerald-500 bg-slate-50/50 dark:bg-slate-800 dark:border-slate-700"
+            className="pl-9 pr-4 py-2 w-full text-sm border rounded-lg focus:outline-none focus:border-emerald-500 bg-muted/30 dark:bg-muted dark:border-border"
           />
         </div>
 
@@ -420,7 +420,7 @@ export default function ShippingStatus() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === tab.id
                   ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground dark:text-muted-foreground dark:hover:bg-muted"
               }`}
             >
               {tab.label}
@@ -431,7 +431,7 @@ export default function ShippingStatus() {
 
       {/* Main Table / List Card */}
       {loading ? (
-        <div className="bg-white dark:bg-slate-900 border rounded-2xl p-12 text-center text-slate-500">
+        <div className="bg-card border rounded-2xl p-12 text-center text-muted-foreground">
           <div className="flex flex-col items-center justify-center gap-2">
             <div className="w-8 h-8 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
             <p className="text-sm font-medium">Memuat data pengiriman sewaan...</p>
@@ -444,25 +444,25 @@ export default function ShippingStatus() {
           <Button variant="outline" size="sm" onClick={getData} className="mt-2">Coba Lagi</Button>
         </div>
       ) : filteredData.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border rounded-2xl p-12 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
-          <Truck className="size-12 text-slate-300" />
+        <div className="bg-card border rounded-2xl p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
+          <Truck className="size-12 text-muted-foreground" />
           <p className="text-sm font-medium">Tidak ada data transaksi pengiriman yang sesuai filter.</p>
         </div>
       ) : (
         <>
         <div className="grid gap-4">
           {paginateArray(filteredData, currentPage, PER_PAGE).map((item) => (
-            <Card key={item.id_transaksi} className="border shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-white dark:bg-slate-900">
-              <div className="border-b bg-slate-50/50 dark:bg-slate-800/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <Card key={item.id_transaksi} className="border shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-card">
+              <div className="border-b bg-muted/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
                     <Package className="size-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 dark:text-slate-200">
+                    <h3 className="font-bold text-foreground">
                       ID Transaksi: #{item.id_transaksi}
                     </h3>
-                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <Calendar className="size-3" />
                       Mulai: {new Date(item.tanggal_mulai).toLocaleDateString("id-ID")} - Selesai: {new Date(item.tanggal_selesai).toLocaleDateString("id-ID")}
                     </p>
@@ -478,87 +478,87 @@ export default function ShippingStatus() {
                 {/* Kolom 1: Informasi Barang & Customer */}
                 <div className="space-y-4">
                   <div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Peralatan Alat</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Peralatan Alat</p>
                     {item.detail_transaksi && item.detail_transaksi.length > 0 ? (
                       <div className="space-y-1">
                         {item.detail_transaksi.map((detail, idx) => (
                           <div key={detail.id_detail || idx} className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                            <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">
+                            <p className="font-semibold text-foreground dark:text-muted-foreground text-sm">
                               {detail.nama_barang || detail.barang?.nama_barang}
-                              <span className="text-xs text-slate-500 font-normal ml-1">({detail.jumlah_pinjam} unit)</span>
+                              <span className="text-xs text-muted-foreground font-normal ml-1">({detail.jumlah_pinjam} unit)</span>
                             </p>
                           </div>
                         ))}
                       </div>
                     ) : (
                       <>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">
+                        <p className="font-semibold text-foreground dark:text-muted-foreground text-sm">
                           {item.nama_barang}
                         </p>
-                        <p className="text-xs text-slate-500">Jumlah: {item.jumlah} unit</p>
+                        <p className="text-xs text-muted-foreground">Jumlah: {item.jumlah} unit</p>
                       </>
                     )}
                   </div>
                   
                   <div className="flex items-center gap-2 border-t pt-2">
-                    <User className="size-4 text-slate-400" />
+                    <User className="size-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                      <p className="text-xs font-semibold text-muted-foreground dark:text-muted-foreground">
                         {item.penyewa?.nama || "Penyewa"}
                       </p>
-                      <p className="text-[10px] text-slate-400">{item.penyewa?.no_telp || "-"}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.penyewa?.no_telp || "-"}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Kolom 2: Informasi Pengiriman & Resi */}
                 <div className="space-y-2 border-t md:border-t-0 md:border-l md:pl-6 pt-4 md:pt-0">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Informasi Lokasi & Alamat</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Informasi Lokasi & Alamat</p>
                   
                   {item.metode_pengiriman === "delivery" ? (
                     <div className="space-y-2 text-xs">
-                      <p className="text-slate-600 dark:text-slate-400">
-                        <strong className="text-slate-700">Tujuan:</strong> {item.alamat_pengiriman || "Alamat tidak diinput"}
+                      <p className="text-muted-foreground dark:text-muted-foreground">
+                        <strong className="text-foreground">Tujuan:</strong> {item.alamat_pengiriman || "Alamat tidak diinput"}
                       </p>
                       {item.pengiriman ? (
                         <>
-                          <p className="text-slate-600 dark:text-slate-400">
-                            <strong className="text-slate-700">Kurir:</strong> {item.pengiriman.kurir} ({item.pengiriman.no_resi})
+                          <p className="text-muted-foreground dark:text-muted-foreground">
+                            <strong className="text-foreground">Kurir:</strong> {item.pengiriman.kurir} ({item.pengiriman.no_resi})
                           </p>
-                          <p className="text-slate-600 dark:text-slate-400 flex items-start gap-1">
+                          <p className="text-muted-foreground dark:text-muted-foreground flex items-start gap-1">
                             <Navigation className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
                             <span>
-                              <strong className="text-slate-700">Posisi Terakhir:</strong> {item.pengiriman.lokasi_terakhir}
+                              <strong className="text-foreground">Posisi Terakhir:</strong> {item.pengiriman.lokasi_terakhir}
                             </span>
                           </p>
                         </>
                       ) : (
-                        <p className="text-slate-500 italic">Belum dikirim. Silakan klik tombol "Kirim Barang" di samping.</p>
+                        <p className="text-muted-foreground italic">Belum dikirim. Silakan klik tombol "Kirim Barang" di samping.</p>
                       )}
                     </div>
                   ) : (
                     <div className="space-y-2 text-xs">
-                      <p className="text-slate-600 dark:text-slate-400">
+                      <p className="text-muted-foreground dark:text-muted-foreground">
                         Customer memilih metode <strong>Ambil di Tempat (Pick Up)</strong>.
                       </p>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        Status Sewa: <span className="font-semibold text-slate-700 dark:text-slate-300 capitalize">{item.status_sewa?.replace('_', ' ')}</span>
+                      <p className="text-muted-foreground dark:text-muted-foreground">
+                        Status Sewa: <span className="font-semibold text-foreground dark:text-muted-foreground capitalize">{item.status_sewa?.replace('_', ' ')}</span>
                       </p>
                       {item.status_kembali && item.status_kembali !== 'belum' && (
-                        <p className="text-slate-600 dark:text-slate-400">
-                          Status Pengembalian: <span className={`font-semibold capitalize ${item.status_kembali === 'proses' ? 'text-orange-600' : item.status_kembali === 'diterima' ? 'text-green-600' : 'text-slate-700'}`}>
+                        <p className="text-muted-foreground dark:text-muted-foreground">
+                          Status Pengembalian: <span className={`font-semibold capitalize ${item.status_kembali === 'proses' ? 'text-orange-600' : item.status_kembali === 'diterima' ? 'text-green-600' : 'text-foreground'}`}>
                             {item.status_kembali}
                           </span>
                         </p>
                       )}
                       {item.metode_kembali && (
-                        <p className="text-slate-600 dark:text-slate-400">
+                        <p className="text-muted-foreground dark:text-muted-foreground">
                           Metode Kembali: <span className="font-medium">{item.metode_kembali === 'delivery' ? 'Kirim via Kurir' : 'Datang Langsung'}</span>
                         </p>
                       )}
                       {item.no_resi_kembali && (
-                        <p className="text-slate-600 dark:text-slate-400 font-mono">
+                        <p className="text-muted-foreground dark:text-muted-foreground font-mono">
                           <span className="font-medium font-sans">No. Resi Kembali:</span> {item.no_resi_kembali}
                         </p>
                       )}
@@ -599,7 +599,7 @@ export default function ShippingStatus() {
                           <p className="text-xs text-indigo-700 dark:text-indigo-400 font-semibold flex items-center justify-center gap-1.5">
                             <MapPin className="size-3.5" /> Sudah Tiba di Lokasi
                           </p>
-                          <p className="text-[10px] text-slate-400 mt-1">
+                          <p className="text-[10px] text-muted-foreground mt-1">
                             Menunggu konfirmasi penerimaan oleh customer.
                           </p>
                         </div>
@@ -621,7 +621,7 @@ export default function ShippingStatus() {
                               <p className="text-xs text-green-700 dark:text-green-400 font-semibold flex items-center justify-center gap-1.5">
                                 <CheckCircle2 className="size-3.5" /> Transaksi Selesai
                               </p>
-                              <p className="text-[10px] text-slate-400 mt-1">
+                              <p className="text-[10px] text-muted-foreground mt-1">
                                 Barang sudah dikembalikan & diverifikasi.
                               </p>
                             </div>
@@ -630,7 +630,7 @@ export default function ShippingStatus() {
                               <p className="text-xs text-green-700 dark:text-green-400 font-semibold flex items-center justify-center gap-1.5">
                                 <CheckCircle2 className="size-3.5" /> Selesai Diterima
                               </p>
-                              <p className="text-[10px] text-slate-400 mt-1">
+                              <p className="text-[10px] text-muted-foreground mt-1">
                                 Barang sudah seutuhnya di tangan customer.
                               </p>
                             </div>
@@ -658,7 +658,7 @@ export default function ShippingStatus() {
                           <p className="text-xs text-blue-700 dark:text-blue-400 font-semibold flex items-center justify-center gap-1.5">
                             <CheckCircle2 className="size-3.5" /> Sedang Disewa
                           </p>
-                          <p className="text-[10px] text-slate-400 mt-1">
+                          <p className="text-[10px] text-muted-foreground mt-1">
                             Menunggu customer mengembalikan barang.
                           </p>
                         </div>
@@ -681,7 +681,7 @@ export default function ShippingStatus() {
                           <p className="text-xs text-green-700 dark:text-green-400 font-semibold flex items-center justify-center gap-1.5">
                             <CheckCircle2 className="size-3.5" /> Transaksi Selesai
                           </p>
-                          <p className="text-[10px] text-slate-400 mt-1">
+                          <p className="text-[10px] text-muted-foreground mt-1">
                             Barang sudah dikembalikan & diverifikasi.
                           </p>
                         </div>
@@ -708,16 +708,16 @@ export default function ShippingStatus() {
       {/* Modal 1: Kirim Barang */}
       {isShipModalOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white dark:bg-slate-900 z-10">
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-card z-10">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <Truck className="size-5 text-emerald-600" />
                 Proses Kirim Barang
               </h2>
               <button 
                 onClick={() => { setIsShipModalOpen(false); setSelectedTrx(null); }} 
-                className="text-slate-400 hover:text-slate-600 rounded-lg p-1 hover:bg-slate-100 transition"
+                className="text-muted-foreground hover:text-muted-foreground rounded-lg p-1 hover:bg-muted transition"
               >
                 <X size={20} />
               </button>
@@ -731,11 +731,11 @@ export default function ShippingStatus() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Nama Kurir / Pengantar</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Nama Kurir / Pengantar</label>
                 <select
                   value={shipForm.kurir}
                   onChange={(e) => setShipForm(prev => ({ ...prev, kurir: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-card dark:border-border"
                 >
                   <option value="SiPetualang Delivery">SiPetualang Delivery (Internal)</option>
                   <option value="JNE Express">JNE Express</option>
@@ -746,23 +746,23 @@ export default function ShippingStatus() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Nomor Resi Pengiriman</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Nomor Resi Pengiriman</label>
                 <input
                   type="text"
                   placeholder="Contoh: SP-0812384218 atau resi kurir"
                   value={shipForm.no_resi}
                   onChange={(e) => setShipForm(prev => ({ ...prev, no_resi: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-card dark:border-border"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Lokasi Awal Keberangkatan</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Lokasi Awal Keberangkatan</label>
                 <input
                   type="text"
                   value={shipForm.lokasi_terakhir}
                   onChange={(e) => setShipForm(prev => ({ ...prev, lokasi_terakhir: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-card dark:border-border"
                 />
               </div>
 
@@ -772,7 +772,7 @@ export default function ShippingStatus() {
                   type="button"
                   variant="outline"
                   onClick={() => { setIsShipModalOpen(false); setSelectedTrx(null); }}
-                  className="rounded-xl border-slate-200"
+                  className="rounded-xl border-border"
                 >
                   Batal
                 </Button>
@@ -791,41 +791,41 @@ export default function ShippingStatus() {
       {/* Modal 2: Update Lokasi */}
       {isUpdateModalOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white dark:bg-slate-900 z-10">
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-card z-10">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <Navigation className="size-5 text-emerald-600" />
                 Perbarui Lokasi & Status
               </h2>
               <button 
                 onClick={() => { setIsUpdateModalOpen(false); setSelectedTrx(null); }} 
-                className="text-slate-400 hover:text-slate-600 rounded-lg p-1 hover:bg-slate-100 transition"
+                className="text-muted-foreground hover:text-muted-foreground rounded-lg p-1 hover:bg-muted transition"
               >
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleUpdateSubmit} className="p-6 space-y-4">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-xs space-y-1.5 text-slate-600 dark:text-slate-300">
+              <div className="bg-muted dark:bg-muted/50 p-4 rounded-xl text-xs space-y-1.5 text-muted-foreground dark:text-muted-foreground">
                 <p><strong>Kurir:</strong> {selectedTrx.pengiriman?.kurir}</p>
                 <p><strong>Nomor Resi:</strong> {selectedTrx.pengiriman?.no_resi}</p>
                 <p><strong>Lokasi Terakhir:</strong> {selectedTrx.pengiriman?.lokasi_terakhir}</p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Lokasi Pos Terkini</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Lokasi Pos Terkini</label>
                 <input
                   type="text"
                   placeholder="Contoh: Hub Sleman, atau Sedang dikirim kurir"
                   value={updateForm.lokasi_terakhir}
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, lokasi_terakhir: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-card dark:border-border"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Status Pengiriman</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Status Pengiriman</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -833,7 +833,7 @@ export default function ShippingStatus() {
                     className={`py-3 rounded-xl border text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                       updateForm.status_pengiriman === "dikirim"
                         ? "border-blue-500 bg-blue-50/50 text-blue-700"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        : "border-border text-muted-foreground hover:bg-muted"
                     }`}
                   >
                     <Truck className="size-4" /> Dalam Perjalanan
@@ -845,7 +845,7 @@ export default function ShippingStatus() {
                     className={`py-3 rounded-xl border text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                       updateForm.status_pengiriman === "sampai"
                         ? "border-indigo-500 bg-indigo-50/50 text-indigo-700"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        : "border-border text-muted-foreground hover:bg-muted"
                     }`}
                   >
                     <MapPin className="size-4" /> Sudah Sampai
@@ -859,7 +859,7 @@ export default function ShippingStatus() {
                   type="button"
                   variant="outline"
                   onClick={() => { setIsUpdateModalOpen(false); setSelectedTrx(null); }}
-                  className="rounded-xl border-slate-200"
+                  className="rounded-xl border-border"
                 >
                   Batal
                 </Button>
@@ -878,16 +878,16 @@ export default function ShippingStatus() {
       {/* Modal 3: Konfirmasi Pengembalian Barang (Admin terima kembali) */}
       {isReturnModalOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white dark:bg-slate-900 z-10">
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-card z-10">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <CheckCircle2 className="size-5 text-orange-600" />
                 Konfirmasi Pengembalian Barang
               </h2>
               <button 
                 onClick={() => { setIsReturnModalOpen(false); setSelectedTrx(null); }} 
-                className="text-slate-400 hover:text-slate-600 rounded-lg p-1 hover:bg-slate-100 transition"
+                className="text-muted-foreground hover:text-muted-foreground rounded-lg p-1 hover:bg-muted transition"
               >
                 <X size={20} />
               </button>
@@ -908,11 +908,11 @@ export default function ShippingStatus() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Kondisi Barang Saat Diterima</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Kondisi Barang Saat Diterima</label>
                 <select
                   value={returnForm.kondisi_barang}
                   onChange={(e) => setReturnForm(prev => ({ ...prev, kondisi_barang: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-card dark:border-border"
                 >
                   <option value="baik">Baik (Tidak Ada Kerusakan)</option>
                   <option value="rusak_ringan">Rusak Ringan</option>
@@ -922,24 +922,24 @@ export default function ShippingStatus() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Denda Kerusakan (Rp)</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Denda Kerusakan (Rp)</label>
                 <input
                   type="number"
                   min="0"
                   value={returnForm.denda_kerusakan}
                   onChange={(e) => setReturnForm(prev => ({ ...prev, denda_kerusakan: Number(e.target.value) }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-card dark:border-border"
                   placeholder="0"
                 />
-                <p className="text-[10px] text-slate-400 mt-1">Isi 0 jika tidak ada kerusakan. Denda otomatis dipotong dari deposit.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Isi 0 jika tidak ada kerusakan. Denda otomatis dipotong dari deposit.</p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Catatan Admin (Opsional)</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Catatan Admin (Opsional)</label>
                 <textarea
                   value={returnForm.catatan}
                   onChange={(e) => setReturnForm(prev => ({ ...prev, catatan: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-white dark:bg-slate-800 dark:border-slate-700 resize-none"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-orange-500 bg-card dark:border-border resize-none"
                   rows={3}
                   placeholder="Catatan tentang kondisi barang, kerusakan, dll..."
                 />
@@ -961,7 +961,7 @@ export default function ShippingStatus() {
                   type="button"
                   variant="outline"
                   onClick={() => { setIsReturnModalOpen(false); setSelectedTrx(null); }}
-                  className="rounded-xl border-slate-200"
+                  className="rounded-xl border-border"
                 >
                   Batal
                 </Button>

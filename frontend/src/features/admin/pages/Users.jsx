@@ -109,7 +109,7 @@ export default function Users() {
           <CardContent className="p-6 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start mb-4">
               <p className="text-sm font-medium text-muted-foreground">Total Pengguna</p>
-              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><UsersIcon size={18} /></div>
+              <div className="p-2 bg-blue-50 dark:bg-blue-950/30 text-blue-600 rounded-lg"><UsersIcon size={18} /></div>
             </div>
             <h2 className="text-3xl font-bold">{stats.total_users.toLocaleString()}</h2>
           </CardContent>
@@ -119,7 +119,7 @@ export default function Users() {
           <CardContent className="p-6 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start mb-4">
               <p className="text-sm font-medium text-muted-foreground">Penyewa Aktif</p>
-              <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><PersonStanding size={18} /></div>
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-lg"><PersonStanding size={18} /></div>
             </div>
             <h2 className="text-3xl font-bold">{stats.penyewa.toLocaleString()}</h2>
           </CardContent>
@@ -129,7 +129,7 @@ export default function Users() {
           <CardContent className="p-6 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start mb-4">
               <p className="text-sm font-medium text-muted-foreground">Pemilik Gear</p>
-              <div className="p-2 bg-sky-50 text-sky-600 rounded-lg"><Briefcase size={18} /></div>
+              <div className="p-2 bg-sky-50 dark:bg-sky-950/30 text-sky-600 rounded-lg"><Briefcase size={18} /></div>
             </div>
             <h2 className="text-3xl font-bold">{stats.pemilik.toLocaleString()}</h2>
           </CardContent>
@@ -139,7 +139,7 @@ export default function Users() {
           <CardContent className="p-6 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start mb-4">
               <p className="text-sm font-medium text-muted-foreground">Verifikasi Tertunda</p>
-              <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><ClipboardList size={18} /></div>
+              <div className="p-2 bg-orange-50 dark:bg-orange-950/30 text-orange-600 rounded-lg"><ClipboardList size={18} /></div>
             </div>
             <div className="flex items-end gap-2">
               <h2 className="text-3xl font-bold">{stats.verifikasi_tertunda}</h2>
@@ -153,7 +153,7 @@ export default function Users() {
       </div>
 
       <Card>
-        <div className="p-4 border-b flex flex-col sm:flex-row justify-between gap-4 items-center bg-white rounded-t-xl">
+        <div className="p-4 border-b flex flex-col sm:flex-row justify-between gap-4 items-center bg-card rounded-t-xl">
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <Input className="pl-9 bg-muted/50" placeholder="Cari pengguna..." />
@@ -214,11 +214,11 @@ export default function Users() {
                     </TableCell>
                     <TableCell>
                       {user.is_verified ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-normal">
+                        <Badge variant="outline" className="bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 font-normal">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2"></span> Terverifikasi
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 font-normal">
+                        <Badge variant="outline" className="bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800 font-normal">
                           <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-2"></span> Menunggu
                         </Badge>
                       )}

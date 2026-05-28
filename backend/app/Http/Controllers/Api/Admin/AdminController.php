@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
 use App\Models\Transaksi;
 use App\Models\Barang;
+use App\Models\PengajuanPengembalian;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -32,11 +33,21 @@ class AdminController extends Controller
             $totalTransactions = Transaksi::where('status_pembayaran', 'sukses')->count();
             $totalRevenue = Transaksi::where('status_pembayaran', 'sukses')->sum('total_biaya');
 
+            // Hitung total refund (yang sudah disetujui/selesai)
+            $totalRefund = PengajuanPengembalian::whereIn('status', ['disetujui'])
+                ->sum('jumlah_refund');
+
+            $totalRefundCount = PengajuanPengembalian::whereIn('status', ['disetujui', 'pending'])
+                ->count();
+
             $stats = [
                 'total_users' => $totalUsers,
                 'total_gears' => $totalGears,
                 'total_transactions' => $totalTransactions,
                 'total_revenue' => (float) $totalRevenue,
+                'total_refund' => (float) $totalRefund,
+                'total_refund_count' => $totalRefundCount,
+                'net_revenue' => (float) ($totalRevenue - $totalRefund),
             ];
 
             // Mapping status dari DB ke frontend
@@ -84,13 +95,73 @@ class AdminController extends Controller
                     ];
                 });
 
+            // Monthly revenue + refund data (12 bulan terakhir)
+            $monthlyRevenue = Transaksi::where('status_pembayaran', 'sukses')
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as bulan, SUM(total_biaya) as total, SUM(fee_admin) as fee_admin, SUM(pendapatan_pemilik) as pendapatan_pemilik")
+                ->groupBy('bulan')
+                ->orderBy('bulan')
+                ->get();
+
+            // Monthly refund data
+            $monthlyRefund = PengajuanPengembalian::whereIn('status', ['disetujui'])
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as bulan, SUM(jumlah_refund) as total_refund, COUNT(*) as jumlah")
+                ->groupBy('bulan')
+                ->orderBy('bulan')
+                ->get();
+
+            // Merge refund into monthly revenue
+            $monthlyData = $monthlyRevenue->map(function ($item) use ($monthlyRefund) {
+                $refund = $monthlyRefund->firstWhere('bulan', $item->bulan);
+                return [
+                    'bulan' => $item->bulan,
+                    'total' => (float) $item->total,
+                    'fee_admin' => (float) $item->fee_admin,
+                    'pendapatan_pemilik' => (float) $item->pendapatan_pemilik,
+                    'refund' => $refund ? (float) $refund->total_refund : 0,
+                    'refund_count' => $refund ? (int) $refund->jumlah : 0,
+                ];
+            });
+
+            // Add months that only have refunds but no revenue
+            $monthlyRefund->each(function ($refund) use (&$monthlyData) {
+                if (!$monthlyData->contains('bulan', $refund->bulan)) {
+                    $monthlyData->push([
+                        'bulan' => $refund->bulan,
+                        'total' => 0,
+                        'fee_admin' => 0,
+                        'pendapatan_pemilik' => 0,
+                        'refund' => (float) $refund->total_refund,
+                        'refund_count' => (int) $refund->jumlah,
+                    ]);
+                }
+            });
+
+            // Recent refunds
+            $recentRefunds = PengajuanPengembalian::with(['transaksi', 'customer'])
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function ($r) {
+                    return [
+                        'id' => $r->id_pengajuan,
+                        'customer' => $r->customer ? $r->customer->nama : '-',
+                        'barang' => $r->transaksi ? $r->transaksi->nama_barang : '-',
+                        'jumlah_refund' => (float) $r->jumlah_refund,
+                        'status' => $r->status,
+                        'status_refund' => $r->status_refund,
+                        'created_at' => $r->created_at,
+                    ];
+                });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Dashboard admin',
                 'data' => [
                     'stats' => $stats,
                     'recent_transactions' => $recentTransactions,
-                    'low_stock_alerts' => $lowStockGears
+                    'low_stock_alerts' => $lowStockGears,
+                    'monthly_revenue' => $monthlyData->sortBy('bulan')->values(),
+                    'recent_refunds' => $recentRefunds,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -363,6 +434,9 @@ class AdminController extends Controller
                 })
                 ->values();
 
+            $totalRefund = PengajuanPengembalian::whereIn('status', ['disetujui'])
+                ->sum('jumlah_refund');
+
             $transactions = Transaksi::with(['penyewa', 'pemilik', 'barang'])
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -375,6 +449,8 @@ class AdminController extends Controller
                         'total_fee_admin' => (float) $totalFeeAdmin,
                         'total_pendapatan_pemilik' => (float) $totalPendapatanPemilik,
                         'total_transaksi' => $totalTransaksi,
+                        'total_refund' => (float) $totalRefund,
+                        'net_revenue' => (float) ($totalRevenue - $totalRefund),
                     ],
                     'owner_earnings' => $ownerEarnings,
                     'transactions' => $transactions,

@@ -59,7 +59,7 @@ export default function UserDetail() {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            className="text-emerald-700 border-emerald-500 hover:bg-emerald-50 bg-white rounded-full px-6"
+            className="text-emerald-700 border-emerald-500 hover:bg-emerald-50 bg-card rounded-full px-6"
             onClick={() => setIsEditModalOpen(true)}
           >
             <Edit size={16} className="mr-2" /> Edit
@@ -200,7 +200,7 @@ export default function UserDetail() {
         </Table>
         
         {/* Summary Footer */}
-        <div className="bg-slate-50 border-t p-6 flex justify-end gap-16 rounded-b-xl">
+        <div className="bg-muted border-t p-6 flex justify-end gap-16 rounded-b-xl">
           <div className="text-right">
             <p className="text-xs text-muted-foreground mb-1">Total Transactions</p>
             <p className="font-bold text-xl">2</p>

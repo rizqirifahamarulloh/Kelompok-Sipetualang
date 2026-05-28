@@ -18,7 +18,9 @@ import {
   TrendingUp, 
   Users, 
   ShoppingCart,
-  PieChart
+  PieChart,
+  RotateCcw,
+  TrendingDown,
 } from 'lucide-react'
 import { adminService } from '../services/adminService'
 
@@ -72,31 +74,85 @@ function RevenueStatsCards({ stats }) {
   ]
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card) => (
-        <Card key={card.title}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-            <card.icon className={`size-4 ${card.color}`} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{card.value}</div>
-            <p className="text-xs text-muted-foreground mt-1">{card.desc}</p>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {cards.map((card) => (
+          <Card key={card.title}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
+              <card.icon className={`size-4 ${card.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{card.value}</div>
+              <p className="text-xs text-muted-foreground mt-1">{card.desc}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Refund Stats Row */}
+      {stats?.total_refund > 0 && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="border-red-200 dark:border-red-900/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Total Refund</CardTitle>
+              <RotateCcw className="size-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                - {formatCurrency(stats?.total_refund ?? 0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Dikembalikan ke customer</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-emerald-200 dark:border-emerald-900/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Pendapatan Bersih</CardTitle>
+              <TrendingUp className="size-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(stats?.net_revenue ?? 0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Setelah dikurangi refund</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-amber-200 dark:border-amber-900/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Dampak Refund</CardTitle>
+              <TrendingDown className="size-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                {stats?.total_revenue > 0
+                  ? `${((stats.total_refund / stats.total_revenue) * 100).toFixed(1)}%`
+                  : '0%'}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Persentase dari total pendapatan</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
 
 function RevenueChart({ data }) {
-  // Simple chart representation (bisa diganti dengan library chart seperti recharts)
   const total = data?.total_revenue || 0
   const feeAdmin = data?.total_fee_admin || 0
   const pendapatanPemilik = data?.total_pendapatan_pemilik || 0
+  const refund = data?.total_refund || 0
   
+  const circumference = 283
   const adminPercent = total > 0 ? (feeAdmin / total * 100).toFixed(1) : 0
   const pemilikPercent = total > 0 ? (pendapatanPemilik / total * 100).toFixed(1) : 0
+  const refundPercent = total > 0 ? (refund / total * 100).toFixed(1) : 0
+
+  const adminArc = adminPercent * 2.83
+  const pemilikArc = pemilikPercent * 2.83
+  const refundArc = refundPercent * 2.83
 
   return (
     <Card>
@@ -105,7 +161,7 @@ function RevenueChart({ data }) {
           <PieChart className="size-5" />
           Pembagian Hasil
         </CardTitle>
-        <CardDescription>Distribusi pendapatan antara Admin dan Pemilik Barang</CardDescription>
+        <CardDescription>Distribusi pendapatan antara Admin, Pemilik & Refund</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -113,32 +169,54 @@ function RevenueChart({ data }) {
             <div className="relative w-48 h-48">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                 {/* Background circle (total) */}
-                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="10" className="dark:stroke-gray-700" />
                 {/* Admin fee (20%) */}
                 <circle 
                   cx="50" cy="50" r="45" fill="none" 
                   stroke="#3b82f6" strokeWidth="10" 
-                  strokeDasharray={`${adminPercent * 2.83} ${283 - (adminPercent * 2.83)}`}
+                  strokeDasharray={`${adminArc} ${circumference - adminArc}`}
                 />
                 {/* Pemilik (80%) */}
                 <circle 
                   cx="50" cy="50" r="45" fill="none" 
                   stroke="#8b5cf6" strokeWidth="10"
-                  strokeDasharray={`${pemilikPercent * 2.83} 283`}
-                  strokeDashoffset={-(adminPercent * 2.83)}
+                  strokeDasharray={`${pemilikArc} ${circumference}`}
+                  strokeDashoffset={-adminArc}
                 />
+                {/* Refund (red) */}
+                {refund > 0 && (
+                  <circle 
+                    cx="50" cy="50" r="45" fill="none" 
+                    stroke="#ef4444" strokeWidth="10"
+                    strokeDasharray={`${refundArc} ${circumference}`}
+                    strokeDashoffset={-(adminArc + pemilikArc)}
+                  />
+                )}
               </svg>
+              {/* Center text */}
+              {refund > 0 && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-[10px] text-muted-foreground">Bersih</span>
+                  <span className="text-sm font-bold text-foreground">{formatCurrency(total - refund)}</span>
+                </div>
+              )}
             </div>
           </div>
-          <div className="flex justify-center gap-6">
+          <div className="flex flex-wrap justify-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span className="text-sm">Admin Fee (20%): {formatCurrency(feeAdmin)}</span>
+              <span className="text-xs">Admin ({adminPercent}%): {formatCurrency(feeAdmin)}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-              <span className="text-sm">Pemilik (80%): {formatCurrency(pendapatanPemilik)}</span>
+              <span className="text-xs">Pemilik ({pemilikPercent}%): {formatCurrency(pendapatanPemilik)}</span>
             </div>
+            {refund > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Refund ({refundPercent}%): - {formatCurrency(refund)}</span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

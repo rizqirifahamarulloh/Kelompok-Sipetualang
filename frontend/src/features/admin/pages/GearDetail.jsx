@@ -74,7 +74,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
     setGear(found ? { ...found } : null);
   }, [gearId, gearsData]);
 
-  if (!gear) return <div className="p-8 text-center text-gray-400">Alat tidak ditemukan.</div>;
+  if (!gear) return <div className="p-8 text-center text-muted-foreground">Alat tidak ditemukan.</div>;
 
   const statusCfg = STATUS_CONFIG[gear.status_barang] || STATUS_CONFIG.habis;
   const transaksiList = gear.detail_transaksi || [];
@@ -118,9 +118,9 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
             <ArrowLeft size={20} />
           </button>
           <div>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Dashboard &gt;{" "}
-              <span onClick={onBack} className="cursor-pointer hover:underline text-gray-600">Manajemen Alat</span>
+              <span onClick={onBack} className="cursor-pointer hover:underline text-foreground">Manajemen Alat</span>
               {" "}&gt; Detail Alat
             </p>
             <h1 className="text-2xl font-bold">Detail Alat</h1>
@@ -128,7 +128,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
         </div>
         <div className="flex gap-2">
           <button onClick={() => setIsEditModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-emerald-700 border border-emerald-500 rounded-full hover:bg-emerald-50 transition bg-white shadow-xs">
+            className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-emerald-700 border border-emerald-500 rounded-full hover:bg-emerald-50 transition bg-card shadow-xs">
             <Edit size={15} /> Edit
           </button>
           <button onClick={() => setIsDeleteModalOpen(true)}
@@ -141,8 +141,8 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Foto & Stats */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-xs">
-          <div className="relative rounded-xl overflow-hidden bg-gray-50 border border-gray-100 mb-4 h-64 flex items-center justify-center">
+        <div className="bg-card border border-border rounded-xl p-6 shadow-xs">
+          <div className="relative rounded-xl overflow-hidden bg-muted border border-border mb-4 h-64 flex items-center justify-center">
             {gear.foto_barang ? (
               <img src={getStorageUrl(gear.foto_barang)} alt={gear.nama_barang} className="w-full h-full object-cover" />
             ) : (
@@ -160,19 +160,19 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
           </div>
           <div className="grid grid-cols-4 gap-2 mt-4">
             {statsItems.map((s, i) => (
-              <div key={i} className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight mb-1">{s.label}</p>
+              <div key={i} className="bg-muted rounded-xl p-3 text-center border border-border">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-tight mb-1">{s.label}</p>
                 <p className="font-bold text-base leading-tight">{s.value}</p>
-                {s.suffix && <p className="text-[10px] text-gray-400">{s.suffix}</p>}
+                {s.suffix && <p className="text-[10px] text-muted-foreground">{s.suffix}</p>}
               </div>
             ))}
           </div>
         </div>
 
         {/* Info Alat */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5 shadow-xs">
+        <div className="bg-card border border-border rounded-xl p-6 space-y-5 shadow-xs">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs border border-gray-200 bg-gray-50 text-gray-600 uppercase tracking-wide">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs border border-border bg-muted text-foreground uppercase tracking-wide">
               <Tag size={11} />{gear.kategori?.nama_kategori || "-"}
             </span>
             {gear.rating && (
@@ -185,47 +185,47 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
 
           <div>
             <h2 className="text-2xl font-bold mb-1">{gear.nama_barang}</h2>
-            <p className="text-2xl font-bold text-emerald-700">{formatHarga(gear.harga_sewa)}<span className="text-sm font-normal text-gray-400"> / hari</span></p>
+            <p className="text-2xl font-bold text-emerald-700">{formatHarga(gear.harga_sewa)}<span className="text-sm font-normal text-muted-foreground"> / hari</span></p>
             {(gear.min_durasi_sewa || 1) > 1 && (
-              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
                 📅 Minimum sewa: <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">{gear.min_durasi_sewa} hari</span>
               </p>
             )}
           </div>
 
-          <p className="text-sm text-gray-500 leading-relaxed">{gear.deskripsi || "Tidak ada deskripsi."}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{gear.deskripsi || "Tidak ada deskripsi."}</p>
 
-          <div className="space-y-2 pt-2 border-t border-gray-100">
+          <div className="space-y-2 pt-2 border-t border-border">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Pemilik</span>
+              <span className="text-muted-foreground">Pemilik</span>
               <span className="font-medium">{gear.pemilik?.nama || "-"}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Status Approval</span>
+              <span className="text-muted-foreground">Status Approval</span>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${APPROVAL_CONFIG[gear.status_approval]?.className || ""}`}>
                 {APPROVAL_CONFIG[gear.status_approval]?.label || gear.status_approval}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Metode Penyerahan Barang</span>
-              <span className="font-semibold text-slate-700">
+              <span className="text-muted-foreground">Metode Penyerahan Barang</span>
+              <span className="font-semibold text-foreground">
                 {gear.metode_penyerahan === 'delivery' ? '🚚 Kirim via Kurir (Delivery)' : '🏪 Datang Langsung ke Gudang'}
               </span>
             </div>
             {gear.metode_penyerahan === 'delivery' && gear.no_resi_penyerahan && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">No. Resi Pengiriman</span>
-                <span className="font-mono font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs">
+                <span className="text-muted-foreground">No. Resi Pengiriman</span>
+                <span className="font-mono font-semibold text-foreground bg-slate-100 px-2 py-0.5 rounded text-xs">
                   {gear.no_resi_penyerahan}
                 </span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Status Penyerahan ke Gudang</span>
+              <span className="text-muted-foreground">Status Penyerahan ke Gudang</span>
               <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
                 gear.status_penyerahan === 'diterima' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                 gear.status_penyerahan === 'dikirim' ? 'bg-blue-50 text-blue-700 border-blue-100 animate-pulse' :
-                'bg-slate-50 text-slate-600 border-slate-200'
+                'bg-muted text-muted-foreground border-slate-200'
               }`}>
                 {gear.status_penyerahan === 'diterima' ? '✓ Diterima di Gudang' :
                  gear.status_penyerahan === 'dikirim' ? 'Dalam Pengiriman' :
@@ -236,7 +236,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
 
           {gear.destinasi && gear.destinasi.length > 0 && (
             <div>
-              <p className="text-xs text-gray-400 mb-2 flex items-center gap-1"><MapPin size={12} /> Destinasi yang Sesuai</p>
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><MapPin size={12} /> Destinasi yang Sesuai</p>
               <div className="flex flex-wrap gap-2">
                 {gear.destinasi.map((d) => (
                   <span key={d.id_destinasi} className="px-2.5 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -248,11 +248,11 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
           )}
 
           {/* Admin Control Panel Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs">
-            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+          <div className="bg-muted border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
               <ShieldAlert size={14} className="text-emerald-700" /> Panel Kontrol Admin
             </h3>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               Sebagai admin, Anda memiliki otoritas penuh untuk menyetujui, menolak, atau menonaktifkan barang sewaan ini sebelum ditampilkan ke pelanggan.
             </p>
             
@@ -280,7 +280,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
                 onClick={() => handleUpdateApproval("ditolak", "habis")}
                 className={`px-3 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
                   gear.status_approval === "ditolak"
-                    ? "bg-slate-300 text-slate-700 cursor-not-allowed"
+                    ? "bg-slate-300 text-foreground cursor-not-allowed"
                     : "text-white bg-rose-600 hover:bg-rose-700"
                 }`}
                 disabled={gear.status_approval === "ditolak"}
@@ -290,7 +290,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
             </div>
 
             <div className="pt-2 border-t border-slate-200 flex justify-between items-center gap-2">
-              <span className="text-xs text-slate-600 font-semibold">Status Barang:</span>
+              <span className="text-xs text-muted-foreground font-semibold">Status Barang:</span>
               <button
                 type="button"
                 onClick={() => handleUpdateStatus(gear.status_barang === "tersedia" ? "habis" : "tersedia")}
@@ -308,17 +308,17 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 flex gap-6 px-2">
+      <div className="border-b border-border flex gap-6 px-2">
         {["transaksi", "ulasan"].map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-sm font-semibold ${activeTab === tab ? "border-b-2 border-emerald-700 text-emerald-800" : "text-gray-400 hover:text-gray-600"}`}>
+            className={`pb-3 text-sm font-semibold ${activeTab === tab ? "border-b-2 border-emerald-700 text-emerald-800" : "text-muted-foreground hover:text-foreground"}`}>
             {tab === "transaksi" ? "Riwayat Transaksi Alat" : "Ulasan"}
           </button>
         ))}
       </div>
 
       {activeTab === "transaksi" && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-card border border-border rounded-xl overflow-hidden shadow-xs">
           <div className="p-4 border-b flex items-center justify-between">
             <h3 className="font-semibold text-sm">Riwayat Transaksi Alat</h3>
             <button className="text-xs text-emerald-600 hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer">
@@ -326,23 +326,23 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
             </button>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-muted border-b border-border">
               <tr>
                 {["Nama Penyewa", "Tanggal Mulai", "Durasi", "Status Pengembalian", "Aksi"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {transaksiList.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-8 text-gray-400">Belum ada riwayat transaksi.</td></tr>
+                <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">Belum ada riwayat transaksi.</td></tr>
               ) : transaksiList.map((trx, i) => {
                 const sk = trx.status_sewa || "aktif";
                 const skCfg = STATUS_KEMBALI_CONFIG[sk] || STATUS_KEMBALI_CONFIG.aktif;
                 const durasi = trx.tanggal_mulai && trx.tanggal_selesai
                   ? Math.ceil((new Date(trx.tanggal_selesai) - new Date(trx.tanggal_mulai)) / 86400000) : "-";
                 return (
-                  <tr key={trx.id_transaksi || i} className="border-b border-gray-50 hover:bg-gray-50/50">
+                  <tr key={trx.id_transaksi || i} className="border-b border-gray-50 hover:bg-muted/50">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold shrink-0">
@@ -351,7 +351,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
                         <span>{trx.penyewa?.nama || "-"}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-400">{formatTanggal(trx.tanggal_mulai)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{formatTanggal(trx.tanggal_mulai)}</td>
                     <td className="px-4 py-3">{durasi !== "-" ? `${durasi} Hari` : "-"}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${skCfg.className}`}>
@@ -359,7 +359,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded bg-transparent border-none cursor-pointer"><ExternalLink size={13} /></button>
+                      <button className="p-1.5 text-muted-foreground hover:text-foreground rounded bg-transparent border-none cursor-pointer"><ExternalLink size={13} /></button>
                     </td>
                   </tr>
                 );
@@ -367,13 +367,13 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
             </tbody>
           </table>
           {transaksiList.length > 0 && (
-            <div className="bg-slate-50 border-t p-5 flex justify-end gap-16">
+            <div className="bg-muted border-t p-5 flex justify-end gap-16">
               <div className="text-right">
-                <p className="text-xs text-gray-400 mb-1">Total Transaksi</p>
+                <p className="text-xs text-muted-foreground mb-1">Total Transaksi</p>
                 <p className="font-bold text-xl">{transaksiList.length}</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-400 mb-1">Total Pendapatan</p>
+                <p className="text-xs text-muted-foreground mb-1">Total Pendapatan</p>
                 <p className="font-bold text-xl text-emerald-800">
                   {formatHarga(transaksiList.reduce((s, t) => s + Number(t.total_biaya || 0), 0))}
                 </p>
@@ -384,7 +384,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
       )}
 
       {activeTab === "ulasan" && (
-        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-400 shadow-xs">
+        <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground shadow-xs">
           <Star size={32} className="mx-auto mb-3 opacity-30 text-amber-500" />
           <p className="text-sm">Belum ada ulasan untuk alat ini.</p>
         </div>

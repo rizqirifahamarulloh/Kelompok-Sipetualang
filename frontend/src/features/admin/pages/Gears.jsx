@@ -29,7 +29,7 @@ const getStokColor = (stok) => {
 };
 
 function StatusBadge({ status }) {
-  const cfg = STATUS_CONFIG[status] || { label: status, dot: "bg-gray-400", badge: "bg-gray-50 text-gray-700 border border-gray-200" };
+  const cfg = STATUS_CONFIG[status] || { label: status, dot: "bg-gray-400", badge: "bg-muted text-foreground border border-border" };
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.badge}`}>
       <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${cfg.dot}`}></span>
@@ -50,17 +50,17 @@ function ActionMenu({ onView, onEdit, onDelete }) {
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen(!open)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+      <button onClick={() => setOpen(!open)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-gray-100 rounded-lg transition">
         <MoreHorizontal size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[140px]">
+        <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[140px]">
           <button onClick={() => { onView(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 text-left">
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left">
             <Eye size={14} /> Lihat Detail
           </button>
           <button onClick={() => { onEdit(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 text-left">
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left">
             <Edit size={14} /> Edit Data
           </button>
           <button onClick={() => { onDelete(); setOpen(false); }}
@@ -203,12 +203,12 @@ export default function Gears() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-sm text-gray-400 mb-1">
-          Dashboard &gt; <span className="text-gray-600 font-medium">Manajemen Alat</span>
+        <p className="text-sm text-muted-foreground mb-1">
+          Dashboard &gt; <span className="text-foreground font-medium">Manajemen Alat</span>
         </p>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <h1 className="text-2xl font-bold">Manajemen Alat</h1>
-          <button className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-muted transition">
             <Download size={15} /> Ekspor CSV
           </button>
         </div>
@@ -223,9 +223,9 @@ export default function Gears() {
           { label: "Stok Kritis", value: stats.stok_kritis, icon: <AlertTriangle size={18} />, color: "bg-orange-50 text-orange-600",
             extra: stats.stok_kritis > 0 ? <span className="text-sm text-red-500 ml-2 font-medium">item kritis</span> : null },
         ].map((card) => (
-          <div key={card.label} className="bg-white border border-gray-200 rounded-xl p-6 shadow-xs">
+          <div key={card.label} className="bg-card border border-border rounded-xl p-6 shadow-xs">
             <div className="flex justify-between items-start mb-4">
-              <p className="text-sm font-medium text-gray-400">{card.label}</p>
+              <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
               <div className={`p-2 rounded-lg ${card.color}`}>{card.icon}</div>
             </div>
             <div className="flex items-end">
@@ -253,13 +253,13 @@ export default function Gears() {
       )}
 
       {/* Table Card */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-xs">
         {/* Filter Bar */}
         <div className="p-4 border-b flex flex-col sm:flex-row justify-between gap-4 items-center">
           <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <input
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-emerald-400"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-muted focus:outline-none focus:border-emerald-400"
               placeholder="Cari nama alat..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
@@ -269,17 +269,17 @@ export default function Gears() {
             {/* Filter Kategori */}
             <div className="relative">
               <button onClick={() => { setShowKategoriMenu(!showKategoriMenu); setShowStatusMenu(false); }}
-                className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-muted transition">
                 <Filter size={15} />
                 {filterKategori ? (categories.find((c) => String(c.id_kategori) === filterKategori)?.nama_kategori || "Kategori") : "Semua Kategori"}
               </button>
               {showKategoriMenu && (
-                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[160px]">
+                <div className="absolute top-full mt-1 left-0 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[160px]">
                   <button onClick={() => { setFilterKategori(""); setShowKategoriMenu(false); setCurrentPage(1); }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Semua Kategori</button>
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-muted">Semua Kategori</button>
                   {categories.map((cat) => (
                     <button key={cat.id_kategori} onClick={() => { setFilterKategori(String(cat.id_kategori)); setShowKategoriMenu(false); setCurrentPage(1); }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">{cat.nama_kategori}</button>
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted">{cat.nama_kategori}</button>
                   ))}
                 </div>
               )}
@@ -287,17 +287,17 @@ export default function Gears() {
             {/* Filter Status */}
             <div className="relative">
               <button onClick={() => { setShowStatusMenu(!showStatusMenu); setShowKategoriMenu(false); }}
-                className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-muted transition">
                 <Filter size={15} />
                 {filterStatus ? STATUS_CONFIG[filterStatus]?.label : "Semua Status"}
               </button>
               {showStatusMenu && (
-                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[140px]">
+                <div className="absolute top-full mt-1 left-0 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[140px]">
                   <button onClick={() => { setFilterStatus(""); setShowStatusMenu(false); setCurrentPage(1); }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Semua Status</button>
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-muted">Semua Status</button>
                   {Object.entries(STATUS_CONFIG).map(([key, val]) => (
                     <button key={key} onClick={() => { setFilterStatus(key); setShowStatusMenu(false); setCurrentPage(1); }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">{val.label}</button>
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted">{val.label}</button>
                   ))}
                 </div>
               )}
@@ -310,26 +310,26 @@ export default function Gears() {
           {loading ? (
             <div className="text-center py-10">
               <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-              <p className="text-sm text-gray-500">Memuat data alat...</p>
+              <p className="text-sm text-muted-foreground">Memuat data alat...</p>
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-muted border-b border-border">
                 <tr>
                   {["No", "Nama Alat", "Kategori", "Pemilik", "Stok", "Harga/Hari", "Status", "Approval", "Aksi"].map((h, i) => (
-                    <th key={h} className={`px-4 py-3 text-xs font-semibold text-gray-400 ${i === 0 || i === 4 || i === 8 ? "text-center" : "text-left"}`}>{h}</th>
+                    <th key={h} className={`px-4 py-3 text-xs font-semibold text-muted-foreground ${i === 0 || i === 4 || i === 8 ? "text-center" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {paginated.length === 0 ? (
-                  <tr><td colSpan={9} className="text-center py-10 text-gray-400">Tidak ada alat ditemukan.</td></tr>
+                  <tr><td colSpan={9} className="text-center py-10 text-muted-foreground">Tidak ada alat ditemukan.</td></tr>
                 ) : paginated.map((gear, index) => (
-                  <tr key={gear.id_barang} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                    <td className="px-4 py-3 text-center text-gray-400">{(currentPage - 1) * PER_PAGE + index + 1}</td>
+                  <tr key={gear.id_barang} className="border-b border-gray-50 hover:bg-muted/50 transition">
+                    <td className="px-4 py-3 text-center text-muted-foreground">{(currentPage - 1) * PER_PAGE + index + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center border border-gray-100 shrink-0 overflow-hidden">
+                        <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center border border-border shrink-0 overflow-hidden">
                           {gear.foto_barang ? (
                             <img src={getStorageUrl(gear.foto_barang)} alt={gear.nama_barang} className="w-full h-full object-cover" />
                           ) : (
@@ -340,11 +340,11 @@ export default function Gears() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full">
+                      <span className="text-xs bg-slate-100 text-muted-foreground px-2.5 py-0.5 rounded-full">
                         {gear.kategori?.nama_kategori || "-"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400">{gear.pemilik?.nama || "-"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{gear.pemilik?.nama || "-"}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs ${getStokColor(gear.jumlah_stok)}`}>{gear.jumlah_stok}</span>
                     </td>
@@ -376,13 +376,13 @@ export default function Gears() {
         </div>
 
         {/* Pagination */}
-        <div className="p-4 border-t flex items-center justify-between text-sm text-gray-400">
+        <div className="p-4 border-t flex items-center justify-between text-sm text-muted-foreground">
           <div>
             Showing {paginated.length > 0 ? (currentPage - 1) * PER_PAGE + 1 : 0}–{(currentPage - 1) * PER_PAGE + paginated.length} of {gears.length} alat
           </div>
           <div className="flex items-center gap-1">
             <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}
-              className="p-1.5 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition bg-white">
+              className="p-1.5 border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition bg-card">
               <ChevronLeft size={14} />
             </button>
             {pageNumbers().map((p, i) =>
@@ -390,13 +390,13 @@ export default function Gears() {
                 <span key={i} className="px-2">...</span>
               ) : (
                 <button key={p} onClick={() => setCurrentPage(p)}
-                  className={`w-8 h-8 text-xs rounded-lg border transition ${p === currentPage ? "bg-emerald-700 text-white border-emerald-700" : "border-gray-200 hover:bg-gray-50 bg-white text-gray-600"}`}>
+                  className={`w-8 h-8 text-xs rounded-lg border transition ${p === currentPage ? "bg-emerald-700 text-white border-emerald-700" : "border-border hover:bg-muted bg-card text-foreground"}`}>
                   {p}
                 </button>
               )
             )}
             <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-              className="p-1.5 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition bg-white">
+              className="p-1.5 border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition bg-card">
               <ChevronRight size={14} />
             </button>
           </div>

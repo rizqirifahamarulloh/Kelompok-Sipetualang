@@ -28,7 +28,7 @@ const STATUS_MAP = {
 };
 
 const REFUND_STATUS_MAP = {
-  belum_refund: { label: "Belum Refund", color: "bg-gray-100 text-gray-600 border-gray-200" },
+  belum_refund: { label: "Belum Refund", color: "bg-gray-100 text-foreground border-border" },
   proses_refund: { label: "Proses Refund", color: "bg-blue-100 text-blue-700 border-blue-200" },
   sudah_refund: { label: "Sudah Refund", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
 };
@@ -166,7 +166,7 @@ export default function AdminPengembalian() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total", value: stats.total, color: "text-gray-700", bg: "bg-gray-50" },
+          { label: "Total", value: stats.total, color: "text-foreground", bg: "bg-muted" },
           { label: "Menunggu", value: stats.pending, color: "text-yellow-700", bg: "bg-yellow-50" },
           { label: "Disetujui", value: stats.disetujui, color: "text-emerald-700", bg: "bg-emerald-50" },
           { label: "Ditolak", value: stats.ditolak, color: "text-red-700", bg: "bg-red-50" },
@@ -212,7 +212,7 @@ export default function AdminPengembalian() {
           ) : filteredRequests.length === 0 ? (
             <div className="text-center py-16">
               <Package className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 font-medium">Tidak ada pengajuan</p>
+              <p className="text-sm text-muted-foreground font-medium">Tidak ada pengajuan</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -293,7 +293,7 @@ export default function AdminPengembalian() {
                   <RotateCcw className="w-5 h-5 text-amber-500" />
                   <h2 className="text-lg font-bold">Detail Pengajuan</h2>
                 </div>
-                <button onClick={() => setShowDetail(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowDetail(false)} className="text-muted-foreground hover:text-foreground">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -314,18 +314,18 @@ export default function AdminPengembalian() {
 
                 {/* Info Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                  <div className="bg-muted dark:bg-gray-800 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-xs text-gray-400 font-medium">Customer</span>
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground font-medium">Customer</span>
                     </div>
                     <p className="font-bold text-sm">{req.customer?.nama || "-"}</p>
                     <p className="text-xs text-muted-foreground">{req.customer?.email || "-"}</p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                  <div className="bg-muted dark:bg-gray-800 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Package className="w-4 h-4 text-gray-400" />
-                      <span className="text-xs text-gray-400 font-medium">Barang</span>
+                      <Package className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground font-medium">Barang</span>
                     </div>
                     <p className="font-bold text-sm">{req.transaksi?.nama_barang || "-"}</p>
                     <p className="text-xs text-muted-foreground">
@@ -337,7 +337,7 @@ export default function AdminPengembalian() {
                 {/* Alasan */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-gray-400" />
+                    <FileText className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm font-semibold">Alasan Pengembalian</span>
                   </div>
                   <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
@@ -349,7 +349,7 @@ export default function AdminPengembalian() {
                 {fotoBukti.length > 0 && (
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <ImageIcon className="w-4 h-4 text-gray-400" />
+                      <ImageIcon className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm font-semibold">Foto Bukti ({fotoBukti.length})</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
@@ -380,7 +380,7 @@ export default function AdminPengembalian() {
                 {req.status === "pending" && (
                   <div className="border-t pt-5 space-y-4">
                     <div>
-                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
+                      <label className="text-sm font-semibold text-foreground dark:text-gray-300 mb-2 block">
                         Catatan Admin (wajib untuk penolakan)
                       </label>
                       <textarea
@@ -424,26 +424,26 @@ export default function AdminPengembalian() {
                     <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-xl p-4">
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <p className="text-xs text-gray-400">Jumlah Refund</p>
+                          <p className="text-xs text-muted-foreground">Jumlah Refund</p>
                           <p className="font-bold text-emerald-700 text-lg">
                             Rp {Number(req.jumlah_refund || 0).toLocaleString('id-ID')}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-400">Status Refund</p>
+                          <p className="text-xs text-muted-foreground">Status Refund</p>
                           <Badge className={`text-xs font-bold border mt-1 ${(REFUND_STATUS_MAP[req.status_refund] || REFUND_STATUS_MAP.belum_refund).color}`}>
                             {(REFUND_STATUS_MAP[req.status_refund] || REFUND_STATUS_MAP.belum_refund).label}
                           </Badge>
                         </div>
                         {req.metode_refund && (
                           <div>
-                            <p className="text-xs text-gray-400">Metode</p>
+                            <p className="text-xs text-muted-foreground">Metode</p>
                             <p className="font-medium">{METODE_REFUND_LABELS[req.metode_refund] || req.metode_refund}</p>
                           </div>
                         )}
                         {req.tanggal_refund && (
                           <div>
-                            <p className="text-xs text-gray-400">Tanggal Refund</p>
+                            <p className="text-xs text-muted-foreground">Tanggal Refund</p>
                             <p className="font-medium">{new Date(req.tanggal_refund).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                           </div>
                         )}
@@ -451,7 +451,7 @@ export default function AdminPengembalian() {
 
                       {req.bukti_refund && (
                         <div className="mt-3 pt-3 border-t border-emerald-200">
-                          <p className="text-xs text-gray-400 mb-2">Bukti Transfer</p>
+                          <p className="text-xs text-muted-foreground mb-2">Bukti Transfer</p>
                           <img
                             src={`${BASE_URL}/storage/${req.bukti_refund}`}
                             alt="Bukti Refund"
@@ -477,7 +477,7 @@ export default function AdminPengembalian() {
                           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
                             <h4 className="text-sm font-bold text-blue-800">Konfirmasi Pengiriman Refund</h4>
                             <div>
-                              <label className="text-xs font-medium text-gray-600 mb-1 block">Metode Refund *</label>
+                              <label className="text-xs font-medium text-foreground mb-1 block">Metode Refund *</label>
                               <select
                                 value={metodeRefund}
                                 onChange={(e) => setMetodeRefund(e.target.value)}
@@ -490,10 +490,10 @@ export default function AdminPengembalian() {
                               </select>
                             </div>
                             <div>
-                              <label className="text-xs font-medium text-gray-600 mb-1 block">Bukti Transfer (opsional)</label>
+                              <label className="text-xs font-medium text-foreground mb-1 block">Bukti Transfer (opsional)</label>
                               <div className="flex items-center gap-3">
                                 <label className="flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-blue-50 text-sm">
-                                  <Upload className="w-4 h-4 text-gray-400" />
+                                  <Upload className="w-4 h-4 text-muted-foreground" />
                                   {buktiRefund ? buktiRefund.name : 'Upload bukti'}
                                   <input
                                     type="file"

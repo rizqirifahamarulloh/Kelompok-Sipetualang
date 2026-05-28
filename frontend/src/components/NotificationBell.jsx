@@ -18,6 +18,11 @@ const FILTER_CATEGORIES = {
     types: ['transaction', 'payment', 'shipping', 'return'],
     description: 'Order, pembayaran, pengiriman'
   },
+  refund: {
+    label: 'Refund',
+    types: ['return_request', 'return_approved', 'return_rejected', 'refund_completed'],
+    description: 'Pengajuan pengembalian & refund'
+  },
   barang: {
     label: 'Barang',
     types: ['stock_warning', 'gear_approval', 'barang_status', 'barang_approval'],

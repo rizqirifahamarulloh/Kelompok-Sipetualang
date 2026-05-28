@@ -77,19 +77,19 @@ function ActionMenu({ onViewDetail, onConfirmStatus, onPrint }) {
 
   return (
     <div ref={ref} className="relative inline-block text-left">
-      <button onClick={() => setOpen(!open)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition bg-transparent border-none cursor-pointer">
+      <button onClick={() => setOpen(!open)} className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-muted rounded-lg transition bg-transparent border-none cursor-pointer">
         <MoreHorizontal size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[160px] overflow-hidden">
-          <button onClick={() => { onViewDetail(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50 text-slate-700 text-left bg-transparent border-none cursor-pointer">
-            <Eye size={14} className="text-gray-400" /> Detail Pembayaran
+        <div className="absolute right-0 mt-1 bg-card border border-border rounded-xl shadow-lg z-50 min-w-[160px] overflow-hidden">
+          <button onClick={() => { onViewDetail(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted text-foreground text-left bg-transparent border-none cursor-pointer">
+            <Eye size={14} className="text-muted-foreground" /> Detail Pembayaran
           </button>
-          <button onClick={() => { onConfirmStatus(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50 text-slate-700 text-left bg-transparent border-none cursor-pointer">
+          <button onClick={() => { onConfirmStatus(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted text-foreground text-left bg-transparent border-none cursor-pointer">
             <CheckCircle2 size={14} className="text-emerald-600" /> Konfirmasi Lunas
           </button>
-          <button onClick={() => { onPrint(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50 text-slate-700 text-left border-t border-gray-50 bg-transparent border-none cursor-pointer">
-            <Printer size={14} className="text-slate-400" /> Cetak Invoice
+          <button onClick={() => { onPrint(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted text-foreground text-left border-t border-border bg-transparent border-none cursor-pointer">
+            <Printer size={14} className="text-muted-foreground" /> Cetak Invoice
           </button>
         </div>
       )}
@@ -152,25 +152,25 @@ export default function Payment() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <p className="text-xs text-gray-400 mb-0.5">Dashboard &gt; Pembayaran</p>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Pembayaran</h1>
+          <p className="text-xs text-muted-foreground mb-0.5">Dashboard &gt; Pembayaran</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Pembayaran</h1>
         </div>
-        <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-xl text-xs font-semibold bg-white text-slate-700 hover:bg-gray-50 transition border-gray-200 shadow-xs cursor-pointer">
+        <button className="flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-xl text-xs font-semibold bg-card text-foreground hover:bg-muted transition shadow-xs cursor-pointer">
           <Download size={14} /> Ekspor ke CSV
         </button>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+      <div className="bg-card border border-border rounded-2xl p-5 shadow-xs grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
         
         {/* Filter 1: Cari Transaksi */}
         <div className="md:col-span-4 space-y-1.5">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Cari Transaksi</label>
+          <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Cari Transaksi</label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
             <input
               type="text"
-              className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-emerald-600 transition"
+              className="w-full pl-9 pr-3 py-2 text-xs border border-border rounded-xl bg-card text-foreground focus:outline-none focus:border-emerald-600 transition"
               placeholder="ID Pembayaran, Transaksi, Nama"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -180,12 +180,12 @@ export default function Payment() {
 
         {/* Filter 2: Periode */}
         <div className="md:col-span-3 space-y-1.5">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Periode</label>
+          <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Periode</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
             <input
               type="text"
-              className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-xl bg-white text-slate-700 font-medium focus:outline-none"
+              className="w-full pl-9 pr-3 py-2 text-xs border border-border rounded-xl bg-card text-foreground font-medium focus:outline-none"
               value="01 Okt 2023 - 31 Okt 2023"
               readOnly
             />
@@ -194,11 +194,11 @@ export default function Payment() {
 
         {/* Filter 3: Metode Pembayaran */}
         <div className="md:col-span-3 space-y-1.5">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Metode Pembayaran</label>
+          <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Metode Pembayaran</label>
           <select 
             value={metode} 
             onChange={(e) => setMetode(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-emerald-600 appearance-none cursor-pointer"
+            className="w-full border border-border rounded-xl px-3 py-2 bg-card text-xs font-medium text-foreground focus:outline-none focus:border-emerald-600 appearance-none cursor-pointer"
           >
             <option>Semua Metode</option>
             <option>Transfer Bank</option>
@@ -209,12 +209,12 @@ export default function Payment() {
 
         {/* Filter 4: Tombol Aksi & Reset */}
         <div className="md:col-span-2 flex items-center gap-2">
-          <button className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2 px-3 bg-white text-xs font-semibold text-slate-700 hover:bg-gray-50 transition shadow-xs cursor-pointer">
+          <button className="flex-1 flex items-center justify-center gap-2 border border-border rounded-xl py-2 px-3 bg-card text-xs font-semibold text-foreground hover:bg-muted transition shadow-xs cursor-pointer">
             <SlidersHorizontal size={14} />
           </button>
           <button 
             onClick={handleResetFilter}
-            className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2 px-3 bg-slate-50 hover:bg-gray-100 text-slate-600 transition cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-2 border border-border rounded-xl py-2 px-3 bg-muted hover:bg-muted/80 text-muted-foreground transition cursor-pointer"
           >
             <RefreshCw size={14} />
           </button>
@@ -223,10 +223,10 @@ export default function Payment() {
       </div>
 
       {/* Tabel Utama */}
-      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-xs">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
-            <thead className="bg-slate-50/80 border-b border-gray-100 font-bold text-slate-500 uppercase tracking-wider">
+            <thead className="bg-muted/50 border-b border-border font-bold text-muted-foreground uppercase tracking-wider">
               <tr>
                 <th className="px-5 py-4">ID Pembayaran</th>
                 <th className="px-5 py-4">ID Transaksi</th>
@@ -240,48 +240,48 @@ export default function Payment() {
                 <th className="px-5 py-4 text-center">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 text-slate-700 font-medium">
+            <tbody className="divide-y divide-border text-foreground font-medium">
               {currentItems.map((pmt, index) => (
-                <tr key={index} className="hover:bg-slate-50/40 transition">
-                  <td className="px-5 py-4 text-slate-900 font-bold">{pmt.id_pembayaran}</td>
-                  <td className="px-5 py-4 font-bold text-emerald-700">
+                <tr key={index} className="hover:bg-muted/30 transition">
+                  <td className="px-5 py-4 text-foreground font-bold">{pmt.id_pembayaran}</td>
+                  <td className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">
                     <span className="hover:underline cursor-pointer">{pmt.id_transaksi}</span>
                   </td>
-                  <td className="px-5 py-4 text-slate-900 font-semibold">{pmt.penyewa}</td>
-                  <td className="px-5 py-4 text-slate-600 font-normal">{pmt.metode_bayar}</td>
+                  <td className="px-5 py-4 text-foreground font-semibold">{pmt.penyewa}</td>
+                  <td className="px-5 py-4 text-muted-foreground font-normal">{pmt.metode_bayar}</td>
                   
                   {/* Kolom Bukti Bayar */}
                   <td className="px-5 py-4 text-center">
                     {pmt.bukti_bayar === "ada" ? (
                       <button 
                         onClick={() => setPreviewBukti(true)}
-                        className="inline-flex items-center gap-1.5 px-2 py-1 text-[10px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold rounded-lg border border-emerald-200 transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-2 py-1 text-[10px] bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/40 font-bold rounded-lg border border-emerald-200 dark:border-emerald-800 transition cursor-pointer"
                       >
                         <ImageIcon size={12} />
                         Lihat Bukti
                       </button>
                     ) : (
-                      <span className="text-gray-400 font-normal">-</span>
+                      <span className="text-muted-foreground font-normal">-</span>
                     )}
                   </td>
 
-                  <td className="px-5 py-4 text-right font-bold text-slate-900">{formatHarga(pmt.jumlah)}</td>
-                  <td className="px-5 py-4 text-right font-medium text-slate-500">{formatHarga(pmt.deposit)}</td>
+                  <td className="px-5 py-4 text-right font-bold text-foreground">{formatHarga(pmt.jumlah)}</td>
+                  <td className="px-5 py-4 text-right font-medium text-muted-foreground">{formatHarga(pmt.deposit)}</td>
                   
                   {/* Badge Status */}
                   <td className="px-5 py-4 text-center">
                     <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
                       pmt.status === "Lunas" 
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                        ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800" 
                         : pmt.status === "Menunggu"
-                        ? "bg-amber-50 text-amber-700 border-amber-100"
-                        : "bg-rose-50 text-rose-700 border-rose-100"
+                        ? "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-800"
+                        : "bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-800"
                     }`}>
                       {pmt.status}
                     </span>
                   </td>
 
-                  <td className="px-5 py-4 text-slate-400 text-xs font-normal">{pmt.waktu_bayar}</td>
+                  <td className="px-5 py-4 text-muted-foreground text-xs font-normal">{pmt.waktu_bayar}</td>
                   <td className="px-5 py-4 text-center">
                     <ActionMenu 
                       onViewDetail={() => alert(`Detail item ${pmt.id_pembayaran}`)}
@@ -293,7 +293,7 @@ export default function Payment() {
               ))}
               {currentItems.length === 0 && (
                 <tr>
-                  <td colSpan="10" className="text-center py-10 text-gray-400 font-normal">
+                  <td colSpan="10" className="text-center py-10 text-muted-foreground font-normal">
                     Tidak ada data pembayaran yang sesuai dengan filter.
                   </td>
                 </tr>
@@ -303,25 +303,25 @@ export default function Payment() {
         </div>
 
         {/* Pagination Panel */}
-        <div className="px-5 py-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500 bg-slate-50/30">
+        <div className="px-5 py-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground bg-muted/30">
           <span>
-            Showing <strong className="text-slate-800">{totalItems === 0 ? 0 : indexOfFirstItem + 1}</strong> to{" "}
-            <strong className="text-slate-800">{Math.min(indexOfLastItem, totalItems)}</strong> of{" "}
-            <strong className="text-slate-800">{totalItems}</strong> results
+            Showing <strong className="text-foreground">{totalItems === 0 ? 0 : indexOfFirstItem + 1}</strong> to{" "}
+            <strong className="text-foreground">{Math.min(indexOfLastItem, totalItems)}</strong> of{" "}
+            <strong className="text-foreground">{totalItems}</strong> results
           </span>
 
           <div className="flex items-center gap-1">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-1.5 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition bg-white text-slate-600 flex items-center font-semibold gap-1 px-2.5 cursor-pointer"
+              className="p-1.5 border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition bg-card text-foreground flex items-center font-semibold gap-1 px-2.5 cursor-pointer"
             >
               <ChevronLeft size={13} /> Previous
             </button>
             
             {pageNumbers().map((p, i) =>
               p === "..." ? (
-                <span key={i} className="px-2 text-gray-400">...</span>
+                <span key={i} className="px-2 text-muted-foreground">...</span>
               ) : (
                 <button
                   key={i}
@@ -329,7 +329,7 @@ export default function Payment() {
                   className={`w-7 h-7 text-xs font-bold rounded-lg border transition ${
                     p === currentPage 
                       ? "bg-emerald-700 text-white border-emerald-700 shadow-inner" 
-                      : "border-gray-200 bg-white hover:bg-gray-50 text-slate-600 cursor-pointer"
+                      : "border-border bg-card hover:bg-muted text-foreground cursor-pointer"
                   }`}
                 >
                   {p}
@@ -340,7 +340,7 @@ export default function Payment() {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-1.5 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition bg-white text-slate-600 flex items-center font-semibold gap-1 px-2.5 cursor-pointer"
+              className="p-1.5 border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition bg-card text-foreground flex items-center font-semibold gap-1 px-2.5 cursor-pointer"
             >
               Next <ChevronRight size={13} />
             </button>
@@ -352,20 +352,20 @@ export default function Payment() {
       {/* Bukti Transfer Modal */}
       {previewBukti && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl w-full max-w-xs shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <ImageIcon size={13} className="text-emerald-700" /> Berkas Bukti Transfer
+          <div className="bg-card rounded-2xl w-full max-w-xs shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <ImageIcon size={13} className="text-emerald-600" /> Berkas Bukti Transfer
               </span>
-              <button onClick={() => setPreviewBukti(false)} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg bg-transparent border-none cursor-pointer">
+              <button onClick={() => setPreviewBukti(false)} className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg bg-transparent border-none cursor-pointer">
                 <X size={15} />
               </button>
             </div>
-            <div className="p-5 bg-slate-50 flex justify-center items-center">
-              <div className="w-48 h-64 bg-white border border-gray-200 rounded-xl shadow-xs p-3 text-[9px] text-slate-600 font-mono flex flex-col justify-between">
+            <div className="p-5 bg-muted/50 flex justify-center items-center">
+              <div className="w-48 h-64 bg-card border border-border rounded-xl shadow-xs p-3 text-[9px] text-muted-foreground font-mono flex flex-col justify-between">
                 <div className="space-y-1 text-center border-b border-dashed pb-2">
                   <p className="font-bold text-emerald-800 text-xs">M-BANKING SUCCESS</p>
-                  <p className="text-gray-400">12-10-2023 14:30</p>
+                  <p className="text-muted-foreground">12-10-2023 14:30</p>
                 </div>
                 <div className="space-y-1 flex-1 pt-2">
                   <div className="flex justify-between"><span>No Ref:</span><span className="font-bold">982310239</span></div>
@@ -373,10 +373,10 @@ export default function Payment() {
                   <div className="flex justify-between"><span>Tujuan:</span><span className="font-bold">SIPETUALANG</span></div>
                   <div className="flex justify-between pt-2 border-t border-slate-100">
                     <span>Jumlah:</span>
-                    <span className="font-bold text-slate-900">Rp 450.000</span>
+                    <span className="font-bold text-foreground">Rp 450.000</span>
                   </div>
                 </div>
-                <div className="text-center text-[7px] text-gray-400 tracking-wider uppercase pt-1 border-t border-dashed">
+                <div className="text-center text-[7px] text-muted-foreground tracking-wider uppercase pt-1 border-t border-dashed">
                   Valid Receipt
                 </div>
               </div>

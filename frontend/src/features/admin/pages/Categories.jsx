@@ -171,7 +171,7 @@ export default function Categories() {
       {/* Table */}
       <Card>
         {/* Search */}
-        <div className="p-4 border-b flex items-center gap-3 bg-white rounded-t-xl">
+        <div className="p-4 border-b flex items-center gap-3 bg-card rounded-t-xl">
           <div className="relative w-full sm:max-w-xs">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"

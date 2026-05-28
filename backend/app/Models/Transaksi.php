@@ -71,4 +71,9 @@ class Transaksi extends Model
     {
         return $this->hasOne(Pengiriman::class, 'id_transaksi', 'id_transaksi');
     }
+
+    public function pengajuanPengembalian()
+    {
+        return $this->hasOne(PengajuanPengembalian::class, 'id_transaksi', 'id_transaksi');
+    }
 }

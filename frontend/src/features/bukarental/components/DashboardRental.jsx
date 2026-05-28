@@ -30,7 +30,9 @@ import {
   Loader2,
   Search,
   Store,
-  Truck
+  Truck,
+  RotateCcw,
+  ImageIcon
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -71,8 +73,10 @@ export default function DashboardRental() {
   const [gears, setGears] = useState([])
   const [transactions, setTransactions] = useState([])
   const [categories, setCategories] = useState([])
+  const [refundRequests, setRefundRequests] = useState([])
   const [loadingGears, setLoadingGears] = useState(false)
   const [loadingTransactions, setLoadingTransactions] = useState(false)
+  const [loadingRefunds, setLoadingRefunds] = useState(false)
   
   // Modal States
   const [addModalOpen, setAddModalOpen] = useState(false)
@@ -194,6 +198,20 @@ export default function DashboardRental() {
       }
     } catch (err) {
       console.error('Gagal memuat kategori:', err)
+    }
+  }
+
+  const fetchRefundRequests = async () => {
+    try {
+      setLoadingRefunds(true)
+      const res = await api.get('/customer/pengembalian/sebagai-pemilik')
+      if (res.data.status === 'success') {
+        setRefundRequests(res.data.data || [])
+      }
+    } catch (err) {
+      console.error('Gagal mengambil data refund:', err)
+    } finally {
+      setLoadingRefunds(false)
     }
   }
 
@@ -360,6 +378,7 @@ export default function DashboardRental() {
       fetchTransactions()
       fetchCategories()
       fetchUnreadChats()
+      fetchRefundRequests()
       
       // Polling chat unread badge setiap 15 detik
       const chatInterval = setInterval(fetchUnreadChats, 15000)
@@ -375,18 +394,30 @@ export default function DashboardRental() {
     const successfulTrans = transactions.filter(t => t.status_pembayaran === 'sukses')
     const totalRevenue = successfulTrans.reduce((sum, t) => sum + Number(t.pendapatan_pemilik || 0), 0)
     
+    // Total Refund yang sudah dikonfirmasi
+    const totalRefund = refundRequests
+      .filter(r => r.status === 'disetujui' && (r.status_refund === 'sudah_refund' || r.status_refund === 'proses_refund'))
+      .reduce((sum, r) => sum + Number(r.jumlah_refund || 0), 0)
+    
+    const netRevenue = totalRevenue - totalRefund
+    
     const activeRentals = transactions.filter(t => t.status_sewa === 'sedang_disewa').length
     const criticalStock = gears.filter(g => g.jumlah_stok < 5).length
     const pendingApproval = gears.filter(g => g.status_approval === 'pending').length
+    const activeRefunds = refundRequests.filter(r => r.status === 'disetujui' && r.status_refund !== 'sudah_refund').length
     
     return {
       totalGears,
       totalRevenue,
+      totalRefund,
+      netRevenue,
       activeRentals,
       criticalStock,
-      pendingApproval
+      pendingApproval,
+      activeRefunds,
+      totalRefundCount: refundRequests.length
     }
-  }, [gears, transactions])
+  }, [gears, transactions, refundRequests])
 
   // Generate local notifications for critical stock and new rentals
   useEffect(() => {
@@ -655,7 +686,8 @@ export default function DashboardRental() {
         monthName: months[d.getMonth()],
         monthIndex: d.getMonth(),
         year: d.getFullYear(),
-        value: 0
+        value: 0,
+        refund: 0
       })
     }
 
@@ -673,8 +705,22 @@ export default function DashboardRental() {
       }
     })
 
+    // Isi data refund per bulan
+    refundRequests.forEach(r => {
+      if (r.status === 'disetujui') {
+        const refundDate = new Date(r.created_at || r.updated_at)
+        const refMonth = refundDate.getMonth()
+        const refYear = refundDate.getFullYear()
+
+        const match = result.find(m => m.monthIndex === refMonth && m.year === refYear)
+        if (match) {
+          match.refund += Number(r.jumlah_refund || 0)
+        }
+      }
+    })
+
     return result
-  }, [transactions])
+  }, [transactions, refundRequests])
 
   const pieData = useMemo(() => {
     const statuses = {
@@ -707,8 +753,8 @@ export default function DashboardRental() {
 
   // Hitung titik koordinat SVG Area Chart
   const svgLinePoints = useMemo(() => {
-    if (chartData.length === 0) return ''
-    const maxVal = Math.max(...chartData.map(d => d.value), 100000)
+    if (chartData.length === 0) return []
+    const maxVal = Math.max(...chartData.map(d => d.value), ...chartData.map(d => d.refund), 100000)
     const width = 500
     const height = 150
     const padding = 20
@@ -717,6 +763,26 @@ export default function DashboardRental() {
       const x = padding + (i * (width - padding * 2) / (chartData.length - 1))
       const y = height - padding - (d.value * (height - padding * 2) / maxVal)
       return { x, y }
+    })
+
+    return points
+  }, [chartData])
+
+  // Hitung titik koordinat SVG Refund Line
+  const svgRefundPoints = useMemo(() => {
+    if (chartData.length === 0) return []
+    const hasRefund = chartData.some(d => d.refund > 0)
+    if (!hasRefund) return []
+
+    const maxVal = Math.max(...chartData.map(d => d.value), ...chartData.map(d => d.refund), 100000)
+    const width = 500
+    const height = 150
+    const padding = 20
+
+    const points = chartData.map((d, i) => {
+      const x = padding + (i * (width - padding * 2) / (chartData.length - 1))
+      const y = height - padding - (d.refund * (height - padding * 2) / maxVal)
+      return { x, y, hasRefund: d.refund > 0 }
     })
 
     return points
@@ -812,7 +878,7 @@ export default function DashboardRental() {
             
             {/* Sidebar Kemitraan */}
             <div className="lg:col-span-1">
-              <Card className="shadow-lg border bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
+              <Card className="shadow-lg border bg-card dark:bg-slate-900 rounded-2xl overflow-hidden">
                 <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white text-center">
                   <Avatar className="size-20 mx-auto ring-4 ring-white/20 mb-3">
                     <AvatarImage src={getStorageUrl(user.profile_photo)} />
@@ -855,6 +921,17 @@ export default function DashboardRental() {
                       <Badge className="ml-auto bg-blue-500 text-white hover:bg-blue-500 scale-90">{stats.activeRentals} Aktif</Badge>
                     )}
                   </Button>
+                  <Button 
+                    onClick={() => setActiveTab('refunds')}
+                    variant={activeTab === 'refunds' ? 'secondary' : 'ghost'} 
+                    className={`w-full justify-start rounded-xl font-medium ${activeTab === 'refunds' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    <RotateCcw className="size-4 mr-3" />
+                    Refund Barang
+                    {stats.activeRefunds > 0 && (
+                      <Badge className="ml-auto bg-rose-500 text-white hover:bg-rose-500 scale-90">{stats.activeRefunds} Proses</Badge>
+                    )}
+                  </Button>
                   
                   <div className="border-t my-4" />
                   
@@ -880,13 +957,13 @@ export default function DashboardRental() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     
                     {/* Total Barang */}
-                    <Card className="shadow-sm border border-slate-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 hover:-translate-y-1 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 group">
+                    <Card className="shadow-sm border border-border rounded-2xl bg-card hover:-translate-y-1 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 group">
                       <CardContent className="p-6 flex items-center justify-between">
                         <div className="space-y-1">
-                          <p className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                          <p className="text-[11px] font-extrabold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest">
                             Total Alat
                           </p>
-                          <h4 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                          <h4 className="text-2xl font-black text-foreground dark:text-white tracking-tight">
                             {stats.totalGears} <span className="text-xs font-semibold text-muted-foreground">Item</span>
                           </h4>
                           {stats.pendingApproval > 0 ? (
@@ -906,18 +983,24 @@ export default function DashboardRental() {
                     </Card>
 
                     {/* Total Pendapatan */}
-                    <Card className="shadow-sm border border-slate-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 hover:-translate-y-1 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/5 transition-all duration-300 group">
+                    <Card className="shadow-sm border border-border rounded-2xl bg-card hover:-translate-y-1 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/5 transition-all duration-300 group">
                       <CardContent className="p-6 flex items-center justify-between">
                         <div className="space-y-1">
-                          <p className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                          <p className="text-[11px] font-extrabold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest">
                             Earning Bersih
                           </p>
                           <h4 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-                            {formatRupiah(stats.totalRevenue)}
+                            {formatRupiah(stats.netRevenue)}
                           </h4>
-                          <span className="text-[10px] text-teal-600 dark:text-teal-400 flex items-center gap-1 font-bold mt-2 bg-teal-50 dark:bg-teal-950/10 px-2 py-0.5 rounded-full w-fit">
-                            <TrendingUp className="size-3" /> Bagian Owner (80%)
-                          </span>
+                          {stats.totalRefund > 0 ? (
+                            <span className="text-[10px] text-rose-500 flex items-center gap-1 font-bold mt-2 bg-rose-50 dark:bg-rose-950/10 px-2 py-0.5 rounded-full w-fit">
+                              <TrendingDown className="size-3" /> Refund: -{formatRupiah(stats.totalRefund)}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-teal-600 dark:text-teal-400 flex items-center gap-1 font-bold mt-2 bg-teal-50 dark:bg-teal-950/10 px-2 py-0.5 rounded-full w-fit">
+                              <TrendingUp className="size-3" /> Bagian Owner (80%)
+                            </span>
+                          )}
                         </div>
                         <div className="size-12 bg-gradient-to-br from-teal-100 to-teal-50 dark:from-teal-950/40 dark:to-teal-950/20 text-teal-600 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition duration-300">
                           <DollarSign className="size-5" />
@@ -926,13 +1009,13 @@ export default function DashboardRental() {
                     </Card>
 
                     {/* Transaksi Aktif */}
-                    <Card className="shadow-sm border border-slate-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 hover:-translate-y-1 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 group">
+                    <Card className="shadow-sm border border-border rounded-2xl bg-card hover:-translate-y-1 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 group">
                       <CardContent className="p-6 flex items-center justify-between">
                         <div className="space-y-1">
-                          <p className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                          <p className="text-[11px] font-extrabold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest">
                             Sewa Aktif
                           </p>
-                          <h4 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                          <h4 className="text-2xl font-black text-foreground dark:text-white tracking-tight">
                             {stats.activeRentals} <span className="text-xs font-semibold text-muted-foreground">Order</span>
                           </h4>
                           <span className="text-[10px] text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-bold mt-2 bg-indigo-50 dark:bg-indigo-950/10 px-2 py-0.5 rounded-full w-fit">
@@ -946,13 +1029,13 @@ export default function DashboardRental() {
                     </Card>
 
                     {/* Stok Kritis */}
-                    <Card className="shadow-sm border border-slate-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 hover:-translate-y-1 hover:border-rose-500/30 hover:shadow-lg hover:shadow-rose-500/5 transition-all duration-300 group">
+                    <Card className="shadow-sm border border-border rounded-2xl bg-card hover:-translate-y-1 hover:border-rose-500/30 hover:shadow-lg hover:shadow-rose-500/5 transition-all duration-300 group">
                       <CardContent className="p-6 flex items-center justify-between">
                         <div className="space-y-1">
-                          <p className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                          <p className="text-[11px] font-extrabold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest">
                             Stok Kritis
                           </p>
-                          <h4 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                          <h4 className="text-2xl font-black text-foreground dark:text-white tracking-tight">
                             {stats.criticalStock} <span className="text-xs font-semibold text-muted-foreground">Item</span>
                           </h4>
                           {stats.criticalStock > 0 ? (
@@ -965,7 +1048,7 @@ export default function DashboardRental() {
                             </span>
                           )}
                         </div>
-                        <div className={`size-12 bg-gradient-to-br ${stats.criticalStock > 0 ? 'from-rose-100 to-rose-50 dark:from-rose-950/40 dark:to-rose-950/20 text-rose-600 shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 text-slate-500'} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition duration-300`}>
+                        <div className={`size-12 bg-gradient-to-br ${stats.criticalStock > 0 ? 'from-rose-100 to-rose-50 dark:from-rose-950/40 dark:to-rose-950/20 text-rose-600 shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 text-muted-foreground'} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition duration-300`}>
                           <AlertCircle className="size-5" />
                         </div>
                       </CardContent>
@@ -976,23 +1059,44 @@ export default function DashboardRental() {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     
                     {/* SVG Line / Area Chart Dinamis */}
-                    <Card className="lg:col-span-2 shadow-sm border rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
+                    <Card className="lg:col-span-2 shadow-sm border rounded-2xl bg-card overflow-hidden">
                       <CardHeader className="p-6">
-                        <CardTitle className="text-lg font-bold">Tren Pendapatan Bulanan</CardTitle>
-                        <CardDescription>Visualisasi earning bersih perental (dalam rupiah) selama 6 bulan terakhir.</CardDescription>
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div>
+                            <CardTitle className="text-lg font-bold">Tren Pendapatan Bulanan</CardTitle>
+                            <CardDescription>Visualisasi earning & refund perental selama 6 bulan terakhir.</CardDescription>
+                          </div>
+                          {/* Legend */}
+                          <div className="flex items-center gap-4 text-[11px] font-semibold">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3 h-[3px] rounded-full bg-emerald-500" />
+                              <span className="text-muted-foreground">Pendapatan</span>
+                            </div>
+                            {svgRefundPoints.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-[3px] rounded-full bg-red-500" style={{ borderTop: '2px dashed #ef4444' }} />
+                                <span className="text-red-500">Refund</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </CardHeader>
                       <CardContent className="p-6 pt-0">
                         {transactions.length === 0 ? (
-                          <div className="h-[180px] flex items-center justify-center text-sm text-muted-foreground">
+                          <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
                             Belum ada riwayat transaksi masuk untuk diplot.
                           </div>
                         ) : (
                           <div className="relative">
-                            <svg className="w-full h-[180px]" viewBox="0 0 500 150" preserveAspectRatio="none">
+                            <svg className="w-full h-[200px]" viewBox="0 0 500 150" preserveAspectRatio="none">
                               <defs>
                                 <linearGradient id="gradient-area" x1="0" y1="0" x2="0" y2="1">
                                   <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
                                   <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                                </linearGradient>
+                                <linearGradient id="gradient-refund" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.2" />
+                                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
                                 </linearGradient>
                               </defs>
                               
@@ -1002,7 +1106,7 @@ export default function DashboardRental() {
                               <line x1="20" y1="110" x2="480" y2="110" stroke="#f1f5f9" strokeWidth="1" className="dark:stroke-slate-800" />
                               <line x1="20" y1="130" x2="480" y2="130" stroke="#e2e8f0" strokeWidth="1.5" className="dark:stroke-slate-700" />
 
-                              {/* Area under curve */}
+                              {/* Earning area fill */}
                               {svgLinePoints.length > 0 && (
                                 <path 
                                   d={`${svgLinePoints.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, '')} L ${svgLinePoints[svgLinePoints.length - 1].x} 130 L ${svgLinePoints[0].x} 130 Z`} 
@@ -1010,7 +1114,7 @@ export default function DashboardRental() {
                                 />
                               )}
 
-                              {/* Line curve */}
+                              {/* Earning line */}
                               {svgLinePoints.length > 0 && (
                                 <path 
                                   d={svgLinePoints.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, '')} 
@@ -1022,24 +1126,63 @@ export default function DashboardRental() {
                                 />
                               )}
 
-                              {/* Dots on line */}
+                              {/* Refund area fill */}
+                              {svgRefundPoints.length > 0 && (
+                                <path 
+                                  d={`${svgRefundPoints.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, '')} L ${svgRefundPoints[svgRefundPoints.length - 1].x} 130 L ${svgRefundPoints[0].x} 130 Z`} 
+                                  fill="url(#gradient-refund)" 
+                                />
+                              )}
+
+                              {/* Refund line (dashed) */}
+                              {svgRefundPoints.length > 0 && (
+                                <path 
+                                  d={svgRefundPoints.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, '')} 
+                                  fill="none" 
+                                  stroke="#ef4444" 
+                                  strokeWidth="2.5" 
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeDasharray="6 4"
+                                />
+                              )}
+
+                              {/* Earning dots */}
                               {svgLinePoints.map((p, idx) => (
                                 <circle 
-                                  key={idx}
+                                  key={`earn-${idx}`}
                                   cx={p.x} 
                                   cy={p.y} 
                                   r="5" 
                                   fill="#ffffff" 
                                   stroke="#10b981" 
                                   strokeWidth="2.5" 
-                                  className="cursor-pointer transition hover:scale-150"
+                                  className="cursor-pointer transition dark:fill-slate-900"
                                   onMouseEnter={() => setHoveredMonth(idx)}
                                   onMouseLeave={() => setHoveredMonth(null)}
                                 />
                               ))}
+
+                              {/* Refund dots (only on months with refund) */}
+                              {svgRefundPoints.map((p, idx) => (
+                                p.hasRefund && (
+                                  <circle 
+                                    key={`ref-${idx}`}
+                                    cx={p.x} 
+                                    cy={p.y} 
+                                    r="4.5" 
+                                    fill="#ef4444" 
+                                    stroke="#ffffff" 
+                                    strokeWidth="2" 
+                                    className="cursor-pointer dark:stroke-slate-900"
+                                    onMouseEnter={() => setHoveredMonth(idx)}
+                                    onMouseLeave={() => setHoveredMonth(null)}
+                                  />
+                                )
+                              ))}
                             </svg>
 
-                            {/* Tooltip Overlay */}
+                            {/* Month labels */}
                             <div className="flex justify-between px-5 mt-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                               {chartData.map((d, i) => (
                                 <span key={i} className={hoveredMonth === i ? 'text-emerald-600 font-extrabold' : ''}>
@@ -1050,9 +1193,14 @@ export default function DashboardRental() {
 
                             {/* Real-time Tooltip Box */}
                             {hoveredMonth !== null && (
-                              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-950 text-white rounded-xl px-4 py-2 shadow-xl border border-slate-800 flex flex-col text-xs font-semibold items-center z-10 animate-in fade-in zoom-in-95 duration-150">
-                                <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">{chartData[hoveredMonth].monthName} {chartData[hoveredMonth].year}</span>
-                                <span className="text-emerald-400 mt-0.5 text-sm font-extrabold">{formatRupiah(chartData[hoveredMonth].value)}</span>
+                              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-950 text-white rounded-xl px-4 py-2.5 shadow-xl border border-slate-800 flex flex-col text-xs font-semibold items-center z-10 animate-in fade-in zoom-in-95 duration-150 min-w-[140px]">
+                                <span className="text-muted-foreground font-bold uppercase tracking-widest text-[9px]">{chartData[hoveredMonth].monthName} {chartData[hoveredMonth].year}</span>
+                                <span className="text-emerald-400 mt-1 text-sm font-extrabold">{formatRupiah(chartData[hoveredMonth].value)}</span>
+                                {chartData[hoveredMonth].refund > 0 && (
+                                  <span className="text-red-400 mt-0.5 text-xs font-bold flex items-center gap-1">
+                                    <RotateCcw className="size-3" /> -{formatRupiah(chartData[hoveredMonth].refund)}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
@@ -1061,7 +1209,7 @@ export default function DashboardRental() {
                     </Card>
 
                     {/* SVG Circular Doughnut Chart Dinamis */}
-                    <Card className="shadow-sm border rounded-2xl bg-white dark:bg-slate-900 overflow-hidden flex flex-col">
+                    <Card className="shadow-sm border rounded-2xl bg-card overflow-hidden flex flex-col">
                       <CardHeader className="p-6">
                         <CardTitle className="text-lg font-bold">Status Transaksi</CardTitle>
                         <CardDescription>Proporsi status penyewaan saat ini di database.</CardDescription>
@@ -1082,12 +1230,13 @@ export default function DashboardRental() {
                                     d={slice.path} 
                                     fill={slice.color}
                                     className="cursor-pointer transition duration-300 hover:opacity-90"
-                                    stroke="#ffffff"
+                                    stroke="currentColor"
                                     strokeWidth="1.5"
                                     style={{
                                       transform: hoveredPie === idx ? 'scale(1.04)' : 'scale(1)',
                                       transformOrigin: '100px 100px',
-                                      transition: 'all 0.3s ease'
+                                      transition: 'all 0.3s ease',
+                                      color: 'var(--card)'
                                     }}
                                     onMouseEnter={() => setHoveredPie(idx)}
                                     onMouseLeave={() => setHoveredPie(null)}
@@ -1095,7 +1244,7 @@ export default function DashboardRental() {
                                 ))}
 
                                 {/* Center cutout for Doughnut effect */}
-                                <circle cx="100" cy="100" r="50" fill="#ffffff" className="dark:fill-slate-900" />
+                                <circle cx="100" cy="100" r="50" className="fill-card" />
                               </svg>
 
                               {/* Center text of Doughnut */}
@@ -1111,7 +1260,7 @@ export default function DashboardRental() {
                               {pieSlices.map((slice, idx) => (
                                 <div 
                                   key={idx} 
-                                  className={`flex items-center gap-2 cursor-pointer p-1 rounded-lg transition ${hoveredPie === idx ? 'bg-slate-100 dark:bg-slate-800' : ''}`}
+                                  className={`flex items-center gap-2 cursor-pointer p-1 rounded-lg transition ${hoveredPie === idx ? 'bg-muted' : ''}`}
                                   onMouseEnter={() => setHoveredPie(idx)}
                                   onMouseLeave={() => setHoveredPie(null)}
                                 >
@@ -1121,6 +1270,22 @@ export default function DashboardRental() {
                                 </div>
                               ))}
                             </div>
+
+                            {/* Refund summary below pie */}
+                            {stats.totalRefund > 0 && (
+                              <div className="mt-4 w-full px-2 pt-3 border-t border-border">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="flex items-center gap-1.5 text-red-500 font-semibold">
+                                    <RotateCcw className="size-3" /> Refund
+                                  </span>
+                                  <span className="font-bold text-red-500">-{formatRupiah(stats.totalRefund)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs mt-1">
+                                  <span className="text-muted-foreground font-medium">Earning Bersih</span>
+                                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatRupiah(stats.netRevenue)}</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </CardContent>
@@ -1128,7 +1293,7 @@ export default function DashboardRental() {
                   </div>
 
                   {/* Transaksi Terbaru di Ringkasan */}
-                  <Card className="shadow-sm border rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
+                  <Card className="shadow-sm border rounded-2xl bg-card dark:bg-slate-900 overflow-hidden">
                     <CardHeader className="p-6 flex flex-row justify-between items-center">
                       <div>
                         <CardTitle className="text-lg font-bold">Aktivitas Sewa Terbaru</CardTitle>
@@ -1219,7 +1384,7 @@ export default function DashboardRental() {
 
               {/* TAB 2: KELOLA BARANG */}
               {activeTab === 'gears' && (
-                <Card className="shadow-lg border rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
+                <Card className="shadow-lg border rounded-2xl bg-card dark:bg-slate-900 overflow-hidden">
                   <CardHeader className="p-6 flex flex-row items-center justify-between border-b">
                     <div>
                       <CardTitle className="text-xl font-extrabold">Inventaris Barang Anda</CardTitle>
@@ -1280,7 +1445,7 @@ export default function DashboardRental() {
                                       className="size-12 rounded-lg object-cover border" 
                                     />
                                   ) : (
-                                    <div className="size-12 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
+                                    <div className="size-12 bg-slate-100 rounded-lg flex items-center justify-center text-muted-foreground">
                                       <Package className="size-5" />
                                     </div>
                                   )}
@@ -1292,7 +1457,7 @@ export default function DashboardRental() {
                                   )}
                                 </TableCell>
                                 <TableCell>
-                                  <Badge variant="outline" className="font-semibold text-xs border bg-slate-50 dark:bg-slate-800">
+                                  <Badge variant="outline" className="font-semibold text-xs border bg-muted/50 dark:bg-slate-800">
                                     {gear.kategori?.nama_kategori || 'Alat'}
                                   </Badge>
                                 </TableCell>
@@ -1359,7 +1524,7 @@ export default function DashboardRental() {
 
               {/* TAB 3: PENYEWAAN MASUK */}
               {activeTab === 'transactions' && (
-                <Card className="shadow-lg border rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
+                <Card className="shadow-lg border rounded-2xl bg-card dark:bg-slate-900 overflow-hidden">
                   <CardHeader className="p-6 border-b">
                     <CardTitle className="text-xl font-extrabold">Daftar Penyewaan Masuk</CardTitle>
                     <CardDescription>
@@ -1373,7 +1538,7 @@ export default function DashboardRental() {
                         <span>Memuat transaksi masuk...</span>
                       </div>
                     ) : transactions.length === 0 ? (
-                      <div className="p-12 text-center flex flex-col items-center justify-center min-h-[300px] bg-slate-50/50 m-6 rounded-2xl border-2 border-dashed">
+                      <div className="p-12 text-center flex flex-col items-center justify-center min-h-[300px] bg-background m-6 rounded-2xl border-2 border-dashed">
                         <div className="size-14 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4">
                           <ShoppingBag className="size-7" />
                         </div>
@@ -1495,6 +1660,178 @@ export default function DashboardRental() {
                 </Card>
               )}
 
+              {/* TAB 4: REFUND BARANG */}
+              {activeTab === 'refunds' && (
+                <Card className="shadow-sm border rounded-2xl bg-card dark:bg-slate-900">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                          <RotateCcw className="size-5 text-rose-500" />
+                          Refund Barang Saya
+                        </CardTitle>
+                        <CardDescription>Daftar pengajuan pengembalian barang yang Anda miliki</CardDescription>
+                      </div>
+                      {stats.totalRefund > 0 && (
+                        <div className="text-right">
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold">Total Refund</p>
+                          <p className="text-lg font-black text-rose-500">-{formatRupiah(stats.totalRefund)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingRefunds ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="size-6 animate-spin text-emerald-600 mr-2" />
+                        <span className="text-sm text-muted-foreground">Memuat data refund...</span>
+                      </div>
+                    ) : refundRequests.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <RotateCcw className="size-10 mx-auto mb-3 text-muted-foreground" />
+                        <p className="font-semibold">Belum ada pengajuan refund</p>
+                        <p className="text-sm mt-1">Jika ada customer yang mengajukan pengembalian, akan muncul di sini.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {refundRequests.map((req) => {
+                          const fotoBukti = Array.isArray(req.foto_bukti) ? req.foto_bukti : (typeof req.foto_bukti === 'string' ? JSON.parse(req.foto_bukti || '[]') : [])
+                          
+                          const statusColors = {
+                            pending: 'bg-amber-100 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400',
+                            disetujui: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400',
+                            ditolak: 'bg-rose-100 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400',
+                          }
+                          const statusLabel = {
+                            pending: 'Menunggu Review',
+                            disetujui: 'Disetujui',
+                            ditolak: 'Ditolak',
+                          }
+                          const refundStatusColors = {
+                            belum_refund: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+                            proses_refund: 'bg-blue-100 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400',
+                            sudah_refund: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400',
+                          }
+                          const refundStatusLabel = {
+                            belum_refund: 'Belum Refund',
+                            proses_refund: 'Proses Refund',
+                            sudah_refund: 'Sudah Direfund',
+                          }
+
+                          return (
+                            <div key={req.id_pengajuan} className="border rounded-2xl p-5 space-y-3 bg-background dark:bg-slate-800/30 hover:border-rose-200 dark:hover:border-rose-800 transition-colors">
+                              {/* Header */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <Badge className={`text-[10px] font-bold border-0 ${statusColors[req.status] || statusColors.pending}`}>
+                                      {statusLabel[req.status] || req.status}
+                                    </Badge>
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {new Date(req.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                  <h4 className="font-bold text-base mt-2 text-foreground dark:text-white">
+                                    {req.transaksi?.nama_barang || 'Barang tidak ditemukan'}
+                                  </h4>
+                                </div>
+                                {/* Customer photo thumbnails */}
+                                <div className="flex -space-x-2 shrink-0">
+                                  {fotoBukti.slice(0, 3).map((foto, idx) => (
+                                    <img
+                                      key={idx}
+                                      src={`${BASE_URL}/storage/${foto}`}
+                                      alt="Bukti"
+                                      className="size-10 rounded-xl border-2 border-white dark:border-slate-800 object-cover cursor-pointer hover:scale-110 transition-transform"
+                                      onClick={() => window.open(`${BASE_URL}/storage/${foto}`, '_blank')}
+                                    />
+                                  ))}
+                                  {fotoBukti.length > 3 && (
+                                    <div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-700 border-2 border-white dark:border-slate-800 flex items-center justify-center text-xs font-bold text-muted-foreground dark:text-muted-foreground">
+                                      +{fotoBukti.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Customer & Alasan */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-xs text-muted-foreground">Customer:</span>
+                                  <p className="font-medium text-foreground">
+                                    {req.customer?.nama || req.transaksi?.penyewa?.nama || '-'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-xs text-muted-foreground">Alasan Pengembalian:</span>
+                                  <p className="font-medium text-foreground">{req.alasan}</p>
+                                </div>
+                              </div>
+
+                              {/* Admin Note */}
+                              {req.catatan_admin && (
+                                <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-200 dark:border-amber-900 rounded-xl px-4 py-2 text-sm">
+                                  <span className="font-bold text-amber-700 dark:text-amber-400">Catatan Admin:</span>{' '}
+                                  <span className="text-amber-800 dark:text-amber-300">{req.catatan_admin}</span>
+                                </div>
+                              )}
+
+                              {/* Refund Info */}
+                              {req.status === 'disetujui' && (
+                                <div className="bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900 rounded-xl p-4 space-y-2">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <DollarSign className="size-4 text-emerald-600" />
+                                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Informasi Refund</span>
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                    <div>
+                                      <span className="text-muted-foreground">Jumlah Refund:</span>
+                                      <p className="font-bold text-rose-600 dark:text-rose-400 text-sm">
+                                        -{formatRupiah(req.jumlah_refund)}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">Status Refund:</span>
+                                      <Badge className={`text-[9px] font-bold border-0 mt-1 ${refundStatusColors[req.status_refund] || refundStatusColors.belum_refund}`}>
+                                        {refundStatusLabel[req.status_refund] || 'Belum Refund'}
+                                      </Badge>
+                                    </div>
+                                    {req.metode_refund && (
+                                      <div>
+                                        <span className="text-muted-foreground">Metode:</span>
+                                        <p className="font-medium capitalize">{req.metode_refund.replace('_', ' ')}</p>
+                                      </div>
+                                    )}
+                                    {req.tanggal_refund && (
+                                      <div>
+                                        <span className="text-muted-foreground">Tanggal Refund:</span>
+                                        <p className="font-medium">{new Date(req.tanggal_refund).toLocaleDateString('id-ID')}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {/* Bukti transfer dari admin */}
+                                  {req.bukti_refund && (
+                                    <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800">
+                                      <span className="text-xs text-muted-foreground block mb-1.5">Bukti Transfer dari Admin:</span>
+                                      <img
+                                        src={`${BASE_URL}/storage/${req.bukti_refund}`}
+                                        alt="Bukti Transfer Refund"
+                                        className="w-40 rounded-xl border border-emerald-200 cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
+                                        onClick={() => window.open(`${BASE_URL}/storage/${req.bukti_refund}`, '_blank')}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
             </div>
           </div>
 
@@ -1503,7 +1840,7 @@ export default function DashboardRental() {
 
       {/* Add Gear Modal */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-        <DialogContent className="max-w-lg rounded-2xl bg-white dark:bg-slate-900 border">
+        <DialogContent className="max-w-lg rounded-2xl bg-card dark:bg-slate-900 border">
           <form onSubmit={handleAddSubmit}>
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Ajukan Barang Baru</DialogTitle>
@@ -1575,7 +1912,7 @@ export default function DashboardRental() {
                     id="add_deposit" 
                     type="number"
                     placeholder="Otomatis 20% dari Harga" 
-                    className="rounded-lg bg-slate-50 border-slate-200 text-slate-500 font-semibold"
+                    className="rounded-lg bg-muted/50 border-border text-muted-foreground font-semibold"
                     value={addForm.nominal_deposit}
                     readOnly
                   />
@@ -1600,9 +1937,9 @@ export default function DashboardRental() {
                       value={addForm.min_durasi_sewa}
                       onChange={(e) => setAddForm(prev => ({ ...prev, min_durasi_sewa: parseInt(e.target.value) || 1 }))}
                     />
-                    <span className="text-sm text-slate-500 font-medium">Hari</span>
+                    <span className="text-sm text-muted-foreground font-medium">Hari</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
                     📅 Customer harus menyewa minimal selama <strong className="text-emerald-600">{addForm.min_durasi_sewa || 1} hari</strong>. Set ke 1 jika tidak ada minimum.
                   </p>
                 </div>
@@ -1646,7 +1983,7 @@ export default function DashboardRental() {
                       className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
                         addForm.metode_penyerahan === 'pickup'
                           ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          : 'border-border text-muted-foreground hover:bg-muted/50'
                       }`}
                     >
                       <Store className="size-4" /> Datang ke Gudang
@@ -1658,7 +1995,7 @@ export default function DashboardRental() {
                       className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
                         addForm.metode_penyerahan === 'delivery'
                           ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          : 'border-border text-muted-foreground hover:bg-muted/50'
                       }`}
                     >
                       <Truck className="size-4" /> Kirim via Kurir (Delivery)
@@ -1678,7 +2015,7 @@ export default function DashboardRental() {
                     </div>
                   )}
 
-                  <div className="bg-slate-50 p-3 rounded-xl text-[10px] text-slate-500 border border-dashed leading-relaxed">
+                  <div className="bg-muted/50 p-3 rounded-xl text-[10px] text-muted-foreground border border-dashed leading-relaxed">
                     💡 <strong>Gudang SiPetualang:</strong> Jl. Petualang No. 100, Bandung. Barang harus diserahkan/dikirimkan ke gudang untuk diverifikasi admin sebelum alat sewa dipublikasikan secara live di katalog.
                   </div>
                 </div>
@@ -1723,7 +2060,7 @@ export default function DashboardRental() {
 
       {/* Edit Gear Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-lg rounded-2xl bg-white dark:bg-slate-900 border">
+        <DialogContent className="max-w-lg rounded-2xl bg-card dark:bg-slate-900 border">
           <form onSubmit={handleEditSubmit}>
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Ubah Detail & Stok Alat</DialogTitle>
@@ -1807,7 +2144,7 @@ export default function DashboardRental() {
                     id="edit_deposit" 
                     type="number"
                     placeholder="Otomatis 20% dari Harga" 
-                    className="rounded-lg bg-slate-50 border-slate-200 text-slate-500 font-semibold"
+                    className="rounded-lg bg-muted/50 border-border text-muted-foreground font-semibold"
                     value={editForm.nominal_deposit}
                     readOnly
                   />
@@ -1832,9 +2169,9 @@ export default function DashboardRental() {
                       value={editForm.min_durasi_sewa}
                       onChange={(e) => setEditForm(prev => ({ ...prev, min_durasi_sewa: parseInt(e.target.value) || 1 }))}
                     />
-                    <span className="text-sm text-slate-500 font-medium">Hari</span>
+                    <span className="text-sm text-muted-foreground font-medium">Hari</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
                     📅 Customer harus menyewa minimal selama <strong className="text-emerald-600">{editForm.min_durasi_sewa || 1} hari</strong>. Set ke 1 jika tidak ada minimum.
                   </p>
                 </div>
@@ -1884,7 +2221,7 @@ export default function DashboardRental() {
                       className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
                         editForm.metode_penyerahan === 'pickup'
                           ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          : 'border-border text-muted-foreground hover:bg-muted/50'
                       }`}
                     >
                       <Store className="size-4" /> Datang ke Gudang
@@ -1896,7 +2233,7 @@ export default function DashboardRental() {
                       className={`py-2.5 rounded-xl border text-xs font-semibold transition-colors flex flex-col items-center justify-center gap-1.5 ${
                         editForm.metode_penyerahan === 'delivery'
                           ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          : 'border-border text-muted-foreground hover:bg-muted/50'
                       }`}
                     >
                       <Truck className="size-4" /> Kirim via Kurir (Delivery)
@@ -1916,7 +2253,7 @@ export default function DashboardRental() {
                     </div>
                   )}
 
-                  <div className="bg-slate-50 p-3 rounded-xl text-[10px] text-slate-500 border border-dashed leading-relaxed">
+                  <div className="bg-muted/50 p-3 rounded-xl text-[10px] text-muted-foreground border border-dashed leading-relaxed">
                     💡 <strong>Gudang SiPetualang:</strong> Jl. Petualang No. 100, Bandung. Barang harus diserahkan/dikirimkan ke gudang untuk diverifikasi admin sebelum alat sewa dipublikasikan secara live di katalog.
                   </div>
                 </div>
@@ -1968,7 +2305,7 @@ export default function DashboardRental() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 w-[360px] h-[480px] rounded-2xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col z-[9999]"
+            className="fixed bottom-6 right-6 w-[360px] h-[480px] rounded-2xl shadow-2xl bg-card border border-border overflow-hidden flex flex-col z-[9999]"
           >
             {/* HEADER */}
             <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex items-center gap-3">
@@ -2018,7 +2355,7 @@ export default function DashboardRental() {
             </div>
 
             {/* BODY CONTENT */}
-            <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 flex flex-col">
+            <div className="flex-1 overflow-y-auto bg-muted/50 dark:bg-slate-950 flex flex-col">
               {activeChatId ? (
                 chatLoading ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground text-xs gap-2">
@@ -2043,10 +2380,10 @@ export default function DashboardRental() {
                             <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-xs shadow-sm ${
                               isMe 
                                 ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-none' 
-                                : 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-none'
+                                : 'bg-card border border-border text-foreground rounded-tl-none'
                             }`}>
                               <p className="leading-relaxed break-words">{msg.message}</p>
-                              <span className={`text-[8px] block text-right mt-1 ${isMe ? 'text-emerald-100' : 'text-slate-400'}`}>
+                              <span className={`text-[8px] block text-right mt-1 ${isMe ? 'text-emerald-100' : 'text-muted-foreground'}`}>
                                 {new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
@@ -2059,11 +2396,11 @@ export default function DashboardRental() {
                 )
               ) : (
                 <>
-                  <div className="p-3 border-b border-slate-100 dark:border-slate-900 bg-white dark:bg-slate-900 flex items-center relative">
-                    <Search className="size-3.5 absolute left-6 text-slate-400" />
+                  <div className="p-3 border-b border-border bg-card flex items-center relative">
+                    <Search className="size-3.5 absolute left-6 text-muted-foreground" />
                     <Input 
                       placeholder="Cari customer..." 
-                      className="h-8 rounded-lg pl-8 text-xs bg-slate-50 dark:bg-slate-950 border-none outline-none"
+                      className="h-8 rounded-lg pl-8 text-xs bg-muted/50 dark:bg-slate-950 border-none outline-none"
                       value={chatSearch}
                       onChange={(e) => setChatSearch(e.target.value)}
                     />
@@ -2071,7 +2408,7 @@ export default function DashboardRental() {
                   <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-900">
                     {filteredChatConvs.length === 0 ? (
                       <div className="p-8 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-2">
-                        <MessageCircle className="size-8 text-slate-300" />
+                        <MessageCircle className="size-8 text-muted-foreground" />
                         <span>Tidak ada obrolan</span>
                       </div>
                     ) : (
@@ -2090,12 +2427,12 @@ export default function DashboardRental() {
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-baseline gap-2">
-                                <h5 className="font-bold text-xs text-slate-800 dark:text-slate-200 truncate">{otherUser?.nama}</h5>
-                                <span className="text-[9px] text-slate-400 font-semibold shrink-0">
+                                <h5 className="font-bold text-xs text-foreground truncate">{otherUser?.nama}</h5>
+                                <span className="text-[9px] text-muted-foreground font-semibold shrink-0">
                                   {conv.last_message_at ? new Date(conv.last_message_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : ''}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                              <p className="text-[11px] text-muted-foreground dark:text-muted-foreground truncate mt-0.5">
                                 {conv.last_message || 'Belum ada pesan'}
                               </p>
                               {conv.unread_count > 0 && (
@@ -2117,13 +2454,13 @@ export default function DashboardRental() {
             {activeChatId && (
               <form 
                 onSubmit={handleSendQuickMessage}
-                className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-2 items-center"
+                className="p-3 border-t border-border bg-card flex gap-2 items-center"
               >
                 <Input 
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Ketik balasan cepat..." 
-                  className="flex-1 h-9 rounded-xl text-xs bg-slate-50 border-none dark:bg-slate-950 focus:ring-1 focus:ring-emerald-500"
+                  className="flex-1 h-9 rounded-xl text-xs bg-muted/50 border-none dark:bg-slate-950 focus:ring-1 focus:ring-emerald-500"
                   disabled={sendingMsg}
                 />
                 <Button 

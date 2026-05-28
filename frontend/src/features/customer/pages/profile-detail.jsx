@@ -4,8 +4,8 @@ import Sidebar from "@/features/customer/components/Sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Edit, Key, Trash2, User } from 'lucide-react';
-import { BASE_URL } from '@/services/api';
+import { Edit, Key, Trash2, User, Mail, Phone, MapPin, Shield, Building } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { getStorageUrl } from '@/utils/storageUrl';
 
 export default function ProfileDetail() {
@@ -17,27 +17,33 @@ export default function ProfileDetail() {
 
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
 
+  const fields = [
+    { label: 'Nama Lengkap', value: user.nama, icon: User },
+    { label: 'Alamat Email', value: user.email, icon: Mail },
+    { label: 'Nomor Telepon', value: user.no_telp || '-', icon: Phone },
+    { label: 'Peran Pengguna', value: user.peran_pengguna || 'Customer', icon: Shield, capitalize: true },
+    { label: 'Alamat', value: user.alamat || '-', icon: MapPin },
+    { label: 'Kota', value: user.kota || '-', icon: Building },
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      {/* 1. Navbar khusus Customer */}
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-4 pt-24 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          {/* 2. Sidebar khusus Customer */}
           <Sidebar
             user={user}
             getPhotoUrl={getPhotoUrl}
             getInitials={getInitials}
           />
 
-          {/* 3. Konten Utama (Kotak-Kotak Data) */}
           <div className="lg:col-span-3 space-y-6">
-            <Card className="border shadow-sm bg-white rounded-2xl overflow-hidden">
-              <CardHeader className="border-b bg-white/50 px-8 py-6">
+            <Card className="border shadow-sm rounded-2xl overflow-hidden">
+              <CardHeader className="border-b bg-muted/30 px-8 py-6">
                 <div className="flex items-center gap-2">
-                  <User className="size-5 text-emerald-600" />
+                  <User className="size-5 text-primary" />
                   <CardTitle className="text-xl font-bold">Data Profil</CardTitle>
                 </div>
                 <CardDescription>
@@ -46,58 +52,60 @@ export default function ProfileDetail() {
               </CardHeader>
               
               <CardContent className="p-8 space-y-10">
-                {/* Bagian Foto & Nama Tengah */}
+                {/* Foto & Nama */}
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative">
                     {getPhotoUrl() ? (
-                      <img src={getPhotoUrl()} alt="p" className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md" />
+                      <img src={getPhotoUrl()} alt="p" className="w-28 h-28 rounded-full object-cover border-4 border-card shadow-lg ring-2 ring-primary/10" />
                     ) : (
-                      <div className="w-28 h-28 rounded-full bg-emerald-100 flex items-center justify-center text-3xl font-bold text-emerald-700">
+                      <div className="w-28 h-28 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary shadow-lg ring-2 ring-primary/10">
                         {getInitials()}
                       </div>
                     )}
                   </div>
                   <div className="text-center">
-                    <h3 className="font-bold text-xl text-slate-800">{user.nama}</h3>
-                    <p className="text-sm text-slate-500 font-medium">{user.email}</p>
+                    <h3 className="font-bold text-xl text-foreground">{user.nama}</h3>
+                    <p className="text-sm text-muted-foreground font-medium">{user.email}</p>
+                    <Badge variant="outline" className="mt-2 capitalize">{user.peran_pengguna || 'Customer'}</Badge>
                   </div>
                 </div>
 
-                {/* Grid Data (Kotak-kotak) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 border-t pt-8">
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Nama Lengkap</p>
-                    <p className="font-semibold text-slate-700">{user.nama}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Alamat Email</p>
-                    <p className="font-semibold text-slate-700">{user.email}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Nomor Telepon</p>
-                    <p className="font-semibold text-slate-700">{user.no_telp || '-'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Peran Pengguna</p>
-                    <p className="font-semibold text-slate-700 capitalize">{user.peran_pengguna || 'Customer'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Alamat</p>
-                    <p className="font-semibold text-slate-700">{user.alamat || '-'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Kota</p>
-                    <p className="font-semibold text-slate-700">{user.kota || '-'}</p>
-                  </div>
+                {/* Grid Data */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 border-t border-border pt-8">
+                  {fields.map((field, idx) => (
+                    <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                        <field.icon className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{field.label}</p>
+                        <p className={`font-semibold text-foreground ${field.capitalize ? 'capitalize' : ''} truncate`}>
+                          {field.value}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Tombol Aksi di bawah Kotak */}
+            {/* Tombol Aksi */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Link to="/profile/edit"><Button variant="outline" className="w-full gap-2 border-slate-200">Edit Profil</Button></Link>
-              <Link to="/profile/update-password"><Button variant="outline" className="w-full gap-2 border-slate-200">Ubah Password</Button></Link>
-              <Link to="/profile/delete-akun"><Button variant="destructive" className="w-full gap-2 opacity-90">Hapus Akun</Button></Link>
+              <Link to="/profile/edit">
+                <Button variant="outline" className="w-full gap-2">
+                  <Edit className="size-4" /> Edit Profil
+                </Button>
+              </Link>
+              <Link to="/profile/update-password">
+                <Button variant="outline" className="w-full gap-2">
+                  <Key className="size-4" /> Ubah Password
+                </Button>
+              </Link>
+              <Link to="/profile/delete-akun">
+                <Button variant="destructive" className="w-full gap-2 opacity-90">
+                  <Trash2 className="size-4" /> Hapus Akun
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

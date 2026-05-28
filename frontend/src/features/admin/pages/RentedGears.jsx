@@ -152,7 +152,7 @@ export default function RentedGears() {
   const getStatusBadge = (trx) => {
     if (trx.status_sewa === "selesai") {
       return (
-        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 flex items-center gap-1.5 w-fit">
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-foreground dark:bg-gray-800 dark:text-gray-300 flex items-center gap-1.5 w-fit">
           <CheckCircle2 className="size-3.5" /> Selesai & Kembali
         </span>
       );
@@ -178,11 +178,11 @@ export default function RentedGears() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Package className="size-6 text-emerald-600" />
             Status Barang yang Disewakan
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Kelola barang sewaan aktif, lacak proses pengembalian customer, dan selesaikan transaksi dengan hitung denda otomatis.
           </p>
         </div>
@@ -190,42 +190,42 @@ export default function RentedGears() {
 
       {/* Stats Counter */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+        <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/30">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-blue-100 text-blue-700 rounded-2xl dark:bg-blue-900/20">
               <Package className="size-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Sedang Disewa (Aktif)</p>
-              <h3 className="text-xl font-bold text-slate-800">
+              <p className="text-xs text-muted-foreground font-medium">Sedang Disewa (Aktif)</p>
+              <h3 className="text-xl font-bold text-foreground">
                 {data.filter(t => t.status_sewa === 'sedang_disewa' && t.status_kembali === 'belum').length}
               </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+        <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/30">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-amber-100 text-amber-700 rounded-2xl dark:bg-amber-900/20">
               <Clock className="size-5 animate-spin" style={{ animationDuration: '3s' }} />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Proses Pengembalian</p>
-              <h3 className="text-xl font-bold text-slate-800">
+              <p className="text-xs text-muted-foreground font-medium">Proses Pengembalian</p>
+              <h3 className="text-xl font-bold text-foreground">
                 {data.filter(t => t.status_sewa === 'sedang_disewa' && t.status_kembali === 'proses').length}
               </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-gradient-to-br from-white to-slate-50/50">
+        <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/30">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-3 bg-emerald-100 text-emerald-700 rounded-2xl dark:bg-emerald-900/20">
               <CheckCircle2 className="size-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Total Selesai</p>
-              <h3 className="text-xl font-bold text-slate-800">
+              <p className="text-xs text-muted-foreground font-medium">Total Selesai</p>
+              <h3 className="text-xl font-bold text-foreground">
                 {data.filter(t => t.status_sewa === 'selesai').length}
               </h3>
             </div>
@@ -234,16 +234,16 @@ export default function RentedGears() {
       </div>
 
       {/* Filter Tabs & Search */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-xl border">
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-3 rounded-xl border">
         {/* Search */}
         <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
+          <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Cari transaksi, customer, barang..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 w-full text-sm border rounded-lg focus:outline-none focus:border-emerald-500 bg-slate-50/50 dark:bg-slate-800 dark:border-slate-700"
+            className="pl-9 pr-4 py-2 w-full text-sm border rounded-lg focus:outline-none focus:border-emerald-500 bg-muted/30 dark:bg-muted dark:border-border"
           />
         </div>
 
@@ -261,7 +261,7 @@ export default function RentedGears() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === tab.id
                   ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground dark:text-muted-foreground dark:hover:bg-muted"
               }`}
             >
               {tab.label}
@@ -272,7 +272,7 @@ export default function RentedGears() {
 
       {/* Main Table / List */}
       {loading ? (
-        <div className="bg-white dark:bg-slate-900 border rounded-2xl p-12 text-center text-slate-500">
+        <div className="bg-card border rounded-2xl p-12 text-center text-muted-foreground">
           <div className="flex flex-col items-center justify-center gap-2">
             <div className="w-8 h-8 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
             <p className="text-sm font-medium">Memuat data barang disewakan...</p>
@@ -285,26 +285,26 @@ export default function RentedGears() {
           <Button variant="outline" size="sm" onClick={getData} className="mt-2">Coba Lagi</Button>
         </div>
       ) : filteredData.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border rounded-2xl p-12 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
-          <Package className="size-12 text-slate-300" />
+        <div className="bg-card border rounded-2xl p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
+          <Package className="size-12 text-muted-foreground" />
           <p className="text-sm font-medium">Tidak ada data penyewaan yang sesuai filter.</p>
         </div>
       ) : (
         <>
         <div className="grid gap-4">
           {paginateArray(filteredData, currentPage, PER_PAGE).map((item) => (
-            <Card key={item.id_transaksi} className="border shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-white dark:bg-slate-900">
+            <Card key={item.id_transaksi} className="border shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-card">
               {/* Header Box */}
-              <div className="border-b bg-slate-50/50 dark:bg-slate-800/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="border-b bg-muted/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
                     <Package className="size-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 dark:text-slate-200">
+                    <h3 className="font-bold text-foreground">
                       ID Transaksi: #{item.id_transaksi}
                     </h3>
-                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <Calendar className="size-3" />
                       Masa Sewa: {new Date(item.tanggal_mulai).toLocaleDateString("id-ID")} s/d {new Date(item.tanggal_selesai).toLocaleDateString("id-ID")}
                     </p>
@@ -321,11 +321,11 @@ export default function RentedGears() {
                 {/* Kolom 1: Detail Alat & Customer */}
                 <div className="space-y-4">
                   <div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Peralatan Sewa</p>
-                    <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Peralatan Sewa</p>
+                    <p className="font-semibold text-foreground dark:text-muted-foreground text-sm">
                       {item.nama_barang}
                     </p>
-                    <p className="text-xs text-slate-500">Jumlah: {item.jumlah} unit | Pemilik: {item.pemilik?.nama || '-'}</p>
+                    <p className="text-xs text-muted-foreground">Jumlah: {item.jumlah} unit | Pemilik: {item.pemilik?.nama || '-'}</p>
                     {Number(item.nominal_deposit) > 0 && (
                       <p className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded w-fit mt-1 border border-emerald-100 flex items-center gap-1">
                         Jaminan Deposit: Rp {Number(item.nominal_deposit).toLocaleString()}
@@ -334,25 +334,25 @@ export default function RentedGears() {
                   </div>
                   
                   <div className="flex items-center gap-2 border-t pt-2">
-                    <User className="size-4 text-slate-400" />
+                    <User className="size-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                      <p className="text-xs font-semibold text-muted-foreground dark:text-muted-foreground">
                         Penyewa: {item.penyewa?.nama || "Penyewa"}
                       </p>
-                      <p className="text-[10px] text-slate-400">{item.penyewa?.no_telp || "-"}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.penyewa?.no_telp || "-"}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Kolom 2: Metode & Status Pengembalian */}
                 <div className="space-y-2 border-t md:border-t-0 md:border-l md:pl-6 pt-4 md:pt-0">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Status Pengembalian</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Status Pengembalian</p>
                   
                   {item.status_sewa === 'sedang_disewa' ? (
                     <div className="space-y-2 text-xs">
                       {item.status_kembali === 'proses' ? (
                         <>
-                          <p className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                          <p className="text-muted-foreground dark:text-muted-foreground flex items-center gap-1.5">
                             {item.metode_kembali === 'delivery' ? (
                               <>
                                 <Truck className="size-4 text-amber-600" />
@@ -366,32 +366,32 @@ export default function RentedGears() {
                             )}
                           </p>
                           {item.no_resi_kembali && (
-                            <p className="text-slate-600 dark:text-slate-400">
-                              <strong className="text-slate-700">Resi Pengembalian:</strong> {item.no_resi_kembali}
+                            <p className="text-muted-foreground dark:text-muted-foreground">
+                              <strong className="text-foreground">Resi Pengembalian:</strong> {item.no_resi_kembali}
                             </p>
                           )}
-                          <p className="text-slate-500 italic">Barang sedang dalam perjalanan kembali ke gudang.</p>
+                          <p className="text-muted-foreground italic">Barang sedang dalam perjalanan kembali ke gudang.</p>
                         </>
                       ) : (
-                        <p className="text-slate-500 italic">Barang masih aktif digunakan oleh customer (belum diajukan pengembalian).</p>
+                        <p className="text-muted-foreground italic">Barang masih aktif digunakan oleh customer (belum diajukan pengembalian).</p>
                       )}
                     </div>
                   ) : (
                     // SELESAI
                     <div className="space-y-2 text-xs">
-                      <p className="text-slate-600 dark:text-slate-400">
-                        <strong className="text-slate-700">Tanggal Pengembalian:</strong> {item.tanggal_kembali_real || item.pengembalian?.tanggal_kembali}
+                      <p className="text-muted-foreground dark:text-muted-foreground">
+                        <strong className="text-foreground">Tanggal Pengembalian:</strong> {item.tanggal_kembali_real || item.pengembalian?.tanggal_kembali}
                       </p>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        <strong className="text-slate-700">Kondisi Barang:</strong> <span className="capitalize font-semibold text-slate-700 dark:text-slate-300">{item.pengembalian?.kondisi_barang || 'Baik'}</span>
+                      <p className="text-muted-foreground dark:text-muted-foreground">
+                        <strong className="text-foreground">Kondisi Barang:</strong> <span className="capitalize font-semibold text-foreground dark:text-muted-foreground">{item.pengembalian?.kondisi_barang || 'Baik'}</span>
                       </p>
                       {Number(item.nominal_deposit) > 0 && (
                         <>
-                          <p className="text-slate-600 dark:text-slate-400">
-                            <strong className="text-slate-700">Deposit Awal:</strong> Rp {Number(item.nominal_deposit).toLocaleString()}
+                          <p className="text-muted-foreground dark:text-muted-foreground">
+                            <strong className="text-foreground">Deposit Awal:</strong> Rp {Number(item.nominal_deposit).toLocaleString()}
                           </p>
-                          <p className="text-slate-600 dark:text-slate-400">
-                            <strong className="text-slate-700">Denda Kerusakan:</strong> Rp {Number(item.pengembalian?.denda_kerusakan || 0).toLocaleString()}
+                          <p className="text-muted-foreground dark:text-muted-foreground">
+                            <strong className="text-foreground">Denda Kerusakan:</strong> Rp {Number(item.pengembalian?.denda_kerusakan || 0).toLocaleString()}
                           </p>
                         </>
                       )}
@@ -426,7 +426,7 @@ export default function RentedGears() {
                       <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold flex items-center justify-center gap-1.5">
                         <CheckCircle2 className="size-3.5" /> Transaksi Selesai
                       </p>
-                      <p className="text-[10px] text-slate-400 mt-1">
+                      <p className="text-[10px] text-muted-foreground mt-1">
                         Sewa tuntas & barang telah diterima kembali di gudang.
                       </p>
                     </div>
@@ -451,16 +451,16 @@ export default function RentedGears() {
       {/* Modal Konfirmasi Alat Dikembalikan */}
       {isReturnModalOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white dark:bg-slate-900 z-10">
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-card z-10">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <CheckCircle2 className="size-5 text-emerald-600" />
                 Konfirmasi Penerimaan Pengembalian
               </h2>
               <button 
                 onClick={() => { setIsReturnModalOpen(false); setSelectedTrx(null); }} 
-                className="text-slate-400 hover:text-slate-600 rounded-lg p-1 hover:bg-slate-100 transition"
+                className="text-muted-foreground hover:text-muted-foreground rounded-lg p-1 hover:bg-muted transition"
               >
                 <X size={20} />
               </button>
@@ -476,11 +476,11 @@ export default function RentedGears() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Kondisi Barang Saat Kembali</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Kondisi Barang Saat Kembali</label>
                 <select
                   value={returnForm.kondisi_barang}
                   onChange={(e) => setReturnForm(prev => ({ ...prev, kondisi_barang: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-card dark:border-border"
                 >
                   <option value="baik">Sangat Baik / Lengkap (Kondisi Bagus)</option>
                   <option value="rusak">Rusak / Sobek (Dikenakan Biaya Tambahan)</option>
@@ -489,29 +489,29 @@ export default function RentedGears() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Denda Kerusakan Fisik (Rp)</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Denda Kerusakan Fisik (Rp)</label>
                 <input
                   type="number"
                   placeholder="Masukkan nominal denda kerusakan jika ada..."
                   value={returnForm.denda_kerusakan}
                   onChange={(e) => setReturnForm(prev => ({ ...prev, denda_kerusakan: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-card dark:border-border"
                   min="0"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Catatan Khusus Admin (Opsional)</label>
+                <label className="block text-xs font-semibold text-muted-foreground dark:text-muted-foreground mb-1.5">Catatan Khusus Admin (Opsional)</label>
                 <textarea
                   placeholder="Masukkan catatan mengenai kondisi detail pengembalian barang sewaan..."
                   value={returnForm.catatan}
                   onChange={(e) => setReturnForm(prev => ({ ...prev, catatan: e.target.value }))}
                   rows="3"
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white dark:bg-slate-800 dark:border-slate-700 resize-none"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-card dark:border-border resize-none"
                 />
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl text-[10px] text-slate-500 flex items-start gap-1.5 border border-dashed leading-normal">
+              <div className="bg-muted dark:bg-muted/30 p-3 rounded-xl text-[10px] text-muted-foreground flex items-start gap-1.5 border border-dashed leading-normal">
                 <AlertCircle className="size-3.5 text-amber-500 shrink-0 mt-0.5" />
                 <span>
                   <strong>Info Penting:</strong> Sistem akan mendeteksi tanggal pengembalian secara otomatis hari ini ({new Date().toLocaleDateString('id-ID')}). Jika melewati batas waktu ({selectedTrx.tanggal_selesai}), sistem otomatis membebankan denda Rp 20.000/hari kepada customer.
@@ -519,12 +519,12 @@ export default function RentedGears() {
               </div>
 
               {summary && Number(summary.nominalDeposit) > 0 && (
-                <div className="bg-slate-50 dark:bg-slate-800/20 p-4 rounded-xl space-y-2 border border-slate-100">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Estimasi Kalkulasi Deposit & Potongan</h4>
+                <div className="bg-muted dark:bg-muted/20 p-4 rounded-xl space-y-2 border border-border">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Estimasi Kalkulasi Deposit & Potongan</h4>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Deposit Awal:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">Rp {summary.nominalDeposit.toLocaleString()}</span>
+                      <span className="text-muted-foreground">Deposit Awal:</span>
+                      <span className="font-semibold text-foreground">Rp {summary.nominalDeposit.toLocaleString()}</span>
                     </div>
                     {summary.hariKeterlambatan > 0 && (
                       <div className="flex justify-between text-red-600 font-medium">
@@ -538,7 +538,7 @@ export default function RentedGears() {
                         <span>- Rp {summary.dendaKerusakan.toLocaleString()}</span>
                       </div>
                     )}
-                    <div className="flex justify-between border-t pt-2 font-bold text-slate-900 dark:text-white mt-1">
+                    <div className="flex justify-between border-t pt-2 font-bold text-foreground dark:text-white mt-1">
                       <span>Sisa Deposit Refund:</span>
                       <span className="text-emerald-600">Rp {summary.sisaDeposit.toLocaleString()}</span>
                     </div>
@@ -552,7 +552,7 @@ export default function RentedGears() {
                   type="button"
                   variant="outline"
                   onClick={() => { setIsReturnModalOpen(false); setSelectedTrx(null); }}
-                  className="rounded-xl border-slate-200"
+                  className="rounded-xl border-border"
                 >
                   Batal
                 </Button>

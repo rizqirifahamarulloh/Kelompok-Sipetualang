@@ -110,6 +110,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::prefix('pengembalian')->group(function () {
             Route::post('/', [PengajuanPengembalianController::class, 'store']);
             Route::get('/', [PengajuanPengembalianController::class, 'myRequests']);
+            Route::get('/sebagai-pemilik', [PengajuanPengembalianController::class, 'getByPemilik']);
         });
     });
 
