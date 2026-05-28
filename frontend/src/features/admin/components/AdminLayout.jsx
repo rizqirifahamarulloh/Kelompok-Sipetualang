@@ -5,6 +5,7 @@ import { getStorageUrl } from '@/utils/storageUrl'
 import { useLanguage } from '@/contexts/LanguageContext'
 import ThemeToggle from '@/components/ThemeToggle'
 import LanguageToggle from '@/components/LanguageToggle'
+import adminLogo from '@/assets/beranda/Property-1-LogoMark.png'
 import {
   Sidebar,
   SidebarContent,
@@ -35,7 +36,6 @@ import {
   Package,
   ShoppingCart,
   CreditCard,
-  Mountain,
   LogOut,
   ChevronUp,
   Settings,
@@ -44,6 +44,7 @@ import {
   Shield,
   Truck,
   Layers,
+  RotateCcw,
 } from 'lucide-react'
 
 function useMenuGroups() {
@@ -72,6 +73,7 @@ function useMenuGroups() {
         { label: 'Status Pengiriman', icon: Truck, href: '/admin/pengiriman' },
         { label: 'Barang Disewakan', icon: Layers, href: '/admin/disewa' },
         { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments' },
+        { label: 'Pengembalian Barang', icon: RotateCcw, href: '/admin/pengembalian' },
       ],
     },
     {
@@ -100,8 +102,8 @@ function AdminSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/admin/dashboard">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Mountain className="size-4" />
+                <div className="flex size-8 items-center justify-center rounded-lg overflow-hidden">
+                  <img src={adminLogo} alt="SiPetualang" className="size-8 object-cover" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">SiPetualang</span>

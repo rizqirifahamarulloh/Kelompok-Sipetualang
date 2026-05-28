@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\Customer\RentalController;
 use App\Http\Controllers\Api\Customer\ChatController;
 use App\Http\Controllers\Api\Customer\TransaksiController;
+use App\Http\Controllers\Api\Customer\PengajuanPengembalianController;
 use App\Http\Controllers\Api\Admin\KategoriController;
 use App\Http\Controllers\Api\Admin\DestinasiController;
 use App\Http\Controllers\Api\Admin\BarangController as AdminBarangController;
@@ -104,6 +105,12 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::post('/{id}/terima', [\App\Http\Controllers\Api\PengirimanController::class, 'konfirmasiDiterima']);
             Route::post('/{id}/kembalikan', [\App\Http\Controllers\Api\PengirimanController::class, 'customerKembalikanBarang']);
         });
+
+        // 📦 Pengajuan Pengembalian Routes
+        Route::prefix('pengembalian')->group(function () {
+            Route::post('/', [PengajuanPengembalianController::class, 'store']);
+            Route::get('/', [PengajuanPengembalianController::class, 'myRequests']);
+        });
     });
 
     /*
@@ -145,6 +152,12 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/pengiriman/disewa', [\App\Http\Controllers\Api\PengirimanController::class, 'adminGetBarangDisewa']);
         Route::post('/pengiriman/{id}/konfirmasi-kembali', [\App\Http\Controllers\Api\PengirimanController::class, 'adminKonfirmasiKembali']);
         Route::post('/pengiriman/{id}/pickup-diambil', [\App\Http\Controllers\Api\PengirimanController::class, 'pickupBarangDiambil']);
+
+        // 📦 Admin Pengajuan Pengembalian
+        Route::get('/pengembalian', [PengajuanPengembalianController::class, 'index']);
+        Route::post('/pengembalian/{id}/approve', [PengajuanPengembalianController::class, 'approve']);
+        Route::post('/pengembalian/{id}/reject', [PengajuanPengembalianController::class, 'reject']);
+        Route::post('/pengembalian/{id}/confirm-refund', [PengajuanPengembalianController::class, 'confirmRefund']);
     });
 
     /*

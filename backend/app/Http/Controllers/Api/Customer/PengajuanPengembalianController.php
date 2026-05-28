@@ -1,0 +1,326 @@
+<?php
+
+namespace App\Http\Controllers\Api\Customer;
+
+use App\Http\Controllers\Controller;
+use App\Models\PengajuanPengembalian;
+use App\Models\Transaksi;
+use App\Models\Notifikasi;
+use App\Models\Pengguna;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class PengajuanPengembalianController extends Controller
+{
+    /**
+     * Customer: Submit pengajuan pengembalian
+     */
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'id_transaksi' => 'required|exists:transaksi,id_transaksi',
+            'alasan' => 'required|string|min:10|max:1000',
+            'foto_bukti' => 'required|array|min:1|max:5',
+            'foto_bukti.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+        ]);
+
+        // Verify the transaction belongs to this customer
+        $transaksi = Transaksi::where('id_transaksi', $request->id_transaksi)
+            ->where('id_penyewa', $user->id_pengguna)
+            ->first();
+
+        if (!$transaksi) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transaksi tidak ditemukan'
+            ], 404);
+        }
+
+        // Only delivery orders can request return
+        if ($transaksi->metode_pengiriman !== 'delivery') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pengajuan pengembalian hanya tersedia untuk pesanan dengan metode delivery'
+            ], 400);
+        }
+
+        // Check if there's already a pending request for this transaction
+        $existing = PengajuanPengembalian::where('id_transaksi', $transaksi->id_transaksi)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Sudah ada pengajuan pengembalian yang sedang diproses untuk transaksi ini'
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Upload photos
+            $fotoPaths = [];
+            if ($request->hasFile('foto_bukti')) {
+                foreach ($request->file('foto_bukti') as $foto) {
+                    $path = $foto->store('pengembalian', 'public');
+                    $fotoPaths[] = $path;
+                }
+            }
+
+            $pengajuan = PengajuanPengembalian::create([
+                'id_transaksi' => $transaksi->id_transaksi,
+                'id_customer' => $user->id_pengguna,
+                'alasan' => $request->alasan,
+                'foto_bukti' => $fotoPaths,
+                'status' => 'pending',
+            ]);
+
+            // Notify all admins
+            $admins = Pengguna::where('peran_pengguna', 'admin')->get();
+            foreach ($admins as $admin) {
+                Notifikasi::create([
+                    'id_pengguna' => $admin->id_pengguna,
+                    'unique_key' => 'pengajuan_retur_' . $pengajuan->id_pengajuan . '_' . time(),
+                    'type' => 'return_request',
+                    'title' => 'Pengajuan Pengembalian Baru 📦',
+                    'message' => "Customer {$user->nama} mengajukan pengembalian barang \"{$transaksi->nama_barang}\" dengan alasan: " . substr($request->alasan, 0, 100),
+                    'severity' => 'warning',
+                    'data' => [
+                        'id_pengajuan' => $pengajuan->id_pengajuan,
+                        'id_transaksi' => $transaksi->id_transaksi,
+                    ]
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pengajuan pengembalian berhasil dikirim. Menunggu review dari admin.',
+                'data' => $pengajuan->load(['transaksi', 'customer'])
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengirim pengajuan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Customer: Get my return requests
+     */
+    public function myRequests()
+    {
+        $user = Auth::user();
+
+        $requests = PengajuanPengembalian::where('id_customer', $user->id_pengguna)
+            ->with(['transaksi.barang', 'transaksi.pemilik'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $requests
+        ]);
+    }
+
+    /**
+     * Admin: Get all return requests
+     */
+    public function index()
+    {
+        $requests = PengajuanPengembalian::with(['transaksi.barang', 'transaksi.pemilik', 'customer'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $requests
+        ]);
+    }
+
+    /**
+     * Admin: Approve return request + calculate refund
+     */
+    public function approve(Request $request, $id)
+    {
+        $pengajuan = PengajuanPengembalian::with('transaksi')->findOrFail($id);
+
+        if ($pengajuan->status !== 'pending') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pengajuan sudah diproses sebelumnya'
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $transaksi = $pengajuan->transaksi;
+
+            // Calculate refund amount = total_biaya (full refund)
+            $jumlahRefund = $transaksi->total_biaya ?? 0;
+
+            $pengajuan->update([
+                'status' => 'disetujui',
+                'catatan_admin' => $request->catatan_admin ?? 'Pengajuan disetujui oleh admin',
+                'jumlah_refund' => $jumlahRefund,
+                'status_refund' => 'proses_refund',
+            ]);
+
+            // Update transaction status to 'refund'
+            $transaksi->update([
+                'status_sewa' => 'refund',
+            ]);
+
+            // Notify customer with refund info
+            Notifikasi::create([
+                'id_pengguna' => $pengajuan->id_customer,
+                'unique_key' => 'retur_approved_' . $pengajuan->id_pengajuan . '_' . time(),
+                'type' => 'return_approved',
+                'title' => 'Pengembalian Disetujui + Refund 💰',
+                'message' => "Pengajuan pengembalian barang \"{$transaksi->nama_barang}\" disetujui! Refund sebesar Rp " . number_format($jumlahRefund, 0, ',', '.') . " sedang diproses oleh admin.",
+                'severity' => 'success',
+                'data' => [
+                    'id_pengajuan' => $pengajuan->id_pengajuan,
+                    'id_transaksi' => $pengajuan->id_transaksi,
+                    'jumlah_refund' => $jumlahRefund,
+                ]
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pengajuan disetujui. Refund Rp ' . number_format($jumlahRefund, 0, ',', '.') . ' sedang diproses.',
+                'data' => $pengajuan->fresh()->load(['transaksi', 'customer'])
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menyetujui: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Admin: Confirm refund has been sent (upload bukti transfer)
+     */
+    public function confirmRefund(Request $request, $id)
+    {
+        $request->validate([
+            'metode_refund' => 'required|string|in:transfer_bank,ewallet,tunai',
+            'bukti_refund' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+        ]);
+
+        $pengajuan = PengajuanPengembalian::with('transaksi')->findOrFail($id);
+
+        if ($pengajuan->status !== 'disetujui' || $pengajuan->status_refund === 'sudah_refund') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Refund tidak dapat diproses untuk pengajuan ini'
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $buktiPath = null;
+            if ($request->hasFile('bukti_refund')) {
+                $buktiPath = $request->file('bukti_refund')->store('refund_bukti', 'public');
+            }
+
+            $pengajuan->update([
+                'status_refund' => 'sudah_refund',
+                'metode_refund' => $request->metode_refund,
+                'bukti_refund' => $buktiPath,
+                'tanggal_refund' => now(),
+            ]);
+
+            // Notify customer that refund is done
+            Notifikasi::create([
+                'id_pengguna' => $pengajuan->id_customer,
+                'unique_key' => 'refund_completed_' . $pengajuan->id_pengajuan . '_' . time(),
+                'type' => 'refund_completed',
+                'title' => 'Refund Selesai! 🎉',
+                'message' => "Refund sebesar Rp " . number_format($pengajuan->jumlah_refund, 0, ',', '.') . " telah dikirim melalui {$request->metode_refund}. Silakan cek rekening/saldo Anda.",
+                'severity' => 'success',
+                'data' => [
+                    'id_pengajuan' => $pengajuan->id_pengajuan,
+                    'id_transaksi' => $pengajuan->id_transaksi,
+                    'jumlah_refund' => $pengajuan->jumlah_refund,
+                    'metode_refund' => $request->metode_refund,
+                ]
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Refund berhasil dikonfirmasi',
+                'data' => $pengajuan->fresh()->load(['transaksi', 'customer'])
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengkonfirmasi refund: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Admin: Reject return request
+     */
+    public function reject(Request $request, $id)
+    {
+        $request->validate([
+            'catatan_admin' => 'required|string|min:5',
+        ]);
+
+        $pengajuan = PengajuanPengembalian::findOrFail($id);
+
+        if ($pengajuan->status !== 'pending') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pengajuan sudah diproses sebelumnya'
+            ], 400);
+        }
+
+        $pengajuan->update([
+            'status' => 'ditolak',
+            'catatan_admin' => $request->catatan_admin,
+        ]);
+
+        // Notify customer
+        Notifikasi::create([
+            'id_pengguna' => $pengajuan->id_customer,
+            'unique_key' => 'retur_rejected_' . $pengajuan->id_pengajuan . '_' . time(),
+            'type' => 'return_rejected',
+            'title' => 'Pengajuan Pengembalian Ditolak ❌',
+            'message' => "Pengajuan pengembalian barang Anda ditolak. Alasan: {$request->catatan_admin}",
+            'severity' => 'error',
+            'data' => [
+                'id_pengajuan' => $pengajuan->id_pengajuan,
+                'id_transaksi' => $pengajuan->id_transaksi,
+            ]
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pengajuan pengembalian ditolak',
+            'data' => $pengajuan->load(['transaksi', 'customer'])
+        ]);
+    }
+}
+

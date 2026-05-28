@@ -1,7 +1,8 @@
 // src/profile/components/Navbar.jsx
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Mountain, ChevronLeft, MessageCircle, Search, ArrowLeft, Send, Loader2 } from 'lucide-react';
+import { Menu, X, ChevronLeft, MessageCircle, Search, ArrowLeft, Send, Loader2 } from 'lucide-react';
+import logoImg from '@/assets/beranda/Logo.png';
 import NotificationBell from '@/components/NotificationBell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,8 +199,7 @@ export default function Navbar({
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <Mountain className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">SiPetualang</span>
+            <img src={logoImg} alt="SiPetualang" className="h-8 w-auto" />
           </Link>
 
           {/* Desktop Menu */}
