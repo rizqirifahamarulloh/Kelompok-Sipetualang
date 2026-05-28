@@ -27,7 +27,9 @@ class NotifikasiController extends Controller
             $this->syncAdminNotifications($user);
         }
 
+        // Only return non-dismissed notifications
         $notifications = Notifikasi::where('id_pengguna', $user->id_pengguna)
+            ->where('is_dismissed', false)
             ->orderByDesc('created_at')
             ->get();
 
@@ -37,6 +39,9 @@ class NotifikasiController extends Controller
         ]);
     }
 
+    /**
+     * Dismiss a single notification (soft delete - won't reappear)
+     */
     public function destroy($id)
     {
         $user = auth()->user();
@@ -52,9 +57,40 @@ class NotifikasiController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Notification not found'], 404);
         }
 
-        $notification->delete();
+        // Mark as dismissed instead of deleting — prevents re-creation by sync
+        $notification->update([
+            'is_dismissed' => true,
+            'is_read' => true,
+        ]);
 
         return response()->json(['status' => 'success', 'message' => 'Notifikasi berhasil dihapus']);
+    }
+
+    /**
+     * Dismiss all notifications (soft delete - won't reappear)
+     */
+    public function destroyAll()
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+        }
+
+        $count = Notifikasi::where('id_pengguna', $user->id_pengguna)
+            ->where('is_dismissed', false)
+            ->count();
+
+        Notifikasi::where('id_pengguna', $user->id_pengguna)
+            ->where('is_dismissed', false)
+            ->update([
+                'is_dismissed' => true,
+                'is_read' => true,
+            ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Berhasil menghapus {$count} notifikasi"
+        ]);
     }
 
     public function markRead($id)
@@ -86,15 +122,29 @@ class NotifikasiController extends Controller
 
     private function syncAdminNotifications($user)
     {
-        $criticalGears = Barang::where('jumlah_stok', '<=', 1)->get();
+        // Stok kritis: di bawah 5 unit
+        $criticalGears = Barang::where('jumlah_stok', '<', 5)->get();
         foreach ($criticalGears as $g) {
+            $severityLevel = $g->jumlah_stok <= 0 ? 'danger' : ($g->jumlah_stok <= 2 ? 'danger' : 'warning');
+            $stockLabel = $g->jumlah_stok <= 0 ? 'HABIS' : "tinggal {$g->jumlah_stok} unit";
+            
             $this->upsertNotification($user, 'stock_crit_' . $g->id_barang, [
                 'type' => 'stock_warning',
-                'title' => 'Peringatan Stok Kritis',
-                'message' => "Stok peralatan '{$g->nama_barang}' tinggal {$g->jumlah_stok} unit. Segera lakukan update stok!",
-                'severity' => 'danger',
-                'data' => ['id_barang' => $g->id_barang],
+                'title' => $g->jumlah_stok <= 0 ? 'Stok Habis!' : 'Peringatan Stok Kritis',
+                'message' => "Stok peralatan '{$g->nama_barang}' {$stockLabel}. Segera lakukan update stok!",
+                'severity' => $severityLevel,
+                'data' => ['id_barang' => $g->id_barang, 'jumlah_stok' => $g->jumlah_stok],
             ]);
+        }
+
+        // Remove stok warnings for items that are no longer critical (>= 5)
+        $nonCriticalKeys = Barang::where('jumlah_stok', '>=', 5)->pluck('id_barang')
+            ->map(fn($id) => 'stock_crit_' . $id)->toArray();
+        
+        if (!empty($nonCriticalKeys)) {
+            Notifikasi::where('id_pengguna', $user->id_pengguna)
+                ->whereIn('unique_key', $nonCriticalKeys)
+                ->delete(); // Hard delete — stock recovered, clean up
         }
 
         $pendingVerifs = Verifikasi::with('pengguna')
@@ -176,18 +226,32 @@ class NotifikasiController extends Controller
         }
     }
 
+    /**
+     * Smart upsert: only creates if not previously dismissed by user.
+     * If notification exists and is dismissed, it stays dismissed (won't reappear).
+     * If notification exists and is NOT dismissed, update its content dynamically.
+     */
     private function upsertNotification($user, $uniqueKey, array $attributes)
     {
-        Notifikasi::updateOrCreate(
-            [
+        $existing = Notifikasi::where('id_pengguna', $user->id_pengguna)
+            ->where('unique_key', $uniqueKey)
+            ->first();
+
+        if ($existing) {
+            // If user has dismissed this notification, DON'T recreate it
+            if ($existing->is_dismissed) {
+                return;
+            }
+
+            // Update content dynamically (title, message, severity may change)
+            $existing->update(array_intersect_key($attributes, array_flip(['title', 'message', 'severity', 'data'])));
+        } else {
+            // Create new notification
+            Notifikasi::create(array_merge($attributes, [
                 'id_pengguna' => $user->id_pengguna,
                 'unique_key' => $uniqueKey,
-            ],
-            array_merge($attributes, [
-                'id_pengguna' => $user->id_pengguna,
-                'unique_key' => $uniqueKey,
-            ])
-        );
+            ]));
+        }
     }
 
     private function getTransactionTitle($transaksi)

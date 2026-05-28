@@ -55,6 +55,7 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::get('/notifikasi', [NotifikasiController::class, 'index']);
     Route::patch('/notifikasi/{id}/read', [NotifikasiController::class, 'markRead']);
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy']);
+    Route::delete('/notifikasi', [NotifikasiController::class, 'destroyAll']);
 
     /*
     |--------------------------------------------------------------------------
@@ -143,6 +144,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::put('/pengiriman/{id}/lokasi', [\App\Http\Controllers\Api\PengirimanController::class, 'updateLokasi']);
         Route::get('/pengiriman/disewa', [\App\Http\Controllers\Api\PengirimanController::class, 'adminGetBarangDisewa']);
         Route::post('/pengiriman/{id}/konfirmasi-kembali', [\App\Http\Controllers\Api\PengirimanController::class, 'adminKonfirmasiKembali']);
+        Route::post('/pengiriman/{id}/pickup-diambil', [\App\Http\Controllers\Api\PengirimanController::class, 'pickupBarangDiambil']);
         });
 
     /*

@@ -17,11 +17,13 @@ class Notifikasi extends Model
     'severity',
     'data',
     'is_read',
+    'is_dismissed',
   ];
 
   protected $casts = [
     'data' => 'array',
     'is_read' => 'boolean',
+    'is_dismissed' => 'boolean',
   ];
 
   public function pengguna()

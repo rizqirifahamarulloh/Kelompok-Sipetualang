@@ -53,7 +53,7 @@ class AdminController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get()
-                ->map(function($trx) use ($statusMap) {
+                ->map(function ($trx) use ($statusMap) {
                     return [
                         'id' => $trx->id_transaksi,
                         'transaction_code' => $trx->midtrans_order_id ?? ('TRX-' . $trx->id_transaksi),
@@ -73,7 +73,7 @@ class AdminController extends Controller
                 ->where('jumlah_stok', '<=', 1)
                 ->limit(5)
                 ->get()
-                ->map(function($gear) {
+                ->map(function ($gear) {
                     return [
                         'id' => $gear->id_barang,
                         'name' => $gear->nama_barang,
@@ -235,16 +235,23 @@ class AdminController extends Controller
                 ], 422);
             }
 
-            if ($request->has('nama')) $user->nama = $request->nama;
-            if ($request->has('email')) $user->email = $request->email;
+            if ($request->has('nama'))
+                $user->nama = $request->nama;
+            if ($request->has('email'))
+                $user->email = $request->email;
             if ($request->has('password') && !empty($request->password)) {
                 $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
             }
-            if ($request->has('alamat')) $user->alamat = $request->alamat;
-            if ($request->has('kota')) $user->kota = $request->kota;
-            if ($request->has('no_telp')) $user->no_telp = $request->no_telp;
-            if ($request->has('peran_pengguna')) $user->peran_pengguna = $request->peran_pengguna;
-            if ($request->has('rental')) $user->rental = $request->rental;
+            if ($request->has('alamat'))
+                $user->alamat = $request->alamat;
+            if ($request->has('kota'))
+                $user->kota = $request->kota;
+            if ($request->has('no_telp'))
+                $user->no_telp = $request->no_telp;
+            if ($request->has('peran_pengguna'))
+                $user->peran_pengguna = $request->peran_pengguna;
+            if ($request->has('rental'))
+                $user->rental = $request->rental;
 
             $user->save();
 
@@ -334,7 +341,7 @@ class AdminController extends Controller
             // Pendapatan per pemilik (perental)
             $ownerEarnings = Pengguna::where('peran_pengguna', 'customer')
                 ->get()
-                ->map(function($owner) {
+                ->map(function ($owner) {
                     $totalPendapatan = Transaksi::where('id_pemilik', $owner->id_pengguna)
                         ->where('status_pembayaran', 'sukses')
                         ->sum('pendapatan_pemilik');
@@ -351,7 +358,7 @@ class AdminController extends Controller
                         'total_transaksi' => $totalTransaksi,
                     ];
                 })
-                ->filter(function($owner) {
+                ->filter(function ($owner) {
                     return $owner['total_transaksi'] > 0;
                 })
                 ->values();
@@ -411,7 +418,7 @@ class AdminController extends Controller
         try {
             $ownerEarnings = Pengguna::where('peran_pengguna', 'customer')
                 ->get()
-                ->map(function($owner) {
+                ->map(function ($owner) {
                     $totalPendapatan = Transaksi::where('id_pemilik', $owner->id_pengguna)
                         ->where('status_pembayaran', 'sukses')
                         ->sum('pendapatan_pemilik');
@@ -428,7 +435,7 @@ class AdminController extends Controller
                         'total_transaksi' => $totalTransaksi,
                     ];
                 })
-                ->filter(function($owner) {
+                ->filter(function ($owner) {
                     return $owner['total_transaksi'] > 0;
                 })
                 ->values();

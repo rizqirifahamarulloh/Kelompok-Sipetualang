@@ -453,4 +453,70 @@ class PengirimanController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Admin: Mark pickup item as collected by customer (Barang Sudah Diambil)
+     */
+    public function pickupBarangDiambil($id)
+    {
+        $user = Auth::user();
+        if (!$user || $user->peran_pengguna !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak'
+            ], 403);
+        }
+
+        $transaksi = Transaksi::findOrFail($id);
+
+        if ($transaksi->metode_pengiriman !== 'pickup') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi ini bukan metode pickup'
+            ], 400);
+        }
+
+        if ($transaksi->status_sewa !== 'dibayar') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status transaksi tidak valid untuk pengambilan barang. Status saat ini: ' . $transaksi->status_sewa
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $transaksi->update([
+                'status_sewa' => 'sedang_disewa'
+            ]);
+
+            // Kirim notifikasi ke customer
+            Notifikasi::create([
+                'id_pengguna' => $transaksi->id_penyewa,
+                'unique_key' => 'pickup_diambil_' . $transaksi->id_transaksi . '_' . time(),
+                'type' => 'shipping',
+                'title' => 'Barang Berhasil Diambil 📦',
+                'message' => "Peralatan sewaan Anda ({$transaksi->nama_barang}) telah berhasil diambil dari gudang. Status sewa Anda sekarang aktif (Sedang Disewa). Selamat berpetualang!",
+                'severity' => 'success',
+                'data' => [
+                    'id_transaksi' => $transaksi->id_transaksi,
+                    'status_sewa' => 'sedang_disewa',
+                    'metode_pengiriman' => 'pickup',
+                ]
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Barang berhasil ditandai sebagai diambil. Status sewa kini aktif.',
+                'data' => $transaksi
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui status pengambilan barang: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
