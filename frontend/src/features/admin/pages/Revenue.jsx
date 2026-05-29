@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import TablePagination, { paginateArray } from '@/components/TablePagination'
-// import { useLanguage } from '@/contexts/LanguageContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -93,39 +92,35 @@ function RevenueStatsCards({ stats }) {
       {/* Refund Stats Row */}
       {stats?.total_refund > 0 && (
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card className="border-red-200 dark:border-red-900/50">
+          <Card className="border-red-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Total Refund</CardTitle>
+              <CardTitle className="text-sm font-medium text-red-600">Total Refund</CardTitle>
               <RotateCcw className="size-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                - {formatCurrency(stats?.total_refund ?? 0)}
-              </div>
+              <div className="text-2xl font-bold text-red-600">- {formatCurrency(stats?.total_refund ?? 0)}</div>
               <p className="text-xs text-muted-foreground mt-1">Dikembalikan ke customer</p>
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-200 dark:border-emerald-900/50">
+          <Card className="border-emerald-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Pendapatan Bersih</CardTitle>
+              <CardTitle className="text-sm font-medium text-emerald-600">Pendapatan Bersih</CardTitle>
               <TrendingUp className="size-4 text-emerald-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(stats?.net_revenue ?? 0)}
-              </div>
+              <div className="text-2xl font-bold text-emerald-600">{formatCurrency(stats?.net_revenue ?? 0)}</div>
               <p className="text-xs text-muted-foreground mt-1">Setelah dikurangi refund</p>
             </CardContent>
           </Card>
 
-          <Card className="border-amber-200 dark:border-amber-900/50">
+          <Card className="border-amber-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Dampak Refund</CardTitle>
+              <CardTitle className="text-sm font-medium text-amber-600">Dampak Refund</CardTitle>
               <TrendingDown className="size-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              <div className="text-2xl font-bold text-amber-600">
                 {stats?.total_revenue > 0
                   ? `${((stats.total_refund / stats.total_revenue) * 100).toFixed(1)}%`
                   : '0%'}
@@ -161,29 +156,25 @@ function RevenueChart({ data }) {
           <PieChart className="size-5" />
           Pembagian Hasil
         </CardTitle>
-        <CardDescription>Distribusi pendapatan antara Admin, Pemilik & Refund</CardDescription>
+        <p className="text-sm text-muted-foreground">Distribusi pendapatan antara Admin, Pemilik & Refund</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex justify-center">
             <div className="relative w-48 h-48">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                {/* Background circle (total) */}
                 <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="10" className="dark:stroke-gray-700" />
-                {/* Admin fee (20%) */}
                 <circle 
                   cx="50" cy="50" r="45" fill="none" 
                   stroke="#3b82f6" strokeWidth="10" 
                   strokeDasharray={`${adminArc} ${circumference - adminArc}`}
                 />
-                {/* Pemilik (80%) */}
                 <circle 
                   cx="50" cy="50" r="45" fill="none" 
                   stroke="#8b5cf6" strokeWidth="10"
                   strokeDasharray={`${pemilikArc} ${circumference}`}
                   strokeDashoffset={-adminArc}
                 />
-                {/* Refund (red) */}
                 {refund > 0 && (
                   <circle 
                     cx="50" cy="50" r="45" fill="none" 
@@ -193,7 +184,6 @@ function RevenueChart({ data }) {
                   />
                 )}
               </svg>
-              {/* Center text */}
               {refund > 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-[10px] text-muted-foreground">Bersih</span>
@@ -214,7 +204,7 @@ function RevenueChart({ data }) {
             {refund > 0 && (
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Refund ({refundPercent}%): - {formatCurrency(refund)}</span>
+                <span className="text-xs text-red-600 font-semibold">Refund ({refundPercent}%): - {formatCurrency(refund)}</span>
               </div>
             )}
           </div>
@@ -233,7 +223,7 @@ function TransactionList({ transactions }) {
       <Card>
         <CardHeader>
           <CardTitle>Daftar Transaksi</CardTitle>
-          <CardDescription>Belum ada transaksi</CardDescription>
+          <p className="text-sm text-muted-foreground">Belum ada transaksi</p>
         </CardHeader>
       </Card>
     )
@@ -243,7 +233,7 @@ function TransactionList({ transactions }) {
     <Card>
       <CardHeader>
         <CardTitle>Daftar Transaksi</CardTitle>
-        <CardDescription>Semua transaksi yang telah terjadi</CardDescription>
+        <p className="text-sm text-muted-foreground">Semua transaksi yang telah terjadi</p>
       </CardHeader>
       <CardContent>
         <Table>
@@ -252,6 +242,8 @@ function TransactionList({ transactions }) {
               <TableHead>Barang</TableHead>
               <TableHead>Penyewa</TableHead>
               <TableHead>Pemilik</TableHead>
+              <TableHead>Ongkir</TableHead>
+              <TableHead>Deposit</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Fee Admin (20%)</TableHead>
               <TableHead>Pendapatan Pemilik (80%)</TableHead>
@@ -260,22 +252,35 @@ function TransactionList({ transactions }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginateArray(transactions, currentPage, PER_PAGE).map((trx) => (
-              <TableRow key={trx.id_transaksi}>
-                <TableCell className="font-medium">{trx.nama_barang}</TableCell>
-                <TableCell>{trx.penyewa?.nama || '-'}</TableCell>
-                <TableCell>{trx.pemilik?.nama || '-'}</TableCell>
-                <TableCell className="font-semibold">{formatCurrency(trx.total_biaya)}</TableCell>
-                <TableCell className="text-blue-600">{formatCurrency(trx.fee_admin)}</TableCell>
-                <TableCell className="text-purple-600">{formatCurrency(trx.pendapatan_pemilik)}</TableCell>
-                <TableCell>
-                  <Badge className={trx.status_pembayaran === 'sukses' ? 'bg-green-500' : 'bg-yellow-500'}>
-                    {trx.status_pembayaran}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-xs">{formatDate(trx.created_at)}</TableCell>
-              </TableRow>
-            ))}
+            {paginateArray(transactions, currentPage, PER_PAGE).map((trx) => {
+              // Hitung ulang fee admin dan pendapatan pemilik dari total - ongkir - deposit
+              const totalSewa = trx.total_biaya - (trx.biaya_pengiriman || 0) - (trx.nominal_deposit || 0);
+              const feeAdmin = totalSewa * 0.2;
+              const pendapatanPemilik = totalSewa - feeAdmin;
+              
+              return (
+                <TableRow key={trx.id_transaksi}>
+                  <TableCell className="font-medium">{trx.nama_barang}</TableCell>
+                  <TableCell>{trx.penyewa?.nama || '-'}</TableCell>
+                  <TableCell>{trx.pemilik?.nama || '-'}</TableCell>
+                  <TableCell className="text-xs">
+                    {trx.biaya_pengiriman > 0 ? formatCurrency(trx.biaya_pengiriman) : '-'}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {trx.nominal_deposit > 0 ? formatCurrency(trx.nominal_deposit) : '-'}
+                  </TableCell>
+                  <TableCell className="font-semibold">{formatCurrency(trx.total_biaya)}</TableCell>
+                  <TableCell className="text-blue-600 font-semibold">{formatCurrency(feeAdmin)}</TableCell>
+                  <TableCell className="text-purple-600 font-semibold">{formatCurrency(pendapatanPemilik)}</TableCell>
+                  <TableCell>
+                    <Badge className={trx.status_pembayaran === 'sukses' ? 'bg-green-500' : 'bg-yellow-500'}>
+                      {trx.status_pembayaran}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs">{formatDate(trx.created_at)}</TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
         <TablePagination
@@ -300,7 +305,7 @@ function OwnerEarningsList({ earnings }) {
     <Card>
       <CardHeader>
         <CardTitle>Pendapatan per Pemilik</CardTitle>
-        <CardDescription>Total pendapatan yang diterima setiap perental</CardDescription>
+        <p className="text-sm text-muted-foreground">Total pendapatan yang diterima setiap perental</p>
       </CardHeader>
       <CardContent>
         <Table>

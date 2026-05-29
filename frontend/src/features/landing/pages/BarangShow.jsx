@@ -26,15 +26,21 @@ import {
 import '@/features/landing/landing.css';
 
 const MIDTRANS_CLIENT_KEY = 'Mid-client-4bv4cHzWqRv44v7s';
+const PLACEHOLDER_IMAGE = 'https://placehold.co/600x400/f0fdf4/166534?text=Gambar+Tidak+Tersedia';
+
+// Lokasi toko/pemilik
+const getStoreLocation = (barang) => ({
+  name: barang?.pemilik?.nama || "SiPetualang Rental",
+  address: barang?.pemilik?.alamat || "Jl. Merdeka No. 123, Jakarta Pusat",
+  lat: -6.2088,
+  lng: 106.8456,
+});
 
 export default function BarangShow() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-
   const token = localStorage.getItem('token');
-
-
 
   const today = useMemo(() => {
     return new Date().toISOString().split('T')[0];
@@ -46,25 +52,20 @@ export default function BarangShow() {
   const [error, setError] = useState(null);
 
   const [selectedJumlah, setSelectedJumlah] = useState(1);
-
   const [tanggalMulai, setTanggalMulai] = useState(today);
-
   const [tanggalSelesai, setTanggalSelesai] = useState('');
-
-  const [deliveryMethod, setDeliveryMethod] =
-    useState('pickup');
-
-  const [deliveryAddress, setDeliveryAddress] = useState(
-    user?.alamat || ''
-  );
-
-  const [showMap, setShowMap] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState('pickup');
+  const [deliveryAddress, setDeliveryAddress] = useState(user?.alamat || '');
   const [isKtpModalOpen, setIsKtpModalOpen] = useState(false);
+  
+  // State untuk ongkir & jarak
+  const [shippingCost, setShippingCost] = useState(0);
+  const [distance, setDistance] = useState(0);
+  const [isCalculatingOngkir, setIsCalculatingOngkir] = useState(false);
 
-  // Min durasi from barang data (default 1)
   const minDurasi = barang?.min_durasi_sewa || 1;
 
-  // Auto-set tanggalSelesai when tanggalMulai or barang changes
+  // Auto-set tanggalSelesai
   useEffect(() => {
     if (!tanggalMulai) return;
     const start = new Date(tanggalMulai);
@@ -72,61 +73,164 @@ export default function BarangShow() {
     minEnd.setDate(minEnd.getDate() + (minDurasi - 1));
     const minEndStr = minEnd.toISOString().split('T')[0];
     
-    // If current tanggalSelesai is before minimum, auto-adjust
     if (!tanggalSelesai || tanggalSelesai < minEndStr) {
       setTanggalSelesai(minEndStr);
     }
-  }, [tanggalMulai, minDurasi]);
+  }, [tanggalMulai, minDurasi, tanggalSelesai]);
 
   const totalHari = useMemo(() => {
     if (!tanggalMulai || !tanggalSelesai) return 0;
-
     const start = new Date(tanggalMulai);
     const end = new Date(tanggalSelesai);
-
-    return (
-      Math.ceil(
-        (end - start) / (1000 * 60 * 60 * 24)
-      ) + 1
-    );
+    return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
   }, [tanggalMulai, tanggalSelesai]);
 
   const totalHarga = useMemo(() => {
     if (!barang) return 0;
-
-    return (
-      barang.harga_sewa *
-      totalHari *
-      selectedJumlah
-    );
+    return barang.harga_sewa * totalHari * selectedJumlah;
   }, [barang, totalHari, selectedJumlah]);
 
+  const totalDeposit = useMemo(() => {
+    if (!barang) return 0;
+    return (barang.nominal_deposit || 0) * selectedJumlah;
+  }, [barang, selectedJumlah]);
+
+  const grandTotal = useMemo(() => {
+    return totalHarga + totalDeposit + shippingCost;
+  }, [totalHarga, totalDeposit, shippingCost]);
+
+  // Fungsi hitung jarak (Haversine formula)
+  const calculateDistance = (lat1, lng1, lat2, lng2) => {
+    const earthRadius = 6371;
+    const latDiff = (lat2 - lat1) * Math.PI / 180;
+    const lngDiff = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(lngDiff / 2) * Math.sin(lngDiff / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthRadius * c;
+  };
+
+  // Fungsi hitung ongkir pake Nominatim (OpenStreetMap)
+  const calculateOngkir = useCallback(async (address) => {
+    if (deliveryMethod !== 'delivery' || !address || address.trim() === '') {
+      setShippingCost(0);
+      setDistance(0);
+      return;
+    }
+
+    setIsCalculatingOngkir(true);
+    
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`
+      );
+      const data = await response.json();
+      
+      if (data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        const storeLoc = getStoreLocation(barang);
+        const distanceKm = calculateDistance(lat, lng, storeLoc.lat, storeLoc.lng);
+        setDistance(distanceKm);
+        const cost = Math.round(distanceKm * 1000);
+        setShippingCost(cost);
+      } else {
+        setDistance(0);
+        setShippingCost(0);
+        alert("Alamat tidak ditemukan. Silakan masukkan alamat yang lebih spesifik.");
+      }
+    } catch (error) {
+      console.error("Error calculating distance:", error);
+      setDistance(0);
+      setShippingCost(0);
+      alert("Gagal menghitung ongkir. Periksa koneksi internet Anda.");
+    } finally {
+      setIsCalculatingOngkir(false);
+    }
+  }, [deliveryMethod, barang]);
+
+  // Ambil lokasi otomatis dari browser
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Browser Anda tidak mendukung geolocation");
+      return;
+    }
+
+    setIsCalculatingOngkir(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const storeLoc = getStoreLocation(barang);
+        const distanceKm = calculateDistance(lat, lng, storeLoc.lat, storeLoc.lng);
+        setDistance(distanceKm);
+        setShippingCost(Math.round(distanceKm * 1000));
+        
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+          );
+          const data = await response.json();
+          if (data.display_name) {
+            setDeliveryAddress(data.display_name);
+          }
+        } catch (e) {
+          console.log("Gagal reverse geocoding");
+        }
+        setIsCalculatingOngkir(false);
+      },
+      (error) => {
+        let errorMsg = "";
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg = "Izin lokasi ditolak. Beri izin akses lokasi.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg = "Informasi lokasi tidak tersedia.";
+            break;
+          case error.TIMEOUT:
+            errorMsg = "Waktu permintaan lokasi habis.";
+            break;
+          default:
+            errorMsg = error.message;
+        }
+        alert(errorMsg);
+        setIsCalculatingOngkir(false);
+      }
+    );
+  };
+
+  // Debounce hitung ongkir saat alamat berubah
+  useEffect(() => {
+    if (deliveryMethod === 'delivery' && deliveryAddress && deliveryAddress.length > 10) {
+      const timeout = setTimeout(() => {
+        calculateOngkir(deliveryAddress);
+      }, 1000);
+      return () => clearTimeout(timeout);
+    } else {
+      setShippingCost(0);
+      setDistance(0);
+    }
+  }, [deliveryAddress, deliveryMethod, calculateOngkir]);
+
+  // Load Midtrans
   useEffect(() => {
     if (!window.snap) {
       const script = document.createElement('script');
-
-      script.src =
-        'https://app.sandbox.midtrans.com/snap/snap.js';
-
-      script.setAttribute(
-        'data-client-key',
-        MIDTRANS_CLIENT_KEY
-      );
-
+      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+      script.setAttribute('data-client-key', MIDTRANS_CLIENT_KEY);
       document.body.appendChild(script);
     }
   }, []);
 
+  // Fetch barang
   useEffect(() => {
     const fetchBarang = async () => {
       try {
         setIsLoading(true);
         setError(null);
-
-        const response = await axios.get(
-          `${API_URL}/rental/barang/${id}`
-        );
-
+        const response = await axios.get(`${API_URL}/rental/barang/${id}`);
         setBarang(response.data);
       } catch (err) {
         console.error(err);
@@ -151,9 +255,7 @@ export default function BarangShow() {
     if (!barang) return;
 
     if (selectedJumlah > barang.jumlah_stok) {
-      alert(
-        `Stok tidak mencukupi. Sisa ${barang.jumlah_stok}`
-      );
+      alert(`Stok tidak mencukupi. Sisa ${barang.jumlah_stok}`);
       return;
     }
 
@@ -184,9 +286,7 @@ export default function BarangShow() {
         return;
       }
 
-      // Dispatch event agar Navbar badge update
       window.dispatchEvent(new CustomEvent('cart-updated'));
-
       alert('Berhasil ditambahkan ke keranjang');
       navigate('/customer/cart');
     } catch (err) {
@@ -212,6 +312,11 @@ export default function BarangShow() {
 
     if (!barang) return;
 
+    if (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryAddress.trim() === '')) {
+      alert('Mohon isi alamat pengiriman terlebih dahulu');
+      return;
+    }
+
     try {
       setLoadingAction(true);
 
@@ -223,8 +328,8 @@ export default function BarangShow() {
           tanggal_selesai: tanggalSelesai,
         }],
         metode_pengiriman: deliveryMethod,
-        alamat_pengiriman: deliveryAddress,
-        biaya_pengiriman: 0,
+        alamat_pengiriman: deliveryMethod === 'delivery' ? deliveryAddress : null,
+        biaya_pengiriman: shippingCost,
       };
 
       const response = await axios.post(
@@ -242,12 +347,10 @@ export default function BarangShow() {
           alert('Pembayaran berhasil');
           navigate('/customer/transactions');
         },
-
         onPending: () => {
           alert('Pembayaran pending');
           navigate('/customer/transactions');
         },
-
         onError: (err) => {
           console.error(err);
           alert('Pembayaran gagal');
@@ -255,11 +358,7 @@ export default function BarangShow() {
       });
     } catch (err) {
       console.error(err);
-
-      alert(
-        err.response?.data?.message ||
-          'Checkout gagal'
-      );
+      alert(err.response?.data?.message || 'Checkout gagal');
     } finally {
       setLoadingAction(false);
     }
@@ -273,19 +372,9 @@ export default function BarangShow() {
     }
 
     try {
-      const response =
-        await chatService.getOrCreateConversation(
-          barang.pemilik.id_pengguna
-        );
-
-      const conversationId =
-        response.data.id_conversation;
-
-      await chatService.sendMessage(
-        conversationId,
-        `Halo saya tertarik dengan ${barang.nama_barang}`
-      );
-
+      const response = await chatService.getOrCreateConversation(barang.pemilik.id_pengguna);
+      const conversationId = response.data.id_conversation;
+      await chatService.sendMessage(conversationId, `Halo saya tertarik dengan ${barang.nama_barang}`);
       navigate('/customer/chat');
     } catch (err) {
       console.error(err);
@@ -293,35 +382,17 @@ export default function BarangShow() {
     }
   };
 
-  const loadGoogleMaps = useCallback(() => {
-    setShowMap(true);
-
-    if (window.google) return;
-
-    const script = document.createElement('script');
-
-    script.src =
-      'https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY';
-
-    script.async = true;
-
-    document.head.appendChild(script);
-  }, []);
-
   const getImageUrl = useCallback(() => {
-    if (!barang) {
-      return 'https://via.placeholder.com/600x400';
-    }
-
+    if (!barang) return PLACEHOLDER_IMAGE;
+    
     if (barang.foto_barang) {
       if (barang.foto_barang.startsWith('http')) {
         return barang.foto_barang;
       }
-
       return `${BASE_URL}/storage/${barang.foto_barang}`;
     }
-
-    return 'https://via.placeholder.com/600x400';
+    
+    return PLACEHOLDER_IMAGE;
   }, [barang]);
 
   if (isLoading) {
@@ -353,6 +424,7 @@ export default function BarangShow() {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
+          {/* Kolom Kiri */}
           <div className="lg:col-span-5">
             <div className="bg-white rounded-3xl overflow-hidden shadow-sm border">
               <img
@@ -360,8 +432,7 @@ export default function BarangShow() {
                 alt={barang.nama_barang}
                 className="w-full h-[500px] object-cover"
                 onError={(e) => {
-                  e.target.src =
-                    'https://via.placeholder.com/600x400';
+                  e.target.src = PLACEHOLDER_IMAGE;
                 }}
               />
             </div>
@@ -372,24 +443,19 @@ export default function BarangShow() {
                   <div className="w-12 h-12 rounded-full bg-[#F1F3F5] flex items-center justify-center">
                     <Store className="w-5 h-5" />
                   </div>
-
                   <div>
                     <Link
                       to={`/toko/${barang.id_pemilik}`}
                       className="font-bold text-black no-underline"
                     >
-                      {barang.pemilik?.nama ||
-                        'Vendor'}
+                      {barang.pemilik?.nama || 'Vendor'}
                     </Link>
-
                     <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                       <MapPin className="w-3 h-3" />
-                      {barang.pemilik?.kota ||
-                        'Indonesia'}
+                      {barang.pemilik?.kota || 'Indonesia'}
                     </div>
                   </div>
                 </div>
-
                 <button
                   onClick={startChatWithOwner}
                   className="bg-black text-white px-4 py-2 rounded-xl text-sm flex items-center gap-2"
@@ -401,35 +467,23 @@ export default function BarangShow() {
             </div>
           </div>
 
+          {/* Kolom Kanan */}
           <div className="lg:col-span-7 flex flex-col gap-6">
+            {/* Info Barang */}
             <div className="bg-white rounded-3xl p-8 border shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
-                  READY
-                </span>
-
-                <span className="text-xs text-gray-500">
-                  {barang.jumlah_stok} stok tersedia
-                </span>
+                <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">READY</span>
+                <span className="text-xs text-gray-500">{barang.jumlah_stok} stok tersedia</span>
               </div>
 
-              <h1 className="text-3xl font-black text-gray-900">
-                {barang.nama_barang}
-              </h1>
+              <h1 className="text-3xl font-black text-gray-900">{barang.nama_barang}</h1>
 
               <div className="mt-5 flex flex-col gap-1">
                 <div>
                   <span className="text-3xl font-black text-[#00A779]">
-                    Rp{' '}
-                    {Number(
-                      barang.harga_sewa
-                    ).toLocaleString()}
+                    Rp {Number(barang.harga_sewa).toLocaleString()}
                   </span>
-
-                  <span className="text-sm text-gray-400">
-                    {' '}
-                    / hari
-                  </span>
+                  <span className="text-sm text-gray-400"> / hari</span>
                 </div>
                 {Number(barang.nominal_deposit) > 0 && (
                   <div className="mt-2 text-sm text-slate-500 flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 self-start">
@@ -449,67 +503,45 @@ export default function BarangShow() {
               <div className="mt-8 border-t pt-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Info className="w-4 h-4 text-[#00A779]" />
-
-                  <h2 className="font-bold">
-                    Deskripsi
-                  </h2>
+                  <h2 className="font-bold">Deskripsi</h2>
                 </div>
-
-                <p className="text-gray-600 leading-relaxed">
-                  {barang.deskripsi}
-                </p>
+                <p className="text-gray-600 leading-relaxed">{barang.deskripsi}</p>
               </div>
             </div>
 
+            {/* Form Rental */}
             <div className="bg-white rounded-3xl p-8 border shadow-sm">
               <div className="flex items-center gap-2 mb-6">
                 <Calendar className="w-5 h-5 text-[#00A779]" />
-
-                <h2 className="font-bold text-lg">
-                  Konfigurasi Rental
-                </h2>
+                <h2 className="font-bold text-lg">Konfigurasi Rental</h2>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-semibold">
-                    Jumlah
-                  </label>
-
+                  <label className="text-sm font-semibold">Jumlah</label>
                   <input
                     type="number"
                     min="1"
                     max={barang.jumlah_stok}
                     value={selectedJumlah}
-                    onChange={(e) =>
-                      setSelectedJumlah(
-                        parseInt(e.target.value) || 1
-                      )
-                    }
+                    onChange={(e) => setSelectedJumlah(parseInt(e.target.value) || 1)}
                     className="w-full mt-2 px-4 py-3 rounded-xl border"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold">
-                    Mulai
-                  </label>
-
+                  <label className="text-sm font-semibold">Mulai</label>
                   <input
                     type="date"
                     value={tanggalMulai}
-                    onChange={(e) =>
-                      setTanggalMulai(e.target.value)
-                    }
+                    min={today}
+                    onChange={(e) => setTanggalMulai(e.target.value)}
                     className="w-full mt-2 px-4 py-3 rounded-xl border"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold">
-                    Selesai
-                  </label>
-
+                  <label className="text-sm font-semibold">Selesai</label>
                   <input
                     type="date"
                     value={tanggalSelesai}
@@ -519,58 +551,44 @@ export default function BarangShow() {
                       d.setDate(d.getDate() + (minDurasi - 1));
                       return d.toISOString().split('T')[0];
                     })()}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const start = new Date(tanggalMulai);
-                      const minEnd = new Date(start);
-                      minEnd.setDate(minEnd.getDate() + (minDurasi - 1));
-                      const minEndStr = minEnd.toISOString().split('T')[0];
-                      setTanggalSelesai(val < minEndStr ? minEndStr : val);
-                    }}
+                    onChange={(e) => setTanggalSelesai(e.target.value)}
                     className="w-full mt-2 px-4 py-3 rounded-xl border"
                   />
                 </div>
               </div>
 
               {minDurasi > 1 && (
-                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                  <span className="text-amber-600 text-sm">📅</span>
+                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
                   <p className="text-xs text-amber-700 font-medium">
-                    Minimum durasi sewa: <strong className="text-amber-800">{minDurasi} hari</strong>
+                    Minimum durasi sewa: {minDurasi} hari
                   </p>
                 </div>
               )}
 
+              {/* Metode Pengiriman */}
               <div className="mt-6">
-                <label className="text-sm font-semibold">
-                  Metode Pengiriman
-                </label>
-
+                <label className="text-sm font-semibold">Metode Pengiriman</label>
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <button
-                    onClick={() =>
-                      setDeliveryMethod('pickup')
-                    }
-                    className={`py-3 rounded-xl border flex items-center justify-center gap-2 ${
-                      deliveryMethod === 'pickup'
-                        ? 'bg-[#00A779] text-white'
+                    onClick={() => {
+                      setDeliveryMethod('pickup');
+                      setShippingCost(0);
+                      setDistance(0);
+                    }}
+                    className={`py-3 rounded-xl border flex items-center justify-center gap-2 transition ${
+                      deliveryMethod === 'pickup' 
+                        ? 'bg-[#00A779] text-white' 
                         : 'bg-white'
                     }`}
                   >
                     <Store className="w-4 h-4" />
                     Pickup
                   </button>
-
                   <button
-                    onClick={() =>
-                      setDeliveryMethod(
-                        'delivery'
-                      )
-                    }
-                    className={`py-3 rounded-xl border flex items-center justify-center gap-2 ${
-                      deliveryMethod ===
-                      'delivery'
-                        ? 'bg-[#00A779] text-white'
+                    onClick={() => setDeliveryMethod('delivery')}
+                    className={`py-3 rounded-xl border flex items-center justify-center gap-2 transition ${
+                      deliveryMethod === 'delivery' 
+                        ? 'bg-[#00A779] text-white' 
                         : 'bg-white'
                     }`}
                   >
@@ -580,110 +598,140 @@ export default function BarangShow() {
                 </div>
               </div>
 
+              {/* Form Alamat Delivery */}
               {deliveryMethod === 'delivery' && (
                 <div className="mt-5">
-                  <textarea
-                    rows="4"
-                    value={deliveryAddress}
-                    onChange={(e) =>
-                      setDeliveryAddress(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Alamat lengkap..."
-                    className="w-full border rounded-2xl p-4"
-                  />
-
-                  <button
-                    onClick={loadGoogleMaps}
-                    className="mt-3 text-[#00A779] text-sm flex items-center gap-2"
-                  >
+                  <label className="text-sm font-semibold flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
-                    Buka Google Maps
-                  </button>
+                    Alamat Pengiriman
+                  </label>
+                  
+                  <textarea
+                    rows={3}
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    placeholder="Contoh: Jl. Sudirman No. 123, Jakarta Pusat"
+                    className="w-full border rounded-2xl p-4 mt-2 focus:outline-none focus:border-[#00A779]"
+                  />
+                  
+                  {/* DUA TOMBOL */}
+                  <div className="flex gap-2 mt-2">
+                    <button 
+                      onClick={() => calculateOngkir(deliveryAddress)} 
+                      disabled={isCalculatingOngkir || !deliveryAddress}
+                      className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-200 transition"
+                    >
+                      <MapPin className="w-4 h-4" /> 
+                      {isCalculatingOngkir ? "Memuat..." : "Cek Ongkir"}
+                    </button>
+                    <button 
+                      onClick={getCurrentLocation} 
+                      disabled={isCalculatingOngkir}
+                      className="flex-1 bg-[#00A779] text-white py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#008f68] transition"
+                    >
+                      <span className="text-lg">📍</span> Lokasi Saya
+                    </button>
+                  </div>
 
-                  {showMap && (
-                    <div
-                      id="map"
-                      className="w-full h-64 rounded-2xl mt-4 border"
-                    />
+                  {/* Tampilkan Jarak & Ongkir */}
+                  {distance > 0 && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-[#00A779]" />
+                          <span className="text-sm font-semibold text-gray-700">
+                            Biaya Pengiriman:
+                          </span>
+                        </div>
+                        {isCalculatingOngkir ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-[#00A779]" />
+                        ) : (
+                          <span className="font-bold text-[#00A779] text-lg">
+                            Rp {shippingCost.toLocaleString("id-ID")}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                        <span>📍 Jarak: {distance.toFixed(2)} km</span>
+                        <span className="mx-1">•</span>
+                        <span>💰 Rp 1.000/km</span>
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Dari: {barang.pemilik?.kota || "Jakarta"}
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
 
+              {/* Total Harga */}
               <div className="bg-[#F8F9FA] rounded-2xl p-5 mt-6 space-y-2">
-                <div className="flex justify-between text-sm text-slate-600">
-                  <span>Biaya Sewa ({selectedJumlah} barang x {totalHari} hari)</span>
-                  <span className="font-semibold text-slate-800">Rp {totalHarga.toLocaleString()}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Biaya Sewa ({selectedJumlah} barang x {totalHari} hari)</span>
+                  <span className="font-semibold">Rp {totalHarga.toLocaleString()}</span>
                 </div>
 
-                {Number(barang.nominal_deposit) > 0 && (
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span className="flex items-center gap-1">
-                      Deposit Jaminan <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Refundable</span>
+                {totalDeposit > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      Deposit Jaminan
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full">Refundable</span>
                     </span>
-                    <span className="font-semibold text-slate-800">Rp {(Number(barang.nominal_deposit) * selectedJumlah).toLocaleString()}</span>
+                    <span className="font-semibold">Rp {totalDeposit.toLocaleString()}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between text-lg font-black mt-4 border-t pt-4 text-slate-900">
-                  <span>Total Pembayaran</span>
+                {deliveryMethod === 'delivery' && shippingCost > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Biaya Pengiriman</span>
+                    <span className="font-semibold">Rp {shippingCost.toLocaleString()}</span>
+                  </div>
+                )}
 
+                <div className="flex justify-between text-lg font-black mt-4 border-t pt-4">
+                  <span>Total Pembayaran</span>
                   <span className="text-[#00A779] text-xl">
-                    Rp{' '}
-                    {(totalHarga + (Number(barang.nominal_deposit || 0) * selectedJumlah)).toLocaleString()}
+                    Rp {grandTotal.toLocaleString()}
                   </span>
                 </div>
-                {Number(barang.nominal_deposit) > 0 && (
-                  <p className="text-[11px] text-slate-400 leading-snug mt-2 pt-1 border-t border-dashed">
-                    💡 Deposit keamanan akan dikembalikan 100% setelah barang kembali dalam kondisi baik.
+
+                {totalDeposit > 0 && (
+                  <p className="text-[11px] text-gray-400 mt-2">
+                    💡 Deposit akan dikembalikan setelah barang kembali dalam kondisi baik
                   </p>
                 )}
               </div>
 
+              {/* Payment Info */}
               <div className="bg-[#F8F9FA] border rounded-2xl p-4 mt-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <CreditCard className="w-5 h-5 text-[#00A779]" />
-
                   <div>
-                    <p className="font-bold text-sm">
-                      Pembayaran Midtrans
-                    </p>
-
-                    <p className="text-xs text-gray-500">
-                      Transfer / QRIS / E-Wallet
-                    </p>
+                    <p className="font-bold text-sm">Pembayaran Midtrans</p>
+                    <p className="text-xs text-gray-500">Transfer / QRIS / E-Wallet</p>
                   </div>
                 </div>
-
-                <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold">
-                  AKTIF
-                </span>
+                <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold">AKTIF</span>
               </div>
 
+              {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-4 mt-6">
                 <button
                   onClick={addToCart}
                   disabled={loadingAction}
-                  className="bg-gray-100 hover:bg-gray-200 py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
+                  className="bg-gray-100 hover:bg-gray-200 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
                 >
                   <ShoppingCart className="w-5 h-5" />
-
-                  {loadingAction
-                    ? 'Loading...'
-                    : 'Keranjang'}
+                  {loadingAction ? 'Loading...' : 'Keranjang'}
                 </button>
 
                 <button
                   onClick={buyNow}
-                  disabled={loadingAction}
-                  className="bg-[#00A779] hover:bg-[#008f68] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
+                  disabled={loadingAction || (deliveryMethod === 'delivery' && isCalculatingOngkir)}
+                  className="bg-[#00A779] hover:bg-[#008f68] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
                 >
                   <Zap className="w-5 h-5" />
-
-                  {loadingAction
-                    ? 'Processing...'
-                    : 'Sewa Sekarang'}
+                  {loadingAction ? 'Processing...' : 'Sewa Sekarang'}
                 </button>
               </div>
             </div>

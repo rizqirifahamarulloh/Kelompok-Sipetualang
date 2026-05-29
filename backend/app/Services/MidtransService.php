@@ -16,7 +16,10 @@ class MidtransService
         Config::$is3ds = true;
     }
 
-    public function createTransaction($orderId, $amount, $items, $customerDetails)
+    /**
+     * Create Midtrans transaction with optional redirect URLs
+     */
+    public function createTransaction($orderId, $amount, $items, $customerDetails, $redirectUrls = null)
     {
         $params = [
             'transaction_details' => [
@@ -27,6 +30,19 @@ class MidtransService
             'customer_details' => $customerDetails,
         ];
 
+        // Tambahkan redirect URLs jika disediakan
+        if ($redirectUrls && is_array($redirectUrls)) {
+            $params['callbacks'] = [
+                'finish' => $redirectUrls['finish'],
+                'error' => $redirectUrls['error'],
+            ];
+
+            // Optional: tambahkan pending redirect
+            if (isset($redirectUrls['pending'])) {
+                $params['callbacks']['pending'] = $redirectUrls['pending'];
+            }
+        }
+
         try {
             $snapToken = Snap::getSnapToken($params);
             return ['snap_token' => $snapToken, 'order_id' => $orderId];
@@ -35,7 +51,7 @@ class MidtransService
         }
     }
 
-        public function handleNotification()
+    public function handleNotification()
     {
         $notification = new \Midtrans\Notification();
 
@@ -45,4 +61,4 @@ class MidtransService
             'payment_type' => $notification->payment_type,
         ];
     }
-}
+} 

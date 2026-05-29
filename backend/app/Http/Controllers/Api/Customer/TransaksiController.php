@@ -119,8 +119,8 @@ class TransaksiController extends Controller
                 if ($itemDeposit > 0) {
                     $midtransItems[] = [
                         'id' => 'DEP-' . $barang->id_barang,
-                        'price' => (int) $itemDeposit,
-                        'quantity' => 1,
+                        'price' => (int) $barang->nominal_deposit,  // ✅ Harga per unit deposit
+                        'quantity' => $item['jumlah'],              // ✅ Dikalikan jumlah unit
                         'name' => 'Deposit: ' . mb_substr($barang->nama_barang, 0, 30),
                     ];
                 }
@@ -202,8 +202,17 @@ class TransaksiController extends Controller
             ];
 
             // Create Midtrans transaction — grossAmount is guaranteed to match items sum
-            $result = $this->midtrans->createTransaction($orderId, $grossAmount, $midtransItems, $customerDetails);
-
+            $result = $this->midtrans->createTransaction(
+                $orderId,
+                $grossAmount,
+                $midtransItems,
+                $customerDetails,
+                [
+                    'finish' => 'http://localhost:5173/customer/transactions',
+                    'error' => 'http://localhost:5173/customer/transactions',
+                    'pending' => 'http://localhost:5173/customer/transactions',
+                ]
+            );
             if (isset($result['error'])) {
                 DB::rollBack();
                 return response()->json(['error' => $result['error']], 500);
