@@ -46,6 +46,7 @@ import VerifikasiCustomer from '@/features/customer/pages/verifikasi';
 import DashboardRental from '@/features/bukarental/components/DashboardRental';
 import ShippingPage from '@/features/customer/pages/ShippingPage'
 import PengembalianPage from '@/features/customer/pages/PengembalianPage'
+import TransaksiPage from '@/features/customer/pages/TransaksiPage'
 
 function Unauthorized() {
   return (
@@ -122,6 +123,7 @@ function App() {
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/cart" element={<CartPage />} />
                   <Route path="/profile/rentals" element={<TransactionsPage />} />
+                  <Route path="/profile/transaksi" element={<TransaksiPage />} />
                   <Route path="/profile/pengiriman" element={<ShippingPage />} />
                   <Route path="/profile/pengembalian" element={<PengembalianPage />} />
                 </Route>

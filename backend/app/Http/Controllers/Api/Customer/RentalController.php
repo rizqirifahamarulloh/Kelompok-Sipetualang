@@ -19,6 +19,7 @@ class RentalController extends Controller
     public function getAvailableBarang()
     {
         $barang = Barang::with('pemilik')
+            ->withCount('detailTransaksi as total_disewa')
             ->where('status_barang', 'tersedia')
             ->where('status_approval', 'disetujui')
             ->where('jumlah_stok', '>', 0)
@@ -231,12 +232,47 @@ class RentalController extends Controller
             ], 404);
         }
 
-        $barang->delete();
+        // Cek apakah barang sedang disewa (ada transaksi aktif)
+        $activeRentals = DB::table('transaksi')
+            ->where('id_barang', $id)
+            ->whereIn('status_sewa', ['sedang_disewa', 'dibayar', 'menunggu_pembayaran'])
+            ->exists();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Barang berhasil dihapus'
-        ]);
+        // Juga cek melalui detail_transaksi
+        if (!$activeRentals) {
+            $activeRentals = DB::table('detail_transaksi')
+                ->join('transaksi', 'detail_transaksi.id_transaksi', '=', 'transaksi.id_transaksi')
+                ->where('detail_transaksi.id_barang', $id)
+                ->whereIn('transaksi.status_sewa', ['sedang_disewa', 'dibayar', 'menunggu_pembayaran'])
+                ->exists();
+        }
+
+        if ($activeRentals) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barang tidak dapat dihapus karena sedang dalam proses penyewaan aktif.'
+            ], 400);
+        }
+
+        try {
+            // Hapus foto dari storage jika ada
+            if ($barang->foto_barang && \Storage::disk('public')->exists($barang->foto_barang)) {
+                \Storage::disk('public')->delete($barang->foto_barang);
+            }
+
+            // Hapus barang (foreign key SET NULL akan otomatis nullify referensi di transaksi & detail_transaksi)
+            $barang->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Barang berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus barang: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // ==================== CART METHODS ====================

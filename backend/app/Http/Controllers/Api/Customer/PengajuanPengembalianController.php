@@ -11,6 +11,7 @@ use App\Models\Pengguna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class PengajuanPengembalianController extends Controller
 {
@@ -26,6 +27,11 @@ class PengajuanPengembalianController extends Controller
             'alasan' => 'required|string|min:10|max:1000',
             'foto_bukti' => 'required|array|min:1|max:5',
             'foto_bukti.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+            'metode_pengembalian' => 'required|in:pickup,delivery',
+            'alamat_pengembalian' => 'nullable|required_if:metode_pengembalian,delivery|string|max:500',
+            'nama_bank' => 'required|string|max:100',
+            'no_rekening' => 'required|string|max:50',
+            'atas_nama_rekening' => 'required|string|max:150',
         ]);
 
         // Verify the transaction belongs to this customer
@@ -38,14 +44,6 @@ class PengajuanPengembalianController extends Controller
                 'status' => 'error',
                 'message' => 'Transaksi tidak ditemukan'
             ], 404);
-        }
-
-        // Only delivery orders can request return
-        if ($transaksi->metode_pengiriman !== 'delivery') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Pengajuan pengembalian hanya tersedia untuk pesanan dengan metode delivery'
-            ], 400);
         }
 
         // Check if there's already a pending request for this transaction
@@ -77,18 +75,24 @@ class PengajuanPengembalianController extends Controller
                 'id_customer' => $user->id_pengguna,
                 'alasan' => $request->alasan,
                 'foto_bukti' => $fotoPaths,
+                'metode_pengembalian' => $request->metode_pengembalian,
+                'alamat_pengembalian' => $request->metode_pengembalian === 'delivery' ? $request->alamat_pengembalian : null,
+                'nama_bank' => $request->nama_bank,
+                'no_rekening' => $request->no_rekening,
+                'atas_nama_rekening' => $request->atas_nama_rekening,
                 'status' => 'pending',
             ]);
 
             // Notify all admins
             $admins = Pengguna::where('peran_pengguna', 'admin')->get();
+            $metodeLabel = $request->metode_pengembalian === 'delivery' ? 'Delivery (ongkir ditanggung admin)' : 'Pickup (antar sendiri)';
             foreach ($admins as $admin) {
                 Notifikasi::create([
                     'id_pengguna' => $admin->id_pengguna,
                     'unique_key' => 'pengajuan_retur_' . $pengajuan->id_pengajuan . '_' . time(),
                     'type' => 'return_request',
                     'title' => 'Pengajuan Pengembalian Baru 📦',
-                    'message' => "Customer {$user->nama} mengajukan pengembalian barang \"{$transaksi->nama_barang}\" dengan alasan: " . substr($request->alasan, 0, 100),
+                    'message' => "Customer {$user->nama} mengajukan pengembalian barang \"{$transaksi->nama_barang}\" via {$metodeLabel}. Alasan: " . substr($request->alasan, 0, 100),
                     'severity' => 'warning',
                     'data' => [
                         'id_pengajuan' => $pengajuan->id_pengajuan,
@@ -104,7 +108,7 @@ class PengajuanPengembalianController extends Controller
                     'unique_key' => 'retur_owner_request_' . $pengajuan->id_pengajuan . '_' . time(),
                     'type' => 'return_request',
                     'title' => 'Customer Mengajukan Pengembalian Barang 📦',
-                    'message' => "Customer {$user->nama} mengajukan pengembalian barang \"{$transaksi->nama_barang}\" milik Anda. Alasan: " . substr($request->alasan, 0, 100) . ". Menunggu keputusan admin.",
+                    'message' => "Customer {$user->nama} mengajukan pengembalian barang \"{$transaksi->nama_barang}\" milik Anda via {$metodeLabel}. Alasan: " . substr($request->alasan, 0, 100) . ". Menunggu keputusan admin.",
                     'severity' => 'warning',
                     'data' => [
                         'id_pengajuan' => $pengajuan->id_pengajuan,
@@ -194,7 +198,15 @@ class PengajuanPengembalianController extends Controller
     }
 
     /**
-     * Admin: Approve return request + calculate refund
+     * Admin: Approve return request + calculate dynamic refund
+     * 
+     * Refund calculation:
+     * - sisa_hari_sewa = remaining unused rental days
+     * - refund_sewa = proportional refund based on remaining days
+     * - refund_deposit = full deposit refund
+     * - potongan_admin_fee = proportional admin fee deduction
+     * - jumlah_refund = refund_sewa + refund_deposit - potongan_admin_fee
+     * - biaya_ongkir_pengembalian = shipping cost for delivery return (borne by admin, NOT deducted from refund)
      */
     public function approve(Request $request, $id)
     {
@@ -207,17 +219,72 @@ class PengajuanPengembalianController extends Controller
             ], 400);
         }
 
+        $request->validate([
+            'biaya_ongkir_pengembalian' => 'nullable|numeric|min:0',
+            'catatan_admin' => 'nullable|string',
+        ]);
+
         try {
             DB::beginTransaction();
 
             $transaksi = $pengajuan->transaksi;
 
-            // Calculate refund amount = total_biaya (full refund)
-            $jumlahRefund = $transaksi->total_biaya ?? 0;
+            // === DYNAMIC REFUND CALCULATION ===
+            $totalBiayaSewa = $transaksi->total_biaya ?? 0;
+            $totalHariSewa = $transaksi->total_hari ?? 1;
+            $nominalDeposit = $transaksi->nominal_deposit ?? 0;
+            $feeAdmin = $transaksi->fee_admin ?? 0;
+            $biayaPengiriman = $transaksi->biaya_pengiriman ?? 0;
+
+            // Calculate remaining days
+            $tanggalMulai = Carbon::parse($transaksi->tanggal_mulai);
+            $tanggalSelesai = Carbon::parse($transaksi->tanggal_selesai);
+            $today = Carbon::today();
+
+            // If rental hasn't started yet, full refund on rental portion
+            if ($today->lt($tanggalMulai)) {
+                $hariTerpakai = 0;
+            } else {
+                // Days used = from start to today (inclusive), capped at total days
+                $hariTerpakai = min($tanggalMulai->diffInDays($today) + 1, $totalHariSewa);
+            }
+            $sisaHariSewa = max($totalHariSewa - $hariTerpakai, 0);
+
+            // Calculate the pure rental cost (total_biaya - deposit - biaya_pengiriman)
+            $pureRentalCost = $totalBiayaSewa - $nominalDeposit - $biayaPengiriman;
+            if ($pureRentalCost < 0) $pureRentalCost = 0;
+
+            // Proportional refund on rental portion
+            $refundSewa = $totalHariSewa > 0
+                ? round($pureRentalCost * ($sisaHariSewa / $totalHariSewa))
+                : 0;
+
+            // Full deposit refund
+            $refundDeposit = $nominalDeposit;
+
+            // Proportional admin fee deduction
+            $potonganAdminFee = $totalHariSewa > 0
+                ? round($feeAdmin * ($sisaHariSewa / $totalHariSewa))
+                : 0;
+
+            // Total refund to customer = rental refund + deposit - admin fee deduction
+            $jumlahRefund = $refundSewa + $refundDeposit - $potonganAdminFee;
+            if ($jumlahRefund < 0) $jumlahRefund = 0;
+
+            // Shipping cost for delivery return (borne by admin, NOT deducted)
+            $biayaOngkirPengembalian = 0;
+            if ($pengajuan->metode_pengembalian === 'delivery') {
+                $biayaOngkirPengembalian = $request->biaya_ongkir_pengembalian ?? 0;
+            }
 
             $pengajuan->update([
                 'status' => 'disetujui',
                 'catatan_admin' => $request->catatan_admin ?? 'Pengajuan disetujui oleh admin',
+                'sisa_hari_sewa' => $sisaHariSewa,
+                'refund_sewa' => $refundSewa,
+                'refund_deposit' => $refundDeposit,
+                'potongan_admin_fee' => $potonganAdminFee,
+                'biaya_ongkir_pengembalian' => $biayaOngkirPengembalian,
                 'jumlah_refund' => $jumlahRefund,
                 'status_refund' => 'proses_refund',
             ]);
@@ -227,18 +294,34 @@ class PengajuanPengembalianController extends Controller
                 'status_sewa' => 'refund',
             ]);
 
-            // Notify customer with refund info
+            // Format currency for notifications
+            $refundFormatted = 'Rp ' . number_format($jumlahRefund, 0, ',', '.');
+            $metodeLabel = $pengajuan->metode_pengembalian === 'delivery' ? 'delivery' : 'pickup';
+
+            // Notify customer with dynamic refund breakdown
+            $breakdownMsg = "Rincian refund: Sewa Rp " . number_format($refundSewa, 0, ',', '.') 
+                . " + Deposit Rp " . number_format($refundDeposit, 0, ',', '.')
+                . " - Fee Admin Rp " . number_format($potonganAdminFee, 0, ',', '.')
+                . " = Total {$refundFormatted}.";
+
+            if ($pengajuan->metode_pengembalian === 'delivery' && $biayaOngkirPengembalian > 0) {
+                $breakdownMsg .= " Ongkir pengembalian Rp " . number_format($biayaOngkirPengembalian, 0, ',', '.') . " ditanggung admin.";
+            }
+
             Notifikasi::create([
                 'id_pengguna' => $pengajuan->id_customer,
                 'unique_key' => 'retur_approved_' . $pengajuan->id_pengajuan . '_' . time(),
                 'type' => 'return_approved',
                 'title' => 'Pengembalian Disetujui + Refund 💰',
-                'message' => "Pengajuan pengembalian barang \"{$transaksi->nama_barang}\" disetujui! Refund sebesar Rp " . number_format($jumlahRefund, 0, ',', '.') . " sedang diproses oleh admin.",
+                'message' => "Pengajuan pengembalian barang \"{$transaksi->nama_barang}\" disetujui! {$breakdownMsg}",
                 'severity' => 'success',
                 'data' => [
                     'id_pengajuan' => $pengajuan->id_pengajuan,
                     'id_transaksi' => $pengajuan->id_transaksi,
                     'jumlah_refund' => $jumlahRefund,
+                    'refund_sewa' => $refundSewa,
+                    'refund_deposit' => $refundDeposit,
+                    'potongan_admin_fee' => $potonganAdminFee,
                 ]
             ]);
 
@@ -249,7 +332,7 @@ class PengajuanPengembalianController extends Controller
                     'unique_key' => 'retur_owner_approved_' . $pengajuan->id_pengajuan . '_' . time(),
                     'type' => 'return_approved',
                     'title' => 'Pengembalian Barang Disetujui oleh Admin 📦',
-                    'message' => "Pengajuan pengembalian barang \"{$transaksi->nama_barang}\" telah disetujui admin. Refund Rp " . number_format($jumlahRefund, 0, ',', '.') . " akan diproses dan mengurangi pendapatan Anda.",
+                    'message' => "Pengajuan pengembalian barang \"{$transaksi->nama_barang}\" telah disetujui admin. Refund {$refundFormatted} akan diproses (metode pengembalian: {$metodeLabel}).",
                     'severity' => 'warning',
                     'data' => [
                         'id_pengajuan' => $pengajuan->id_pengajuan,
@@ -263,7 +346,7 @@ class PengajuanPengembalianController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Pengajuan disetujui. Refund Rp ' . number_format($jumlahRefund, 0, ',', '.') . ' sedang diproses.',
+                'message' => 'Pengajuan disetujui. Refund ' . $refundFormatted . ' sedang diproses.',
                 'data' => $pengajuan->fresh()->load(['transaksi', 'customer'])
             ]);
 
@@ -423,4 +506,3 @@ class PengajuanPengembalianController extends Controller
         ]);
     }
 }
-

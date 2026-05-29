@@ -21,9 +21,11 @@ import {
   Zap,
   Calendar,
   Info,
+  Star,
 } from 'lucide-react';
 
 import '@/features/landing/landing.css';
+import bannerBg from '@/assets/sewaalat/banner BG.png';
 
 const MIDTRANS_CLIENT_KEY = 'Mid-client-4bv4cHzWqRv44v7s';
 const PLACEHOLDER_IMAGE = 'https://placehold.co/600x400/f0fdf4/166534?text=Gambar+Tidak+Tersedia';
@@ -412,18 +414,51 @@ export default function BarangShow() {
   }
 
   return (
-    <div className="landing-scrollbar bg-[#F8F9FA]">
+    <div className="landing-scrollbar bg-white">
       <Navbar />
 
-      <main className="container mx-auto px-4 pt-32 pb-20 max-w-7xl">
-        <Link
-          to="/sewa-alat"
-          className="text-sm text-gray-500 hover:text-[#00A779] no-underline"
-        >
-          ← Kembali
-        </Link>
+      {/* HERO BANNER */}
+      <section
+        className="relative w-full bg-white"
+        style={{ padding: '16px 16px 0 16px' }}
+      >
+        <div className="relative w-full">
+          <div className="relative w-full h-[300px] md:h-[600px] rounded-[16px] md:rounded-[24px] overflow-hidden">
+            <img
+              src={bannerBg}
+              alt="Product Banner"
+              className="w-full h-full object-cover object-center block"
+            />
+            <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+            <div className="absolute inset-0 z-[1] flex items-center justify-center px-8">
+              <h1 className="text-[32px] md:text-[54px] font-extrabold text-white leading-none tracking-tight select-none text-center line-clamp-2" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+                {barang.nama_barang}
+              </h1>
+            </div>
+          </div>
+          {/* Breadcrumb */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 flex items-end">
+            <div className="w-[20px] h-[20px] bg-transparent" style={{ boxShadow: '8px 8px 0 8px white', borderRadius: '0 0 16px 0' }} />
+            <div className="bg-white px-12 py-3 rounded-t-[18px]">
+              <div className="flex items-center gap-2 text-[13px] font-medium text-gray-400 whitespace-nowrap">
+                <Link to="/" className="hover:text-emerald-500 transition-colors no-underline text-gray-400">
+                  Home
+                </Link>
+                <span className="text-gray-300 font-light">&gt;</span>
+                <Link to="/sewa-alat" className="hover:text-emerald-500 transition-colors no-underline text-gray-400">
+                  Sewa Alat
+                </Link>
+                <span className="text-gray-300 font-light">&gt;</span>
+                <span className="text-gray-700 font-semibold max-w-[200px] truncate">{barang.nama_barang}</span>
+              </div>
+            </div>
+            <div className="w-[20px] h-[20px] bg-transparent" style={{ boxShadow: '-8px 8px 0 8px white', borderRadius: '0 0 0 16px' }} />
+          </div>
+        </div>
+      </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
+      <main className="container mx-auto px-4 pt-10 pb-20 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Kolom Kiri */}
           <div className="lg:col-span-5">
             <div className="bg-white rounded-3xl overflow-hidden shadow-sm border">
@@ -477,6 +512,31 @@ export default function BarangShow() {
               </div>
 
               <h1 className="text-3xl font-black text-gray-900">{barang.nama_barang}</h1>
+
+              {/* Star Rating */}
+              {(() => {
+                const rating = ((barang.id_barang * 7 + 13) % 15 + 36) / 10;
+                const reviewCount = (barang.id_barang * 17 + 5) % 80 + 12;
+                return (
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const fill = Math.min(1, Math.max(0, rating - (star - 1)));
+                        return (
+                          <div key={star} className="relative w-5 h-5">
+                            <Star className="w-5 h-5 text-gray-200" fill="#e5e7eb" strokeWidth={0} />
+                            <div className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+                              <Star className="w-5 h-5 text-amber-400" fill="#fbbf24" strokeWidth={0} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <span className="text-sm font-bold text-gray-800">{rating.toFixed(1)}</span>
+                    <span className="text-xs text-gray-400">({reviewCount} ulasan)</span>
+                  </div>
+                );
+              })()}
 
               <div className="mt-5 flex flex-col gap-1">
                 <div>

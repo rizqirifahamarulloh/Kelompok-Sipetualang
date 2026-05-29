@@ -18,7 +18,14 @@ import {
   FileText,
   ImageIcon,
   Banknote,
-  Upload
+  Upload,
+  Truck,
+  MapPin,
+  CreditCard,
+  Building2,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ShieldCheck,
 } from "lucide-react";
 
 const STATUS_MAP = {
@@ -367,6 +374,72 @@ export default function AdminPengembalian() {
                   </div>
                 )}
 
+                {/* Metode Pengembalian */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Truck className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold">Metode Pengembalian Barang</span>
+                  </div>
+                  <div className={`rounded-xl p-4 border ${
+                    req.metode_pengembalian === 'delivery'
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                      : 'bg-gray-50 dark:bg-gray-800 border-border'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      {req.metode_pengembalian === 'delivery' ? (
+                        <><Truck className="w-4 h-4 text-blue-600" />
+                        <span className="font-bold text-sm text-blue-700 dark:text-blue-400">Delivery (Kurir)</span></>
+                      ) : (
+                        <><MapPin className="w-4 h-4 text-gray-600" />
+                        <span className="font-bold text-sm text-foreground">Pickup (Antar Sendiri)</span></>
+                      )}
+                    </div>
+                    {req.metode_pengembalian === 'delivery' && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400">
+                        Ongkir pengembalian ditanggung admin
+                      </p>
+                    )}
+                    {req.metode_pengembalian === 'delivery' && req.alamat_pengembalian && (
+                      <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                        <p className="text-xs text-muted-foreground mb-0.5">Alamat Pengambilan:</p>
+                        <p className="text-sm font-medium text-foreground">{req.alamat_pengembalian}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Informasi Rekening Customer */}
+                {req.nama_bank && req.no_rekening && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold">Rekening Tujuan Refund</span>
+                    </div>
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">Bank / E-Wallet</p>
+                          <div className="flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="font-bold text-emerald-800 dark:text-emerald-300">{req.nama_bank}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">No. Rekening / ID</p>
+                          <p className="font-mono font-bold text-foreground tracking-wider">{req.no_rekening}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">Atas Nama</p>
+                          <div className="flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="font-bold text-foreground">{req.atas_nama_rekening}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Catatan Admin (existing) */}
                 {req.catatan_admin && req.status !== 'pending' && (
                   <div className={`p-4 rounded-xl text-sm ${
@@ -422,13 +495,61 @@ export default function AdminPengembalian() {
                     </div>
 
                     <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-xl p-4">
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Jumlah Refund</p>
-                          <p className="font-bold text-emerald-700 text-lg">
+                      {/* Dynamic Breakdown */}
+                      <div className="space-y-2 text-sm mb-3">
+                        {req.sisa_hari_sewa != null && (
+                          <div className="flex items-center justify-between text-muted-foreground">
+                            <span className="flex items-center gap-1.5 text-xs">
+                              <Clock className="w-3 h-3" /> Sisa Hari Sewa
+                            </span>
+                            <span className="font-bold text-foreground">{req.sisa_hari_sewa} hari</span>
+                          </div>
+                        )}
+                        {Number(req.refund_sewa) > 0 && (
+                          <div className="flex items-center justify-between text-emerald-700 text-xs">
+                            <span className="flex items-center gap-1.5">
+                              <ArrowDownToLine className="w-3 h-3" /> Refund Sewa (proporsional)
+                            </span>
+                            <span className="font-bold">+ Rp {Number(req.refund_sewa).toLocaleString('id-ID')}</span>
+                          </div>
+                        )}
+                        {Number(req.refund_deposit) > 0 && (
+                          <div className="flex items-center justify-between text-emerald-700 text-xs">
+                            <span className="flex items-center gap-1.5">
+                              <ShieldCheck className="w-3 h-3" /> Pengembalian Deposit
+                            </span>
+                            <span className="font-bold">+ Rp {Number(req.refund_deposit).toLocaleString('id-ID')}</span>
+                          </div>
+                        )}
+                        {Number(req.potongan_admin_fee) > 0 && (
+                          <div className="flex items-center justify-between text-rose-600 text-xs">
+                            <span className="flex items-center gap-1.5">
+                              <ArrowUpFromLine className="w-3 h-3" /> Potongan Admin Fee
+                            </span>
+                            <span className="font-bold">- Rp {Number(req.potongan_admin_fee).toLocaleString('id-ID')}</span>
+                          </div>
+                        )}
+                        {req.metode_pengembalian === 'delivery' && Number(req.biaya_ongkir_pengembalian) > 0 && (
+                          <div className="flex items-center justify-between text-blue-600 text-xs bg-blue-50 dark:bg-blue-950/20 px-2 py-1.5 rounded-lg -mx-1">
+                            <span className="flex items-center gap-1.5">
+                              <Truck className="w-3 h-3" /> Ongkir Pengembalian
+                            </span>
+                            <span className="font-bold">
+                              Rp {Number(req.biaya_ongkir_pengembalian).toLocaleString('id-ID')}
+                              <span className="text-blue-400 ml-1 font-normal text-[10px]">(ditanggung admin)</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Total */}
+                        <div className="border-t border-emerald-200 pt-2 mt-2 flex items-center justify-between">
+                          <span className="font-bold text-foreground text-sm">Total Refund</span>
+                          <span className="font-black text-lg text-emerald-700">
                             Rp {Number(req.jumlah_refund || 0).toLocaleString('id-ID')}
-                          </p>
+                          </span>
                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-sm border-t border-emerald-200 pt-3">
                         <div>
                           <p className="text-xs text-muted-foreground">Status Refund</p>
                           <Badge className={`text-xs font-bold border mt-1 ${(REFUND_STATUS_MAP[req.status_refund] || REFUND_STATUS_MAP.belum_refund).color}`}>

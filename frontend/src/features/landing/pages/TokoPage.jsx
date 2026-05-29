@@ -19,6 +19,7 @@ import {
   Star,
   ShieldCheck,
   Boxes,
+  TrendingUp,
 } from 'lucide-react';
 
 export default function TokoPage() {
@@ -33,6 +34,7 @@ export default function TokoPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilter, setShowFilter] = useState(false);
+  const [sortBy, setSortBy] = useState('');
 
   // =========================
 // FETCH DATA
@@ -82,14 +84,26 @@ useEffect(() => {
   // FILTER PRODUK
   // =========================
   const filteredProduk = useMemo(() => {
-    if (!selectedKategori) return produkList;
+    let result = produkList;
 
-    return produkList.filter(
-      (item) =>
-        item.kategori?.id_kategori ===
-        parseInt(selectedKategori)
-    );
-  }, [produkList, selectedKategori]);
+    if (selectedKategori) {
+      result = result.filter(
+        (item) =>
+          item.kategori?.id_kategori ===
+          parseInt(selectedKategori)
+      );
+    }
+
+    if (sortBy === 'paling_laku') {
+      result = [...result].sort((a, b) => (b.total_disewa || 0) - (a.total_disewa || 0));
+    } else if (sortBy === 'harga_termurah') {
+      result = [...result].sort((a, b) => Number(a.harga_sewa) - Number(b.harga_sewa));
+    } else if (sortBy === 'harga_termahal') {
+      result = [...result].sort((a, b) => Number(b.harga_sewa) - Number(a.harga_sewa));
+    }
+
+    return result;
+  }, [produkList, selectedKategori, sortBy]);
 
   // =========================
   // CHAT
@@ -148,7 +162,7 @@ useEffect(() => {
   if (isLoading) {
     return (
       <div className="bg-[#f8fafc] min-h-screen">
-        <Navbar />
+        <Navbar forceScrolled={true} />
 
         <div className="pt-40 flex justify-center items-center">
           <div className="text-center">
@@ -171,7 +185,7 @@ useEffect(() => {
   if (error || !pemilik) {
     return (
       <div className="bg-[#f8fafc] min-h-screen">
-        <Navbar />
+        <Navbar forceScrolled={true} />
 
         <div className="pt-40 flex justify-center items-center px-4">
           <div className="bg-white rounded-3xl p-10 shadow-sm border border-gray-100 text-center max-w-md w-full">
@@ -200,7 +214,7 @@ useEffect(() => {
 
   return (
     <div className="bg-[#f8fafc] min-h-screen overflow-x-hidden">
-      <Navbar />
+      <Navbar forceScrolled={true} />
 
       <main className="container mx-auto px-4 pt-32 pb-20">
         {/* BACK */}
@@ -306,11 +320,12 @@ useEffect(() => {
                 Filter
               </button>
 
-              {selectedKategori && (
+              {(selectedKategori || sortBy) && (
                 <button
-                  onClick={() =>
-                    setSelectedKategori('')
-                  }
+                  onClick={() => {
+                    setSelectedKategori('');
+                    setSortBy('');
+                  }}
                   className="bg-red-50 text-red-500 hover:bg-red-100 transition px-5 py-3 rounded-2xl font-semibold flex items-center gap-2"
                 >
                   <X className="w-4 h-4" />
@@ -359,6 +374,31 @@ useEffect(() => {
                     }`}
                   >
                     {kat.nama_kategori}
+                  </button>
+                ))}
+              </div>
+
+              {/* Urutkan */}
+              <h3 className="font-black text-gray-800 mb-4 mt-6">
+                Urutkan
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { value: '', label: 'Default' },
+                  { value: 'paling_laku', label: '🔥 Paling Laku' },
+                  { value: 'harga_termurah', label: 'Harga Termurah' },
+                  { value: 'harga_termahal', label: 'Harga Termahal' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSortBy(opt.value)}
+                    className={`px-5 py-2 rounded-2xl text-sm font-bold transition ${
+                      sortBy === opt.value
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {opt.label}
                   </button>
                 ))}
               </div>

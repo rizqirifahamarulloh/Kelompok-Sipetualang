@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL, BASE_URL } from '@/services/api';
 import { cartService } from '@/features/customer/services/cartService';
+import { useAuth } from '@/contexts/AuthContext';
 
 import Navbar from '@/features/landing/components/Navbar';
 import Footer from '@/features/landing/components/Footer';
@@ -128,6 +129,7 @@ const DESTINATIONS = [
 ];
 
 export default function SewaAlat() {
+  const { isAuthenticated } = useAuth();
   const [barangList, setBarangList] = useState([]);
   const [kategoriList, setKategoriList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -537,6 +539,7 @@ export default function SewaAlat() {
           onAddToCart={handleAddToCart}
           onRemoveFromCart={handleRemoveFromCart}
           onUpdateQuantity={handleUpdateQuantity}
+          isAuthenticated={isAuthenticated}
         />
       </div>
 

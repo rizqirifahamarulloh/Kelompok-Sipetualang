@@ -30,10 +30,8 @@ class TokoController extends Controller
     {
         // SEMENTARA: Hapus filter untuk debugging
         $barang = Barang::with(['pemilik', 'kategori'])
+            ->withCount('detailTransaksi as total_disewa')
             ->where('id_pemilik', $ownerId)
-            // ->where('status_barang', 'tersedia')      // Comment dulu
-            // ->where('status_approval', 'disetujui')   // Comment dulu
-            // ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([

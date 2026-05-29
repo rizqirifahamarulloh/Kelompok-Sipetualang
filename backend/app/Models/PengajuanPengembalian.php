@@ -14,6 +14,16 @@ class PengajuanPengembalian extends Model
         'id_customer',
         'alasan',
         'foto_bukti',
+        'metode_pengembalian',
+        'alamat_pengembalian',
+        'nama_bank',
+        'no_rekening',
+        'atas_nama_rekening',
+        'biaya_ongkir_pengembalian',
+        'sisa_hari_sewa',
+        'refund_sewa',
+        'refund_deposit',
+        'potongan_admin_fee',
         'status',
         'catatan_admin',
         'jumlah_refund',
@@ -26,6 +36,10 @@ class PengajuanPengembalian extends Model
     protected $casts = [
         'foto_bukti' => 'array',
         'jumlah_refund' => 'decimal:2',
+        'refund_sewa' => 'decimal:2',
+        'refund_deposit' => 'decimal:2',
+        'potongan_admin_fee' => 'decimal:2',
+        'biaya_ongkir_pengembalian' => 'decimal:2',
         'tanggal_refund' => 'datetime',
     ];
 
@@ -39,3 +53,4 @@ class PengajuanPengembalian extends Model
         return $this->belongsTo(Pengguna::class, 'id_customer', 'id_pengguna');
     }
 }
+

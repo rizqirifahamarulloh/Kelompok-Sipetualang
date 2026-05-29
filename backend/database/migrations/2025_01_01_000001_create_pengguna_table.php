@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('kota', 100)->nullable();
             $table->string('password', 255);
             $table->string('no_telp', 15)->nullable();
-            $table->enum('peran_pengguna', ['customer', 'admin'])->default('customer');
+            $table->enum('peran_pengguna', ['customer', 'admin', 'perental'])->default('customer');
             $table->enum('rental', ['false', 'true'])->default('false');
         });
     }

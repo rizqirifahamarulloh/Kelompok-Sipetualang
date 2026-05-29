@@ -11,8 +11,8 @@ import cartIcon from '@/assets/beranda/icon-simple-cart.svg'
 import arrowRight from '@/assets/beranda/icon-arrow-right.svg'
 import api from '@/services/api'
 
-export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
+export default function Navbar({ forceScrolled = false }) {
+  const [scrolled, setScrolled] = useState(forceScrolled)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { t } = useLanguage()
@@ -167,11 +167,11 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
+      setScrolled(forceScrolled || window.scrollY > 50)
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [forceScrolled])
 
   // Tutup dropdown kalau klik di luar
   useEffect(() => {
@@ -625,20 +625,6 @@ export default function Navbar() {
                     </div>
 
                     <div className="py-1">
-                      {/* Chat di dropdown */}
-                      <button
-                        onClick={() => {
-                          setDropdownOpen(false)
-                          handleChatClick()
-                        }}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors w-full bg-transparent border-none cursor-pointer"
-                      >
-                        <svg className="size-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        Chat
-                      </button>
-
                       {/* Lihat Profile */}
                       <Link
                         to="/profile"
@@ -753,20 +739,6 @@ export default function Navbar() {
                       <span className="text-gray-400 text-xs truncate">{user?.email}</span>
                     </div>
                   </Link>
-
-                  {/* Chat - mobile popup */}
-                  <button
-                    onClick={() => {
-                      setMobileOpen(false)
-                      handleChatClick()
-                    }}
-                    className="flex items-center gap-2 bg-white/10 text-white py-2.5 px-4 rounded-full text-sm font-semibold w-full hover:bg-white/20 border-none cursor-pointer"
-                  >
-                    <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    Chat
-                  </button>
 
                   <Link
                     to="/profile"

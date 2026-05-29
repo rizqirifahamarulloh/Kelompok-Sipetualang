@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Store, Search, Minus, Plus, X, ShoppingCart, Check } from 'lucide-react';
+import { Store, Search, Minus, Plus, X, ShoppingCart, Check, LogIn, UserPlus, ShieldAlert, Star } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function KatalogProduk({
@@ -13,18 +13,39 @@ export default function KatalogProduk({
   cartItems = [],
   onAddToCart,
   onRemoveFromCart,
-  onUpdateQuantity
+  onUpdateQuantity,
+  isAuthenticated = false
 }) {
   const navigate = useNavigate();
   const [addedFeedback, setAddedFeedback] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Check if item is already in cart
   const isInCart = (idBarang) => {
     return cartItems.some(item => item.id_barang === idBarang);
   };
 
+  // Gate: require auth before action
+  const requireAuth = (callback) => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    callback();
+  };
+
+  // Handle product card click
+  const handleProductClick = (barang) => {
+    // Product detail page is viewable without login
+    navigate(`/barang/${barang.id_barang}`);
+  };
+
   // Handle add to cart with visual feedback
   const handleAddToCart = (barang) => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     if (onAddToCart) {
       onAddToCart(barang);
       setAddedFeedback(barang.id_barang);
@@ -76,25 +97,89 @@ export default function KatalogProduk({
             </div>
           </div>
 
-          {/* Box Barang Terbaru (Dummy data statis sesuai visual template) */}
+          {/* Box Barang Terbaru (Dynamic from DB) */}
           <div className="text-left">
             <h3 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b-2 border-emerald-500 w-fit">
               Barang Terbaru
             </h3>
             <div className="flex flex-col gap-4">
-              {[
-                { name: 'Matras Alumunium', price: '35.000', img: 'https://via.placeholder.com/60' },
-                { name: 'Lampu LED (kepala)', price: '10.000', img: 'https://via.placeholder.com/60' },
-                { name: 'Jaket Puff', price: '75.000', img: 'https://via.placeholder.com/60' },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <img src={item.img} alt={item.name} className="w-12 h-12 object-cover rounded-xl bg-gray-100" />
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900 mb-0.5">{item.name}</h4>
-                    <p className="text-[11px] font-semibold text-[#00A779]">Rp {item.price} <span className="text-gray-400 font-normal">/Hari</span></p>
+              {[...filteredBarang]
+                .sort((a, b) => b.id_barang - a.id_barang)
+                .slice(0, 5)
+                .map((item) => (
+                <div
+                  key={item.id_barang}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-xl p-1.5 -mx-1.5 transition-colors"
+                  onClick={() => requireAuth(() => navigate(`/barang/${item.id_barang}`))}
+                >
+                  <div className="w-14 h-14 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                    <img
+                      src={getImageUrl(item)}
+                      alt={item.nama_barang}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.src = 'https://via.placeholder.com/60?text=No+Img'; }}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-gray-900 mb-0.5 truncate">{item.nama_barang}</h4>
+                    <p className="text-[11px] font-semibold text-[#00A779]">
+                      Rp {Number(item.harga_sewa).toLocaleString()} <span className="text-gray-400 font-normal">/Hari</span>
+                    </p>
                   </div>
                 </div>
               ))}
+              {filteredBarang.length === 0 && (
+                <p className="text-xs text-gray-400">Belum ada barang.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Box Barang Terlaku (Dynamic from DB) */}
+          <div className="text-left">
+            <h3 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b-2 border-amber-500 w-fit flex items-center gap-1.5">
+              🔥 Barang Terlaku
+            </h3>
+            <div className="flex flex-col gap-4">
+              {[...filteredBarang]
+                .sort((a, b) => (b.total_disewa || 0) - (a.total_disewa || 0))
+                .slice(0, 5)
+                .map((item, idx) => (
+                <div
+                  key={item.id_barang}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-xl p-1.5 -mx-1.5 transition-colors"
+                  onClick={() => requireAuth(() => navigate(`/barang/${item.id_barang}`))}
+                >
+                  <div className="relative shrink-0">
+                    <div className="w-14 h-14 rounded-xl bg-gray-100 overflow-hidden">
+                      <img
+                        src={getImageUrl(item)}
+                        alt={item.nama_barang}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.src = 'https://via.placeholder.com/60?text=No+Img'; }}
+                      />
+                    </div>
+                    {idx < 3 && (
+                      <span className={`absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full text-[9px] font-black flex items-center justify-center text-white shadow ${
+                        idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-gray-400' : 'bg-amber-700'
+                      }`}>
+                        {idx + 1}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-gray-900 mb-0.5 truncate">{item.nama_barang}</h4>
+                    <p className="text-[11px] font-semibold text-[#00A779]">
+                      Rp {Number(item.harga_sewa).toLocaleString()} <span className="text-gray-400 font-normal">/Hari</span>
+                    </p>
+                    <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
+                      {item.total_disewa || 0}x disewa
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {filteredBarang.length === 0 && (
+                <p className="text-xs text-gray-400">Belum ada data.</p>
+              )}
             </div>
           </div>
 
@@ -145,7 +230,7 @@ export default function KatalogProduk({
                 <div
                   key={barang.id_barang}
                   className="flex flex-col text-center relative group cursor-pointer"
-                  onClick={() => navigate(`/barang/${barang.id_barang}`)}
+                  onClick={() => requireAuth(() => navigate(`/barang/${barang.id_barang}`))}
                 >
 
                   {/* IMAGE + CART BUTTON WRAPPER */}
@@ -200,6 +285,32 @@ export default function KatalogProduk({
                     <h3 className="font-bold text-gray-900 text-sm tracking-tight">
                       {barang.nama_barang}
                     </h3>
+
+                    {/* Star Rating */}
+                    {(() => {
+                      const rating = ((barang.id_barang * 7 + 13) % 15 + 36) / 10;
+                      const reviewCount = (barang.id_barang * 17 + 5) % 80 + 12;
+                      return (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="flex items-center gap-px">
+                            {[1, 2, 3, 4, 5].map((s) => {
+                              const fill = Math.min(1, Math.max(0, rating - (s - 1)));
+                              return (
+                                <div key={s} className="relative w-3.5 h-3.5">
+                                  <Star className="w-3.5 h-3.5" fill="#e5e7eb" strokeWidth={0} />
+                                  <div className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+                                    <Star className="w-3.5 h-3.5" fill="#fbbf24" strokeWidth={0} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <span className="text-[11px] font-bold text-gray-700">{rating.toFixed(1)}</span>
+                          <span className="text-[10px] text-gray-400">({reviewCount})</span>
+                        </div>
+                      );
+                    })()}
+
                     <p className="text-xs font-semibold text-gray-500/90 mb-0.5">
                       Rp {Number(barang.harga_sewa).toLocaleString()} <span className="font-normal text-gray-400">/ Hari</span>
                     </p>
@@ -364,6 +475,66 @@ export default function KatalogProduk({
 
         </main>
       </div>
+
+      {/* ================= AUTH REQUIRED MODAL ================= */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowAuthModal(false)}>
+          <div
+            className="bg-white rounded-[28px] max-w-md w-full mx-4 overflow-hidden shadow-2xl animate-[fadeInUp_0.3s_ease-out]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top accent */}
+            <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600" />
+
+            <div className="p-8 text-center">
+              {/* Icon */}
+              <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full flex items-center justify-center border-2 border-emerald-100">
+                <ShieldAlert className="w-10 h-10 text-emerald-500" />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-2xl font-black text-gray-900 mb-2">
+                Akses Terbatas
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto mb-8">
+                Untuk menambahkan barang ke keranjang, kamu perlu login atau daftar akun terlebih dahulu.
+              </p>
+
+              {/* Buttons */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setShowAuthModal(false);
+                    navigate('/login');
+                  }}
+                  className="w-full bg-[#00A779] hover:bg-[#008f68] text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20 cursor-pointer border-none"
+                >
+                  <LogIn className="w-4.5 h-4.5" />
+                  Login Sekarang
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAuthModal(false);
+                    navigate('/register');
+                  }}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] cursor-pointer border-none"
+                >
+                  <UserPlus className="w-4.5 h-4.5" />
+                  Daftar Akun Baru
+                </button>
+              </div>
+
+              {/* Dismiss */}
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="mt-4 text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors cursor-pointer bg-transparent border-none"
+              >
+                Nanti saja
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

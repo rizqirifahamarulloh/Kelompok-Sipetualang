@@ -18,10 +18,18 @@ import {
   XCircle,
   AlertTriangle,
   Package,
-  ImageIcon,
   Loader2,
-  FileText,
-  Banknote
+  Banknote,
+  Truck,
+  MapPin,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Info,
+  Receipt,
+  ShieldCheck,
+  CreditCard,
+  Building2,
+  User as UserIcon,
 } from "lucide-react";
 
 const REFUND_STATUS_LABELS = {
@@ -42,6 +50,9 @@ const STATUS_MAP = {
   ditolak: { label: "Ditolak", color: "bg-red-100 text-red-800 border-red-200", icon: XCircle },
 };
 
+const formatRupiah = (val) =>
+  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(val || 0);
+
 export default function PengembalianPage() {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
@@ -55,6 +66,11 @@ export default function PengembalianPage() {
   const [alasan, setAlasan] = useState("");
   const [photos, setPhotos] = useState([]);
   const [photoPreviews, setPhotoPreviews] = useState([]);
+  const [metodePengembalian, setMetodePengembalian] = useState("pickup");
+  const [alamatPengembalian, setAlamatPengembalian] = useState("");
+  const [namaBank, setNamaBank] = useState("");
+  const [noRekening, setNoRekening] = useState("");
+  const [atasNamaRekening, setAtasNamaRekening] = useState("");
 
   const getPhotoUrl = () => getStorageUrl(user?.profile_photo);
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || "U";
@@ -75,15 +91,20 @@ export default function PengembalianPage() {
   const fetchTransactions = async () => {
     try {
       const res = await api.get("/customer/transaksi/sebagai-penyewa");
-      // Filter: only delivery transactions
-      const deliveryTx = (res.data.data || []).filter(
-        (tx) => tx.metode_pengiriman === "delivery"
-      );
-      setTransactions(deliveryTx);
+      setTransactions(res.data.data || []);
     } catch (err) {
       console.error(err);
     }
   };
+
+  // Filter out transactions that already have pending/approved refund requests
+  const availableTransactions = transactions.filter((tx) => {
+    return !requests.some(
+      (req) =>
+        req.id_transaksi === tx.id_transaksi &&
+        (req.status === "pending" || req.status === "disetujui")
+    );
+  });
 
   useEffect(() => {
     fetchRequests();
@@ -123,12 +144,35 @@ export default function PengembalianPage() {
       toast.error("Upload minimal 1 foto bukti");
       return;
     }
+    if (metodePengembalian === "delivery" && !alamatPengembalian.trim()) {
+      toast.error("Alamat pengembalian wajib diisi untuk metode delivery");
+      return;
+    }
+    if (!namaBank.trim()) {
+      toast.error("Nama bank wajib diisi");
+      return;
+    }
+    if (!noRekening.trim()) {
+      toast.error("Nomor rekening wajib diisi");
+      return;
+    }
+    if (!atasNamaRekening.trim()) {
+      toast.error("Nama pemilik rekening wajib diisi");
+      return;
+    }
 
     try {
       setSubmitting(true);
       const formData = new FormData();
       formData.append("id_transaksi", selectedTransaksi);
       formData.append("alasan", alasan);
+      formData.append("metode_pengembalian", metodePengembalian);
+      formData.append("nama_bank", namaBank);
+      formData.append("no_rekening", noRekening);
+      formData.append("atas_nama_rekening", atasNamaRekening);
+      if (metodePengembalian === "delivery") {
+        formData.append("alamat_pengembalian", alamatPengembalian);
+      }
       photos.forEach((photo) => {
         formData.append("foto_bukti[]", photo);
       });
@@ -154,6 +198,11 @@ export default function PengembalianPage() {
     setAlasan("");
     setPhotos([]);
     setPhotoPreviews([]);
+    setMetodePengembalian("pickup");
+    setAlamatPengembalian("");
+    setNamaBank("");
+    setNoRekening("");
+    setAtasNamaRekening("");
   };
 
   return (
@@ -181,7 +230,7 @@ export default function PengembalianPage() {
                     <div>
                       <CardTitle className="text-lg">Pengajuan Pengembalian</CardTitle>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Ajukan pengembalian barang yang tidak sesuai kondisi (khusus delivery)
+                        Ajukan pengembalian barang yang tidak sesuai kondisi
                       </p>
                     </div>
                   </div>
@@ -208,7 +257,7 @@ export default function PengembalianPage() {
                     </div>
                     <h3 className="font-semibold text-gray-700">Belum ada pengajuan</h3>
                     <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
-                      Jika barang yang Anda terima via delivery tidak sesuai kondisi, Anda dapat mengajukan pengembalian.
+                      Jika barang yang Anda terima tidak sesuai kondisi, Anda dapat mengajukan pengembalian.
                     </p>
                   </div>
                 ) : (
@@ -225,10 +274,22 @@ export default function PengembalianPage() {
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
                                 <Badge className={`text-[10px] font-bold border ${statusCfg.color}`}>
                                   <StatusIcon className="w-3 h-3 mr-1" />
                                   {statusCfg.label}
+                                </Badge>
+                                {/* Metode pengembalian badge */}
+                                <Badge className={`text-[10px] font-bold border ${
+                                  req.metode_pengembalian === 'delivery'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                    : 'bg-gray-50 text-gray-600 border-gray-200'
+                                }`}>
+                                  {req.metode_pengembalian === 'delivery' ? (
+                                    <><Truck className="w-3 h-3 mr-1" /> Delivery</>
+                                  ) : (
+                                    <><MapPin className="w-3 h-3 mr-1" /> Pickup</>
+                                  )}
                                 </Badge>
                                 <span className="text-[10px] text-muted-foreground">
                                   {new Date(req.created_at).toLocaleDateString("id-ID", {
@@ -248,6 +309,28 @@ export default function PengembalianPage() {
                                 <strong>Alasan:</strong> {req.alasan}
                               </p>
 
+                              {/* Alamat pengembalian */}
+                              {req.metode_pengembalian === 'delivery' && req.alamat_pengembalian && (
+                                <div className="mt-2 flex items-start gap-1.5 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                                  <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                  <span>{req.alamat_pengembalian}</span>
+                                </div>
+                              )}
+
+                              {/* Info Rekening */}
+                              {req.nama_bank && req.no_rekening && (
+                                <div className="mt-2 flex items-start gap-2 text-xs bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-100">
+                                  <CreditCard className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-500" />
+                                  <div className="text-emerald-700">
+                                    <span className="font-bold">{req.nama_bank}</span>
+                                    <span className="mx-1">•</span>
+                                    <span className="font-mono">{req.no_rekening}</span>
+                                    <span className="mx-1">•</span>
+                                    <span>a.n. {req.atas_nama_rekening}</span>
+                                  </div>
+                                </div>
+                              )}
+
                               {req.catatan_admin && (
                                 <div className={`mt-3 px-3 py-2 rounded-lg text-xs ${
                                   req.status === "disetujui"
@@ -258,21 +341,87 @@ export default function PengembalianPage() {
                                 </div>
                               )}
 
-                              {/* Refund Info */}
+                              {/* Dynamic Refund Breakdown */}
                               {req.status === 'disetujui' && req.jumlah_refund > 0 && (
-                                <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                                  <div className="flex items-center gap-1.5 mb-2">
-                                    <Banknote className="w-3.5 h-3.5 text-emerald-600" />
-                                    <span className="text-xs font-bold text-emerald-700">Informasi Refund</span>
+                                <div className="mt-3 bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4">
+                                  <div className="flex items-center gap-1.5 mb-3">
+                                    <Receipt className="w-4 h-4 text-emerald-600" />
+                                    <span className="text-xs font-bold text-emerald-700">Rincian Refund Dinamis</span>
                                   </div>
-                                  <div className="grid grid-cols-2 gap-2 text-xs">
-                                    <div>
-                                      <span className="text-gray-400">Jumlah:</span>
-                                      <p className="font-bold text-emerald-700">Rp {Number(req.jumlah_refund).toLocaleString('id-ID')}</p>
+
+                                  {/* Breakdown Items */}
+                                  <div className="space-y-2 text-xs">
+                                    {req.sisa_hari_sewa != null && (
+                                      <div className="flex items-center justify-between text-gray-600">
+                                        <span className="flex items-center gap-1.5">
+                                          <Clock className="w-3 h-3 text-gray-400" />
+                                          Sisa Hari Sewa
+                                        </span>
+                                        <span className="font-bold">{req.sisa_hari_sewa} hari</span>
+                                      </div>
+                                    )}
+
+                                    {req.refund_sewa > 0 && (
+                                      <div className="flex items-center justify-between text-emerald-700">
+                                        <span className="flex items-center gap-1.5">
+                                          <ArrowDownToLine className="w-3 h-3" />
+                                          Refund Sewa (proporsional)
+                                        </span>
+                                        <span className="font-bold">+ {formatRupiah(req.refund_sewa)}</span>
+                                      </div>
+                                    )}
+
+                                    {req.refund_deposit > 0 && (
+                                      <div className="flex items-center justify-between text-emerald-700">
+                                        <span className="flex items-center gap-1.5">
+                                          <ShieldCheck className="w-3 h-3" />
+                                          Pengembalian Deposit
+                                        </span>
+                                        <span className="font-bold">+ {formatRupiah(req.refund_deposit)}</span>
+                                      </div>
+                                    )}
+
+                                    {req.potongan_admin_fee > 0 && (
+                                      <div className="flex items-center justify-between text-rose-600">
+                                        <span className="flex items-center gap-1.5">
+                                          <ArrowUpFromLine className="w-3 h-3" />
+                                          Potongan Admin Fee
+                                        </span>
+                                        <span className="font-bold">- {formatRupiah(req.potongan_admin_fee)}</span>
+                                      </div>
+                                    )}
+
+                                    {/* Ongkir (ditanggung admin) */}
+                                    {req.metode_pengembalian === 'delivery' && Number(req.biaya_ongkir_pengembalian) > 0 && (
+                                      <div className="flex items-center justify-between text-blue-600 bg-blue-50/60 px-2 py-1.5 rounded-lg -mx-1">
+                                        <span className="flex items-center gap-1.5">
+                                          <Truck className="w-3 h-3" />
+                                          Ongkir Pengembalian
+                                        </span>
+                                        <span className="font-bold text-[10px]">
+                                          {formatRupiah(req.biaya_ongkir_pengembalian)}
+                                          <span className="text-blue-400 ml-1 font-normal">(ditanggung admin)</span>
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {/* Total */}
+                                    <div className="border-t border-emerald-200 pt-2 mt-2 flex items-center justify-between">
+                                      <span className="font-bold text-gray-900 flex items-center gap-1.5">
+                                        <Banknote className="w-3.5 h-3.5 text-emerald-600" />
+                                        Total Refund
+                                      </span>
+                                      <span className="font-black text-base text-emerald-700">
+                                        {formatRupiah(req.jumlah_refund)}
+                                      </span>
                                     </div>
+                                  </div>
+
+                                  {/* Refund status & method */}
+                                  <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-emerald-200 text-xs">
                                     <div>
                                       <span className="text-gray-400">Status:</span>
-                                      <Badge className={`text-[9px] font-bold border mt-0.5 ${REFUND_STATUS_COLORS[req.status_refund] || REFUND_STATUS_COLORS.belum_refund}`}>
+                                      <Badge className={`text-[9px] font-bold border mt-0.5 block w-fit ${REFUND_STATUS_COLORS[req.status_refund] || REFUND_STATUS_COLORS.belum_refund}`}>
                                         {REFUND_STATUS_LABELS[req.status_refund] || 'Belum Direfund'}
                                       </Badge>
                                     </div>
@@ -289,6 +438,7 @@ export default function PengembalianPage() {
                                       </div>
                                     )}
                                   </div>
+
                                   {req.bukti_refund && (
                                     <div className="mt-3 pt-3 border-t border-emerald-200">
                                       <span className="text-xs text-gray-400 block mb-1.5">Bukti Transfer dari Admin:</span>
@@ -365,9 +515,9 @@ export default function PengembalianPage() {
                   <AlertTriangle className="w-3.5 h-3.5" /> Syarat Pengajuan:
                 </p>
                 <ul className="list-disc list-inside space-y-0.5 text-amber-600">
-                  <li>Hanya untuk pesanan dengan metode <strong>delivery</strong></li>
                   <li>Upload minimal 1 foto bukti kondisi barang</li>
                   <li>Jelaskan alasan pengembalian secara detail</li>
+                  <li>Pilih metode pengembalian (pickup atau delivery)</li>
                 </ul>
               </div>
 
@@ -379,20 +529,172 @@ export default function PengembalianPage() {
                 <select
                   value={selectedTransaksi}
                   onChange={(e) => setSelectedTransaksi(e.target.value)}
-                  className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-background"
                 >
-                  <option value="">-- Pilih transaksi delivery --</option>
-                  {transactions.map((tx) => (
+                  <option value="">-- Pilih transaksi --</option>
+                  {availableTransactions.map((tx) => (
                     <option key={tx.id_transaksi} value={tx.id_transaksi}>
                       {tx.nama_barang} — Rp {Number(tx.total_biaya).toLocaleString()} ({new Date(tx.created_at).toLocaleDateString("id-ID")})
                     </option>
                   ))}
                 </select>
-                {transactions.length === 0 && (
+                {availableTransactions.length === 0 && (
                   <p className="text-[11px] text-gray-400 mt-1">
-                    Tidak ada transaksi delivery yang tersedia
+                    Tidak ada transaksi yang tersedia untuk diajukan pengembalian
                   </p>
                 )}
+              </div>
+
+              {/* Metode Pengembalian */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Metode Pengembalian Barang *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Pickup */}
+                  <button
+                    type="button"
+                    onClick={() => setMetodePengembalian("pickup")}
+                    className={`relative flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
+                      metodePengembalian === "pickup"
+                        ? "border-amber-500 bg-amber-50 shadow-md"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    {metodePengembalian === "pickup" && (
+                      <div className="absolute top-2 right-2 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    )}
+                    <MapPin className={`w-7 h-7 mb-2 ${metodePengembalian === "pickup" ? "text-amber-600" : "text-gray-400"}`} />
+                    <span className={`text-sm font-bold ${metodePengembalian === "pickup" ? "text-amber-700" : "text-gray-600"}`}>
+                      Pickup
+                    </span>
+                    <span className="text-[10px] text-gray-400 mt-0.5 text-center">Antar sendiri ke lokasi</span>
+                  </button>
+
+                  {/* Delivery */}
+                  <button
+                    type="button"
+                    onClick={() => setMetodePengembalian("delivery")}
+                    className={`relative flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
+                      metodePengembalian === "delivery"
+                        ? "border-blue-500 bg-blue-50 shadow-md"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    {metodePengembalian === "delivery" && (
+                      <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    )}
+                    <Truck className={`w-7 h-7 mb-2 ${metodePengembalian === "delivery" ? "text-blue-600" : "text-gray-400"}`} />
+                    <span className={`text-sm font-bold ${metodePengembalian === "delivery" ? "text-blue-700" : "text-gray-600"}`}>
+                      Delivery
+                    </span>
+                    <span className="text-[10px] text-gray-400 mt-0.5 text-center">Dikirim via kurir</span>
+                  </button>
+                </div>
+
+                {/* Delivery info */}
+                {metodePengembalian === "delivery" && (
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700 flex items-start gap-2">
+                    <Info className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                    <div>
+                      <p className="font-bold">Ongkir ditanggung admin</p>
+                      <p className="text-blue-500 mt-0.5">
+                        Biaya pengiriman pengembalian barang akan ditanggung sepenuhnya oleh admin. Anda tidak perlu membayar ongkir.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Alamat Pengembalian (if delivery) */}
+              {metodePengembalian === "delivery" && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                    Alamat Pengambilan Barang *
+                  </label>
+                  <textarea
+                    value={alamatPengembalian}
+                    onChange={(e) => setAlamatPengembalian(e.target.value)}
+                    rows={3}
+                    placeholder="Masukkan alamat lengkap tempat kurir akan mengambil barang..."
+                    className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-background"
+                  />
+                </div>
+              )}
+
+              {/* Informasi Rekening */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Informasi Rekening untuk Refund *
+                </label>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start gap-2 text-xs text-emerald-700 mb-1">
+                    <CreditCard className="w-4 h-4 mt-0.5 shrink-0 text-emerald-500" />
+                    <p>Masukkan informasi rekening Anda agar admin dapat mentransfer dana refund.</p>
+                  </div>
+
+                  {/* Nama Bank */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5 block">
+                      <Building2 className="w-3 h-3" /> Nama Bank
+                    </label>
+                    <select
+                      value={namaBank}
+                      onChange={(e) => setNamaBank(e.target.value)}
+                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                    >
+                      <option value="">-- Pilih Bank --</option>
+                      <option value="BCA">BCA</option>
+                      <option value="BNI">BNI</option>
+                      <option value="BRI">BRI</option>
+                      <option value="Mandiri">Mandiri</option>
+                      <option value="BSI">BSI</option>
+                      <option value="CIMB Niaga">CIMB Niaga</option>
+                      <option value="Permata">Permata</option>
+                      <option value="Danamon">Danamon</option>
+                      <option value="BTPN">BTPN</option>
+                      <option value="Jago">Jago</option>
+                      <option value="SeaBank">SeaBank</option>
+                      <option value="DANA">DANA</option>
+                      <option value="OVO">OVO</option>
+                      <option value="GoPay">GoPay</option>
+                      <option value="ShopeePay">ShopeePay</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                  </div>
+
+                  {/* No Rekening */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5 block">
+                      <CreditCard className="w-3 h-3" /> Nomor Rekening / E-Wallet
+                    </label>
+                    <input
+                      type="text"
+                      value={noRekening}
+                      onChange={(e) => setNoRekening(e.target.value)}
+                      placeholder="Contoh: 1234567890"
+                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                    />
+                  </div>
+
+                  {/* Atas Nama */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5 block">
+                      <UserIcon className="w-3 h-3" /> Atas Nama
+                    </label>
+                    <input
+                      type="text"
+                      value={atasNamaRekening}
+                      onChange={(e) => setAtasNamaRekening(e.target.value)}
+                      placeholder="Nama pemilik rekening sesuai buku tabungan"
+                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Alasan */}
@@ -405,7 +707,7 @@ export default function PengembalianPage() {
                   onChange={(e) => setAlasan(e.target.value)}
                   rows={4}
                   placeholder="Jelaskan kondisi barang yang tidak sesuai, misalnya: barang rusak, tidak lengkap, berbeda dari deskripsi..."
-                  className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                  className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none bg-background"
                 />
                 <p className="text-[11px] text-gray-400 mt-1">{alasan.length}/1000 karakter (min. 10)</p>
               </div>

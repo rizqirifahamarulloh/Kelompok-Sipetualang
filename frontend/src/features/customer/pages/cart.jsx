@@ -6,6 +6,7 @@ import api from "@/services/api";
 import { getStorageUrl } from "@/utils/storageUrl";
 import Navbar from "@/features/landing/components/Navbar";
 import Footer from "@/features/landing/components/Footer";
+import bannerBg from '@/assets/sewaalat/banner BG.png';
 import KtpVerificationModal from "@/components/KtpVerificationModal";
 
 import {
@@ -443,7 +444,7 @@ export default function CartPage() {
   // LOADING
   if (isLoading) {
     return (
-      <div className="bg-[#f5f7fb] min-h-screen">
+      <div className="bg-white min-h-screen">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -459,7 +460,7 @@ export default function CartPage() {
   // BELUM LOGIN
   if (!user) {
     return (
-      <div className="bg-[#f5f7fb] min-h-screen">
+      <div className="bg-white min-h-screen">
         <Navbar />
         <div className="min-h-screen flex items-center justify-center px-5">
           <div className="bg-white p-10 rounded-[30px] shadow-xl text-center max-w-md w-full">
@@ -479,7 +480,7 @@ export default function CartPage() {
   // CART KOSONG
   if (cart.length === 0) {
     return (
-      <div className="bg-[#f5f7fb] min-h-screen">
+      <div className="bg-white min-h-screen">
         <Navbar />
         <div className="min-h-screen flex items-center justify-center px-5">
           <div className="bg-white p-10 rounded-[30px] shadow-xl text-center max-w-md w-full">
@@ -497,13 +498,50 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-[#f5f7fb] min-h-screen">
+    <div className="bg-white min-h-screen">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-32 pb-20">
-        <div className="mb-10">
-          <h1 className="text-4xl font-black text-gray-900 mb-2">Keranjang Rental</h1>
-          <p className="text-gray-500 text-sm">Kelola barang rental sebelum lanjut pembayaran.</p>
+
+      {/* HERO BANNER */}
+      <section
+        className="relative w-full bg-white"
+        style={{ padding: '16px 16px 0 16px' }}
+      >
+        <div className="relative w-full">
+          <div className="relative w-full h-[300px] md:h-[600px] rounded-[16px] md:rounded-[24px] overflow-hidden">
+            <img
+              src={bannerBg}
+              alt="Cart Banner"
+              className="w-full h-full object-cover object-center block"
+            />
+            <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+            <div className="absolute inset-0 z-[1] flex items-center justify-center">
+              <h1 className="text-[40px] md:text-[60px] font-extrabold text-white leading-none tracking-tight select-none text-center" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+                Keranjang Rental
+              </h1>
+            </div>
+          </div>
+          {/* Breadcrumb */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 flex items-end">
+            <div className="w-[20px] h-[20px] bg-transparent" style={{ boxShadow: '8px 8px 0 8px white', borderRadius: '0 0 16px 0' }} />
+            <div className="bg-white px-12 py-3 rounded-t-[18px]">
+              <div className="flex items-center gap-2 text-[13px] font-medium text-gray-400 whitespace-nowrap">
+                <Link to="/" className="hover:text-emerald-500 transition-colors no-underline text-gray-400">
+                  Home
+                </Link>
+                <span className="text-gray-300 font-light">&gt;</span>
+                <Link to="/sewa-alat" className="hover:text-emerald-500 transition-colors no-underline text-gray-400">
+                  Sewa Alat
+                </Link>
+                <span className="text-gray-300 font-light">&gt;</span>
+                <span className="text-gray-700 font-semibold">Keranjang</span>
+              </div>
+            </div>
+            <div className="w-[20px] h-[20px] bg-transparent" style={{ boxShadow: '-8px 8px 0 8px white', borderRadius: '0 0 0 16px' }} />
+          </div>
         </div>
+      </section>
+
+      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-10 pb-20">
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
           {/* LEFT */}

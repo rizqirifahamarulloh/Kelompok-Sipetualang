@@ -332,7 +332,7 @@ export default function ChatPage() {
   if (!user) {
     return (
       <div className="landing-scrollbar">
-        <Navbar />
+        <Navbar forceScrolled={true} />
 
         <div className="min-h-screen flex items-center justify-center pt-32 px-4 bg-gray-50">
           <div className="bg-white rounded-3xl shadow-xl p-10 text-center max-w-md w-full border">
@@ -366,7 +366,7 @@ export default function ChatPage() {
   if (isLoading) {
     return (
       <div className="landing-scrollbar">
-        <Navbar />
+        <Navbar forceScrolled={true} />
 
         <div className="min-h-screen flex items-center justify-center pt-32 bg-gray-50">
           <div className="text-center">
@@ -382,7 +382,7 @@ export default function ChatPage() {
 
   return (
     <div className="landing-scrollbar bg-gray-100 min-h-screen">
-      <Navbar />
+      <Navbar forceScrolled={true} />
 
       <main className="container mx-auto px-3 sm:px-4 pt-28 pb-10">
         <div className="bg-white rounded-[28px] overflow-hidden shadow-2xl border border-gray-100 h-[calc(100vh-140px)]">

@@ -47,7 +47,8 @@ class PenggunaSeeder extends Seeder
                 'kota' => 'Jakarta',
                 'password' => Hash::make('password'),
                 'no_telp' => '081234567891',
-                'peran_pengguna' => 'customer',
+                'peran_pengguna' => 'perental',
+                'rental' => 'true',
             ]
         );
     }

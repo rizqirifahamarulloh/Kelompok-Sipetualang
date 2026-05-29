@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import Navbar from '@/features/customer/components/Navbar'
+import Navbar from '@/features/landing/components/Navbar'
 import api, { BASE_URL } from '@/services/api'
 import { getStorageUrl } from '@/utils/storageUrl'
 import { toast } from 'sonner'
@@ -637,7 +637,8 @@ export default function DashboardRental() {
       }
     } catch (err) {
       console.error(err)
-      toast.error('Gagal menghapus barang.')
+      const msg = err.response?.data?.message || 'Gagal menghapus barang.'
+      toast.error(msg)
     }
   }
 
@@ -854,7 +855,7 @@ export default function DashboardRental() {
   return (
     <>
       {/* Top Navbar with integrated notification + chat */}
-      <Navbar rentalMode={true} additionalNotifications={localNotifications} />
+      <Navbar rentalMode={true} additionalNotifications={localNotifications} forceScrolled={true} />
 
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-emerald-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/10 pt-20">
         <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -1727,6 +1728,18 @@ export default function DashboardRental() {
                                     <Badge className={`text-[10px] font-bold border-0 ${statusColors[req.status] || statusColors.pending}`}>
                                       {statusLabel[req.status] || req.status}
                                     </Badge>
+                                    {/* Metode pengembalian badge */}
+                                    <Badge className={`text-[10px] font-bold border-0 ${
+                                      req.metode_pengembalian === 'delivery'
+                                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                    }`}>
+                                      {req.metode_pengembalian === 'delivery' ? (
+                                        <><Truck className="size-3 mr-1" /> Delivery</>
+                                      ) : (
+                                        <><Store className="size-3 mr-1" /> Pickup</>
+                                      )}
+                                    </Badge>
                                     <span className="text-[10px] text-muted-foreground">
                                       {new Date(req.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                     </span>
@@ -1768,6 +1781,34 @@ export default function DashboardRental() {
                                 </div>
                               </div>
 
+                              {/* Alamat Pengembalian (delivery) */}
+                              {req.metode_pengembalian === 'delivery' && req.alamat_pengembalian && (
+                                <div className="flex items-start gap-2 text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-900">
+                                  <Truck className="size-3.5 mt-0.5 shrink-0" />
+                                  <div>
+                                    <span className="font-bold">Alamat Pengambilan:</span>
+                                    <p className="mt-0.5">{req.alamat_pengembalian}</p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Info Rekening Customer */}
+                              {req.nama_bank && req.no_rekening && (
+                                <div className="flex items-start gap-2 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-4 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900">
+                                  <DollarSign className="size-3.5 mt-0.5 shrink-0" />
+                                  <div>
+                                    <span className="font-bold">Rekening Refund:</span>
+                                    <p className="mt-0.5">
+                                      <span className="font-bold">{req.nama_bank}</span>
+                                      <span className="mx-1">•</span>
+                                      <span className="font-mono">{req.no_rekening}</span>
+                                      <span className="mx-1">•</span>
+                                      <span>a.n. {req.atas_nama_rekening}</span>
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Admin Note */}
                               {req.catatan_admin && (
                                 <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-200 dark:border-amber-900 rounded-xl px-4 py-2 text-sm">
@@ -1776,20 +1817,72 @@ export default function DashboardRental() {
                                 </div>
                               )}
 
-                              {/* Refund Info */}
+                              {/* Dynamic Refund Breakdown */}
                               {req.status === 'disetujui' && (
                                 <div className="bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900 rounded-xl p-4 space-y-2">
                                   <div className="flex items-center gap-2 mb-2">
                                     <DollarSign className="size-4 text-emerald-600" />
-                                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Informasi Refund</span>
+                                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Rincian Refund Dinamis</span>
                                   </div>
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                                    <div>
-                                      <span className="text-muted-foreground">Jumlah Refund:</span>
-                                      <p className="font-bold text-rose-600 dark:text-rose-400 text-sm">
+
+                                  {/* Breakdown line items */}
+                                  <div className="space-y-1.5 text-xs">
+                                    {req.sisa_hari_sewa != null && (
+                                      <div className="flex items-center justify-between text-muted-foreground">
+                                        <span className="flex items-center gap-1.5">
+                                          <Clock className="size-3" />
+                                          Sisa Hari Sewa
+                                        </span>
+                                        <span className="font-bold text-foreground">{req.sisa_hari_sewa} hari</span>
+                                      </div>
+                                    )}
+
+                                    {Number(req.refund_sewa) > 0 && (
+                                      <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                                        <span>Refund Sewa (proporsional)</span>
+                                        <span className="font-bold">+ {formatRupiah(req.refund_sewa)}</span>
+                                      </div>
+                                    )}
+
+                                    {Number(req.refund_deposit) > 0 && (
+                                      <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                                        <span>Pengembalian Deposit</span>
+                                        <span className="font-bold">+ {formatRupiah(req.refund_deposit)}</span>
+                                      </div>
+                                    )}
+
+                                    {Number(req.potongan_admin_fee) > 0 && (
+                                      <div className="flex items-center justify-between text-rose-600 dark:text-rose-400">
+                                        <span>Potongan Admin Fee</span>
+                                        <span className="font-bold">- {formatRupiah(req.potongan_admin_fee)}</span>
+                                      </div>
+                                    )}
+
+                                    {/* Ongkir (ditanggung admin) */}
+                                    {req.metode_pengembalian === 'delivery' && Number(req.biaya_ongkir_pengembalian) > 0 && (
+                                      <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-2 py-1.5 rounded-lg -mx-1">
+                                        <span className="flex items-center gap-1.5">
+                                          <Truck className="size-3" />
+                                          Ongkir Pengembalian
+                                        </span>
+                                        <span className="font-bold text-[10px]">
+                                          {formatRupiah(req.biaya_ongkir_pengembalian)}
+                                          <span className="text-blue-400 dark:text-blue-500 ml-1 font-normal">(ditanggung admin)</span>
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {/* Total */}
+                                    <div className="border-t border-emerald-200 dark:border-emerald-800 pt-2 mt-2 flex items-center justify-between">
+                                      <span className="font-bold text-foreground">Total Refund</span>
+                                      <span className="font-black text-sm text-rose-600 dark:text-rose-400">
                                         -{formatRupiah(req.jumlah_refund)}
-                                      </p>
+                                      </span>
                                     </div>
+                                  </div>
+
+                                  {/* Refund status row */}
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800">
                                     <div>
                                       <span className="text-muted-foreground">Status Refund:</span>
                                       <Badge className={`text-[9px] font-bold border-0 mt-1 ${refundStatusColors[req.status_refund] || refundStatusColors.belum_refund}`}>
@@ -1809,6 +1902,7 @@ export default function DashboardRental() {
                                       </div>
                                     )}
                                   </div>
+
                                   {/* Bukti transfer dari admin */}
                                   {req.bukti_refund && (
                                     <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800">
@@ -1837,6 +1931,8 @@ export default function DashboardRental() {
 
         </div>
       </div>
+
+
 
       {/* Add Gear Modal */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
