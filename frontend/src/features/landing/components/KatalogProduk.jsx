@@ -148,52 +148,55 @@ export default function KatalogProduk({
                   onClick={() => navigate(`/barang/${barang.id_barang}`)}
                 >
 
-                  {/* CONTAINER GAMBAR DENGAN CEKUNGAN PUTIH */}
-                  <div className="relative aspect-[10/11] w-full rounded-[24px] bg-[#E9ECEF]/60 overflow-hidden flex items-center justify-center p-6 pb-8">
-                    <img
-                      src={getImageUrl(barang)}
-                      alt={barang.nama_barang}
-                      className="max-h-[80%] max-w-[85%] object-contain object-center transform group-hover:scale-105 transition-transform duration-500"
-                    />
+                  {/* IMAGE + CART BUTTON WRAPPER */}
+                  <div className="relative">
+                    {/* CONTAINER GAMBAR */}
+                    <div className="relative aspect-square w-full rounded-[24px] bg-[#E9ECEF]/60 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={getImageUrl(barang)}
+                        alt={barang.nama_barang}
+                        className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-500"
+                      />
 
-                    {/* Badge Rekomendasi */}
-                    <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide">
-                      Recomended
-                    </span>
-
-                    {/* Badge sudah di keranjang */}
-                    {isInCart(barang.id_barang) && (
-                      <span className="absolute top-4 right-4 bg-emerald-500 text-[9px] font-bold text-white px-2 py-1 rounded-full tracking-wide flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Di Keranjang
+                      {/* Badge Rekomendasi */}
+                      <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide">
+                        Recomended
                       </span>
-                    )}
 
-                    {/* CEKUNGAN PUTIH + TOMBOL KERANJANG DI TENGAH */}
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white w-16 h-8 rounded-t-[20px] flex items-center justify-center">
+                      {/* Badge sudah di keranjang */}
+                      {isInCart(barang.id_barang) && (
+                        <span className="absolute top-4 right-4 bg-emerald-500 text-[9px] font-bold text-white px-2 py-1 rounded-full tracking-wide flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Di Keranjang
+                        </span>
+                      )}
+                    </div>
+
+                    {/* TOMBOL KERANJANG — di luar overflow-hidden, overlap bottom edge */}
+                    <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-10">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddToCart(barang);
                         }}
-                        className={`absolute -top-3 w-10 h-10 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,167,121,0.2)] transition-all active:scale-95 border-none cursor-pointer ${
+                        className={`w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,167,121,0.25)] transition-all active:scale-95 border-[3px] border-white cursor-pointer ${
                           addedFeedback === barang.id_barang
                             ? 'bg-emerald-600 scale-110'
                             : isInCart(barang.id_barang)
-                              ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                              : 'bg-[#00A779] hover:bg-[#008f68] text-white'
+                              ? 'bg-emerald-700 hover:bg-emerald-800'
+                              : 'bg-[#00A779] hover:bg-[#008f68]'
                         }`}
                       >
                         {addedFeedback === barang.id_barang ? (
                           <Check className="w-5 h-5 text-white" />
                         ) : (
-                          <span className="text-sm">🛒</span>
+                          <ShoppingCart className="w-5 h-5 text-white" />
                         )}
                       </button>
                     </div>
                   </div>
 
                   {/* DETAIL TEKS BAWAH (Harga & Nama Toko Tetap Ada!) */}
-                  <div className="mt-4 flex flex-col items-center gap-1">
+                  <div className="mt-8 flex flex-col items-center gap-1">
                     <h3 className="font-bold text-gray-900 text-sm tracking-tight">
                       {barang.nama_barang}
                     </h3>

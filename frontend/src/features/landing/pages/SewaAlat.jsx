@@ -17,7 +17,7 @@ import bannerBg from '@/assets/sewaalat/banner BG.png';
 const DESTINATIONS = [
   // JAWA TIMUR
   { id: 1, name: 'Gunung Bromo', location: 'Probolinggo, Jawa Timur', keywords: ['bromo', 'gunung bromo'] },
-    { id: 2, name: 'Gunung Semeru', location: 'Lumajang, Jawa Timur', keywords: ['semeru', 'mahameru'] },
+  { id: 2, name: 'Gunung Semeru', location: 'Lumajang, Jawa Timur', keywords: ['semeru', 'mahameru'] },
   { id: 3, name: 'Gunung Ijen', location: 'Banyuwangi, Jawa Timur', keywords: ['ijen', 'kawah ijen'] },
   { id: 4, name: 'Gunung Kawi', location: 'Malang, Jawa Timur', keywords: ['kawi', 'gunung kawi'] },
   { id: 5, name: 'Gunung Arjuno', location: 'Pasuruan, Jawa Timur', keywords: ['arjuno', 'gunung arjuno'] },
@@ -31,7 +31,7 @@ const DESTINATIONS = [
   { id: 13, name: 'Pantai Balekambang', location: 'Malang, Jawa Timur', keywords: ['balekambang'] },
   { id: 14, name: 'Pantai Goa Cina', location: 'Malang, Jawa Timur', keywords: ['goa cina'] },
   { id: 15, name: 'Pantai Teluk Asmara', location: 'Malang, Jawa Timur', keywords: ['teluk asmara'] },
-  
+
   // JAWA TENGAH
   { id: 16, name: 'Gunung Merapi', location: 'Yogyakarta/Jawa Tengah', keywords: ['merapi', 'gunung merapi'] },
   { id: 17, name: 'Gunung Merbabu', location: 'Boyolali, Jawa Tengah', keywords: ['merbabu', 'gunung merbabu'] },
@@ -54,7 +54,7 @@ const DESTINATIONS = [
   { id: 34, name: 'Pantai Wediombo', location: 'Gunungkidul, Jogja', keywords: ['wediombo'] },
   { id: 35, name: 'Pantai Sadranan', location: 'Gunungkidul, Jogja', keywords: ['sadranan'] },
   { id: 36, name: 'Pantai Siung', location: 'Gunungkidul, Jogja', keywords: ['siung'] },
-  
+
   // JAWA BARAT
   { id: 37, name: 'Gunung Gede Pangrango', location: 'Bogor, Jawa Barat', keywords: ['gede', 'pangrango'] },
   { id: 38, name: 'Gunung Ciremai', location: 'Kuningan, Jawa Barat', keywords: ['ciremai', 'gunung ciremai'] },
@@ -71,7 +71,7 @@ const DESTINATIONS = [
   { id: 49, name: 'Pantai Carita', location: 'Pandeglang, Banten', keywords: ['carita'] },
   { id: 50, name: 'Pantai Anyer', location: 'Banten', keywords: ['anyer'] },
   { id: 51, name: 'Ujung Genteng', location: 'Sukabumi, Jawa Barat', keywords: ['ujung genteng'] },
-  
+
   // BALI & NUSA TENGGARA
   { id: 52, name: 'Gunung Agung', location: 'Bali', keywords: ['agung', 'gunung agung'] },
   { id: 53, name: 'Gunung Batur', location: 'Kintamani, Bali', keywords: ['batur', 'gunung batur'] },
@@ -90,7 +90,7 @@ const DESTINATIONS = [
   { id: 66, name: 'Pulau Padar', location: 'NTT', keywords: ['padar'] },
   { id: 67, name: 'Danau Toba', location: 'Medan, Sumut', keywords: ['toba', 'danau toba'] },
   { id: 68, name: 'Pulau Samosir', location: 'Danau Toba', keywords: ['samosir'] },
-  
+
   // SUMATRA
   { id: 69, name: 'Gunung Kerinci', location: 'Jambi, Sumatra', keywords: ['kerinci', 'gunung kerinci'] },
   { id: 70, name: 'Gunung Sinabung', location: 'Karo, Sumut', keywords: ['sinabung'] },
@@ -135,7 +135,7 @@ export default function SewaAlat() {
   // FILTER STATES
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedKategori, setSelectedKategori] = useState('');
-  
+
   // DESTINASI STATES (BARU)
   const [destinasiSearch, setDestinasiSearch] = useState('');
   const [showDestinasiDropdown, setShowDestinasiDropdown] = useState(false);
@@ -150,7 +150,7 @@ export default function SewaAlat() {
   // Filter destinasi berdasarkan pencarian
   const filteredDestinations = useMemo(() => {
     if (!destinasiSearch) return [];
-    return DESTINATIONS.filter(dest => 
+    return DESTINATIONS.filter(dest =>
       dest.name.toLowerCase().includes(destinasiSearch.toLowerCase()) ||
       dest.location.toLowerCase().includes(destinasiSearch.toLowerCase())
     );
@@ -220,7 +220,7 @@ export default function SewaAlat() {
     setSelectedDestinasi(destinasi);
     setDestinasiSearch(destinasi.name);
     setShowDestinasiDropdown(false);
-    
+
     // Rekomendasi alat berdasarkan destinasi
     const gearMapping = {
       'Gunung Ijen': ['Tenda', 'Sleeping Bag', 'Headlamp', 'Jaket Gunung', 'Trekking Pole'],
@@ -230,9 +230,9 @@ export default function SewaAlat() {
       'Hutan Pinus Pengger': ['Matras', 'Kursi Lipat', 'Power Bank', 'Tenda'],
       'Kawah Putih': ['Jaket', 'Masker', 'Kamera', 'Trekking Pole'],
     };
-    
+
     const keywords = gearMapping[destinasi.name] || [];
-    const filtered = barangList.filter(barang => 
+    const filtered = barangList.filter(barang =>
       keywords.some(keyword => barang.nama_barang.includes(keyword))
     );
     setRecommendedGears(filtered);
@@ -241,26 +241,26 @@ export default function SewaAlat() {
   // Filter barang (dari search + kategori + rekomendasi destinasi)
   const filteredBarang = useMemo(() => {
     let filtered = [...barangList];
-    
+
     // Filter by rekomendasi destinasi (jika ada)
     if (recommendedGears.length > 0) {
       filtered = recommendedGears;
     }
-    
+
     // Filter by search term
     if (searchTerm.trim() !== '') {
       filtered = filtered.filter((barang) =>
         barang.nama_barang.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     // Filter by kategori
     if (selectedKategori !== '') {
       filtered = filtered.filter(
         (barang) => barang.id_kategori === parseInt(selectedKategori)
       );
     }
-    
+
     return filtered;
   }, [barangList, searchTerm, selectedKategori, recommendedGears]);
 
@@ -274,7 +274,7 @@ export default function SewaAlat() {
       alert('Pilih tanggal ambil');
       return;
     }
-    
+
     // Sudah otomatis filter via useEffect, tinggal scroll ke katalog
     document.getElementById('katalog-section')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -295,6 +295,14 @@ export default function SewaAlat() {
       nextDay.setDate(nextDay.getDate() + 1);
       const tomorrow = nextDay.toISOString().split('T')[0];
 
+      const startDate = tanggalMulai || today;
+      const endDate = tanggalMulai 
+        ? (new Date(new Date(tanggalMulai).getTime() + durasi * 86400000)).toISOString().split('T')[0] 
+        : tomorrow;
+
+      // Hitung total hari dari selisih tanggal (inklusif)
+      const daysDiff = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+
       const cartItem = {
         id_cart: Date.now(),
         id_barang: barang.id_barang,
@@ -302,16 +310,22 @@ export default function SewaAlat() {
         harga_sewa: barang.harga_sewa,
         nominal_deposit: barang.nominal_deposit || 0,
         jumlah: 1,
-        tanggal_mulai: tanggalMulai || today,
-        tanggal_selesai: tanggalMulai ? (new Date(new Date(tanggalMulai).getTime() + durasi * 86400000)).toISOString().split('T')[0] : tomorrow,
-        total_hari: durasi || 1,
-        total_harga: barang.harga_sewa * (durasi || 1),
+        tanggal_mulai: startDate,
+        tanggal_selesai: endDate,
+        total_hari: daysDiff,
+        total_harga: Number(barang.harga_sewa) * 1 * daysDiff,
         foto_barang: barang.foto_barang,
         pemilik: barang.pemilik,
         id_pemilik: barang.id_pemilik,
       };
 
-      await cartService.addToCart(cartItem);
+      const result = await cartService.addToCart(cartItem);
+
+      if (result.alreadyExists) {
+        // Barang sudah ada di keranjang, tidak ditambahkan lagi
+        return;
+      }
+
       await loadCart();
     } catch (err) {
       console.error('Gagal menambahkan ke keranjang:', err);
@@ -352,34 +366,45 @@ export default function SewaAlat() {
       {/* HERO SECTION */}
       <section
         id="hero-sewa"
-        className="relative w-full h-[440px] md:h-[480px] flex items-center justify-center py-0 px-0 overflow-visible"
+        className="relative w-full bg-white"
+        style={{ padding: '16px 16px 0 16px' }}
       >
-        <div className="absolute top-6 left-6 right-6 bottom-6 z-0 overflow-hidden rounded-[32px]">
-          <img
-            src={bannerBg}
-            alt="Shop Banner Background"
-            className="w-full h-full object-cover object-center block"
-          />
-          <div className="absolute inset-0 bg-black/10 pointer-events-none" />
-        </div>
-        <div className="relative z-[1] w-full max-w-[1400px] mx-auto text-center flex flex-col items-center justify-center pb-8">
-          <h1 className="text-[54px] md:text-[60px] font-extrabold text-white leading-none tracking-tight select-none">
-            Our Shop
-          </h1>
-        </div>
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-white px-8 py-2.5 rounded-t-[20px] shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center gap-2 text-[11px] font-medium text-gray-400">
-            <Link to="/" className="hover:text-emerald-500 transition-colors no-underline text-gray-400">
-              Home
-            </Link>
-            <span className="text-gray-300 font-light">&gt;</span>
-            <span className="text-gray-700 font-semibold">Sewa Alat</span>
+        <div className="relative w-full">
+          {/* Image container */}
+          <div className="relative w-full h-[300px] md:h-[600px] rounded-[16px] md:rounded-[24px] overflow-hidden">
+            <img
+              src={bannerBg}
+              alt="Shop Banner Background"
+              className="w-full h-full object-cover object-center block"
+            />
+            <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+            <div className="absolute inset-0 z-[1] flex items-center justify-center">
+              <h1 className="text-[40px] md:text-[60px] font-extrabold text-white leading-none tracking-tight select-none text-center" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+                Our Shop
+              </h1>
+            </div>
+          </div>
+          {/* Breadcrumb — outside overflow-hidden so curves aren't clipped */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 flex items-end">
+            {/* Left inverted curve */}
+            <div className="w-[20px] h-[20px] bg-transparent" style={{ boxShadow: '8px 8px 0 8px white', borderRadius: '0 0 16px 0' }} />
+            <div className="bg-white px-12 py-3 rounded-t-[18px]">
+              <div className="flex items-center gap-2 text-[13px] font-medium text-gray-400 whitespace-nowrap">
+                <Link to="/" className="hover:text-emerald-500 transition-colors no-underline text-gray-400">
+                  Home
+                </Link>
+                <span className="text-gray-300 font-light">&gt;</span>
+                <span className="text-gray-700 font-semibold">Sewa Alat</span>
+              </div>
+            </div>
+            {/* Right inverted curve */}
+            <div className="w-[20px] h-[20px] bg-transparent" style={{ boxShadow: '-8px 8px 0 8px white', borderRadius: '0 0 0 16px' }} />
           </div>
         </div>
       </section>
 
       {/* FILTER PANEL - DENGAN DESTINASI REAL-TIME */}
-      <section className="w-full max-w-[1200px] mx-auto px-6 -mt-1 relative z-20">
+      <section className="w-full max-w-[1200px] mx-auto px-6 mt-8 relative z-20">
         <div className="bg-white rounded-[24px] p-4 shadow-[0_15px_40px_rgba(0,0,0,0.04)] border border-gray-100">
           <div className="border border-gray-200/80 rounded-[20px] p-5 md:py-4 md:px-6">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
@@ -451,7 +476,7 @@ export default function SewaAlat() {
                   onChange={(e) => setDurasi(parseInt(e.target.value))}
                   className="text-xs font-bold text-gray-800 border-0 p-0 bg-transparent focus:ring-0"
                 >
-                  {[1,2,3,4,5,6,7,8,9,10].map(d => (
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(d => (
                     <option key={d} value={d}>{d} hari</option>
                   ))}
                 </select>

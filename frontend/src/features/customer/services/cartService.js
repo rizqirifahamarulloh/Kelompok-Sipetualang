@@ -27,12 +27,15 @@ export const cartService = {
     const cart = getCartFromStorage();
     const existingIndex = cart.findIndex(i => i.id_barang === item.id_barang);
     
+    // Jika barang sudah ada di keranjang, jangan tambah lagi (hindari duplikat)
     if (existingIndex !== -1) {
-      cart[existingIndex].jumlah += item.jumlah;
-      cart[existingIndex].total_harga = cart[existingIndex].harga_sewa * cart[existingIndex].jumlah * cart[existingIndex].total_hari;
-    } else {
-      cart.push(item);
+      return { data: cart, alreadyExists: true };
     }
+    
+    // Pastikan jumlah selalu 1 saat pertama kali ditambahkan
+    item.jumlah = 1;
+    item.total_harga = Number(item.harga_sewa) * item.jumlah * (item.total_hari || 1);
+    cart.push(item);
     
     saveCartToStorage(cart);
     return { data: cart };
@@ -44,7 +47,7 @@ export const cartService = {
     const index = cart.findIndex(i => i.id_cart === cartId);
     if (index !== -1) {
       cart[index].jumlah = data.jumlah;
-      cart[index].total_harga = cart[index].harga_sewa * cart[index].jumlah * cart[index].total_hari;
+      cart[index].total_harga = Number(cart[index].harga_sewa) * cart[index].jumlah * (cart[index].total_hari || 1);
       saveCartToStorage(cart);
     }
     return { data: cart };

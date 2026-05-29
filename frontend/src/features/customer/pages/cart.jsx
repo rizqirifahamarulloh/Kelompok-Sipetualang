@@ -57,11 +57,20 @@ export default function CartPage() {
       const response = await cartService.getCart();
       const cartData = response.data || [];
 
-      setCart(cartData);
+      // Recalculate total_hari & total_harga dari tanggal aktual
+      const fixedCart = cartData.map(item => {
+        const start = new Date(item.tanggal_mulai);
+        const end = new Date(item.tanggal_selesai);
+        const totalHari = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1);
+        const totalHarga = Number(item.harga_sewa) * Number(item.jumlah) * totalHari;
+        return { ...item, total_hari: totalHari, total_harga: totalHarga };
+      });
+
+      setCart(fixedCart);
 
       const initialSelected = {};
 
-      cartData.forEach((item) => {
+      fixedCart.forEach((item) => {
         initialSelected[item.id_cart] = true;
       });
 
@@ -113,12 +122,16 @@ export default function CartPage() {
       setCart((prev) =>
         prev.map((item) => {
           if (item.id_cart === cartId) {
-            const total =
-              Number(item.harga_sewa) * newQuantity;
+            // Hitung total hari dari tanggal aktual
+            const start = new Date(item.tanggal_mulai);
+            const end = new Date(item.tanggal_selesai);
+            const totalHari = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1);
+            const total = Number(item.harga_sewa) * newQuantity * totalHari;
 
             return {
               ...item,
               jumlah: newQuantity,
+              total_hari: totalHari,
               total_harga: total,
             };
           }

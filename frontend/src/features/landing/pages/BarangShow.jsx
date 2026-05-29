@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { chatService } from '@/features/customer/services/chatService';
 import KtpVerificationModal from '@/components/KtpVerificationModal';
 import { API_URL, BASE_URL } from '@/services/api';
+import { cartService } from '@/features/customer/services/cartService';
 
 import Navbar from '@/features/landing/components/Navbar';
 import Footer from '@/features/landing/components/Footer';
@@ -23,17 +24,6 @@ import {
 } from 'lucide-react';
 
 import '@/features/landing/landing.css';
-
-const CART_KEY = 'rental_cart';
-
-const getCartFromStorage = () => {
-  const cart = localStorage.getItem(CART_KEY);
-  return cart ? JSON.parse(cart) : [];
-};
-
-const saveCartToStorage = (cart) => {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-};
 
 const MIDTRANS_CLIENT_KEY = 'Mid-client-4bv4cHzWqRv44v7s';
 
@@ -170,11 +160,6 @@ export default function BarangShow() {
     try {
       setLoadingAction(true);
 
-      const itemTotalHarga =
-        barang.harga_sewa *
-        totalHari *
-        selectedJumlah;
-
       const cartItem = {
         id_cart: Date.now(),
         id_barang: barang.id_barang,
@@ -185,19 +170,24 @@ export default function BarangShow() {
         tanggal_mulai: tanggalMulai,
         tanggal_selesai: tanggalSelesai,
         total_hari: totalHari,
-        total_harga: itemTotalHarga,
+        total_harga: Number(barang.harga_sewa) * selectedJumlah * totalHari,
         foto_barang: barang.foto_barang,
         pemilik: barang.pemilik,
+        id_pemilik: barang.id_pemilik,
       };
 
-      const existingCart = getCartFromStorage();
+      const result = await cartService.addToCart(cartItem);
 
-      existingCart.push(cartItem);
+      if (result.alreadyExists) {
+        alert('Barang ini sudah ada di keranjang');
+        navigate('/customer/cart');
+        return;
+      }
 
-      saveCartToStorage(existingCart);
+      // Dispatch event agar Navbar badge update
+      window.dispatchEvent(new CustomEvent('cart-updated'));
 
       alert('Berhasil ditambahkan ke keranjang');
-
       navigate('/customer/cart');
     } catch (err) {
       console.error(err);
