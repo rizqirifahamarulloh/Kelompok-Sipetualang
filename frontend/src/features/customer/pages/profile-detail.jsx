@@ -4,7 +4,7 @@ import Sidebar from "@/features/customer/components/Sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Edit, Key, Trash2, User, Mail, Phone, MapPin, Shield, Building } from 'lucide-react';
+import { Edit, Key, Trash2, User, Mail, Phone, MapPin, Shield, Building, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getStorageUrl } from '@/utils/storageUrl';
 
@@ -17,11 +17,32 @@ export default function ProfileDetail() {
 
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
 
+  // Mapping peran_pengguna dari DB ke label yang user-friendly
+  const getRoleLabel = (role) => {
+    const roleMap = {
+      customer: 'Customer',
+      perental: 'Perental',
+      admin: 'Admin',
+    };
+    return roleMap[role] || role || 'Customer';
+  };
+
+  const formatTanggalLahir = (dateStr) => {
+    if (!dateStr) return '-';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
   const fields = [
     { label: 'Nama Lengkap', value: user.nama, icon: User },
     { label: 'Alamat Email', value: user.email, icon: Mail },
     { label: 'Nomor Telepon', value: user.no_telp || '-', icon: Phone },
-    { label: 'Peran Pengguna', value: user.peran_pengguna || 'Customer', icon: Shield, capitalize: true },
+    { label: 'Tanggal Lahir', value: formatTanggalLahir(user.tanggal_lahir), icon: Calendar },
+    { label: 'Peran Pengguna', value: getRoleLabel(user.peran_pengguna), icon: Shield },
     { label: 'Alamat', value: user.alamat || '-', icon: MapPin },
     { label: 'Kota', value: user.kota || '-', icon: Building },
   ];
@@ -66,7 +87,7 @@ export default function ProfileDetail() {
                   <div className="text-center">
                     <h3 className="font-bold text-xl text-foreground">{user.nama}</h3>
                     <p className="text-sm text-muted-foreground font-medium">{user.email}</p>
-                    <Badge variant="outline" className="mt-2 capitalize">{user.peran_pengguna || 'Customer'}</Badge>
+                    <Badge variant="outline" className="mt-2">{getRoleLabel(user.peran_pengguna)}</Badge>
                   </div>
                 </div>
 

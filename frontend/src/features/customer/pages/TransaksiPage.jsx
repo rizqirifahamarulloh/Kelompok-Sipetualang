@@ -25,6 +25,10 @@ import {
   ArrowUp,
   CalendarDays,
   History,
+  Star,
+  Camera,
+  X,
+  MessageSquare,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -100,6 +104,15 @@ export default function TransaksiPage() {
   const [sortOrder, setSortOrder] = useState('newest');
   const [processingId, setProcessingId] = useState(null);
 
+  // Review state
+  const [reviewModal, setReviewModal] = useState(null); // transaksi object or null
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewPhotos, setReviewPhotos] = useState([]); // array of File objects
+  const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState([]); // array of preview URLs
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewedTransactions, setReviewedTransactions] = useState(new Set());
+
   const token = localStorage.getItem('token');
 
   const fetchTransactions = async () => {
@@ -116,6 +129,24 @@ export default function TransaksiPage() {
   };
 
   useEffect(() => { fetchTransactions(); }, []);
+
+  // Check which transactions have already been reviewed
+  useEffect(() => {
+    const checkReviews = async () => {
+      const selesaiTrx = transactions.filter(t => t.status_sewa === 'selesai');
+      const reviewed = new Set();
+      for (const trx of selesaiTrx) {
+        try {
+          const res = await axios.get(`${API_URL}/customer/ulasan/check/${trx.id_transaksi}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data.has_reviewed) reviewed.add(trx.id_transaksi);
+        } catch { /* ignore */ }
+      }
+      setReviewedTransactions(reviewed);
+    };
+    if (transactions.length > 0) checkReviews();
+  }, [transactions]);
 
   // ── Derived data ──
   const { grouped, totalFiltered } = useMemo(() => {
@@ -189,6 +220,75 @@ export default function TransaksiPage() {
 
   const getPhotoUrl = () => getStorageUrl(user?.profile_photo);
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
+
+  // Review handlers
+  const openReviewModal = (trans) => {
+    setReviewModal(trans);
+    setReviewRating(0);
+    setReviewComment('');
+    setReviewPhotos([]);
+    setReviewPhotoPreviews([]);
+  };
+
+  const handleReviewPhotoChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 5 - reviewPhotos.length;
+    if (remaining <= 0) {
+      toast.error('Maksimal 5 foto');
+      return;
+    }
+    const newFiles = files.slice(0, remaining);
+    const newPreviews = newFiles.map(f => URL.createObjectURL(f));
+    setReviewPhotos(prev => [...prev, ...newFiles]);
+    setReviewPhotoPreviews(prev => [...prev, ...newPreviews]);
+    e.target.value = ''; // reset input
+  };
+
+  const removeReviewPhoto = (index) => {
+    setReviewPhotos(prev => prev.filter((_, i) => i !== index));
+    setReviewPhotoPreviews(prev => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const submitReview = async () => {
+    if (reviewRating === 0) {
+      toast.error('Pilih rating terlebih dahulu');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const formData = new FormData();
+      formData.append('id_transaksi', reviewModal.id_transaksi);
+      formData.append('rating', reviewRating);
+      if (reviewComment.trim()) formData.append('komentar', reviewComment);
+      reviewPhotos.forEach((file) => {
+        formData.append('foto_ulasan[]', file);
+      });
+
+      await axios.post(`${API_URL}/customer/ulasan`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Ulasan berhasil dikirim!');
+      setReviewedTransactions(prev => new Set([...prev, reviewModal.id_transaksi]));
+      setReviewModal(null);
+    } catch (err) {
+      const data = err.response?.data;
+      if (data?.errors) {
+        const firstError = Object.values(data.errors).flat()[0];
+        toast.error(firstError || data.message || 'Gagal mengirim ulasan');
+      } else {
+        toast.error(data?.message || 'Gagal mengirim ulasan');
+      }
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   if (!user) return null;
 
@@ -290,6 +390,26 @@ export default function TransaksiPage() {
               <CreditCard className="w-3.5 h-3.5" />
               {processingId === trans.id_transaksi ? 'Memproses...' : 'Bayar Sekarang'}
             </Button>
+          </div>
+        )}
+
+        {/* Review Button for completed transactions */}
+        {trans.status_sewa === 'selesai' && (
+          <div className="mt-3 pt-3 border-t">
+            {reviewedTransactions.has(trans.id_transaksi) ? (
+              <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold justify-center py-1.5">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Sudah Diulas
+              </div>
+            ) : (
+              <Button
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white h-9 text-xs gap-2"
+                onClick={() => openReviewModal(trans)}
+              >
+                <Star className="w-3.5 h-3.5" />
+                Beri Ulasan
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
@@ -435,6 +555,112 @@ export default function TransaksiPage() {
           </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {reviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setReviewModal(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">Beri Ulasan</h3>
+                  <p className="text-[11px] text-muted-foreground">{reviewModal.nama_barang}</p>
+                </div>
+              </div>
+              <button onClick={() => setReviewModal(null)} className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Star Rating */}
+            <div className="mb-5">
+              <label className="text-xs font-bold text-gray-700 mb-2 block">Rating</label>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setReviewRating(star)}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className="w-8 h-8"
+                      fill={star <= reviewRating ? '#fbbf24' : '#e5e7eb'}
+                      stroke={star <= reviewRating ? '#f59e0b' : '#d1d5db'}
+                      strokeWidth={1}
+                    />
+                  </button>
+                ))}
+                {reviewRating > 0 && (
+                  <span className="text-sm font-bold text-amber-600 ml-2">
+                    {['', 'Sangat Buruk', 'Buruk', 'Cukup', 'Bagus', 'Sangat Bagus'][reviewRating]}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Comment */}
+            <div className="mb-5">
+              <label className="text-xs font-bold text-gray-700 mb-2 block">Komentar (opsional)</label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Ceritakan pengalaman Anda..."
+                className="w-full border rounded-xl p-3 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                maxLength={1000}
+              />
+              <p className="text-[10px] text-gray-400 text-right mt-1">{reviewComment.length}/1000</p>
+            </div>
+
+            {/* Photo Upload — Multi */}
+            <div className="mb-6">
+              <label className="text-xs font-bold text-gray-700 mb-2 block">Foto (opsional, maks 5)</label>
+              <div className="flex flex-wrap gap-2">
+                {reviewPhotoPreviews.map((preview, idx) => (
+                  <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border">
+                    <img src={preview} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removeReviewPhoto(idx)}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-2.5 h-2.5 text-white" />
+                    </button>
+                  </div>
+                ))}
+                {reviewPhotos.length < 5 && (
+                  <label className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
+                    <Camera className="w-4 h-4 text-gray-400" />
+                    <span className="text-[8px] text-gray-400 mt-0.5">{reviewPhotos.length}/5</span>
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleReviewPhotoChange} />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* Submit */}
+            <Button
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white h-10 text-sm font-bold gap-2"
+              onClick={submitReview}
+              disabled={submittingReview || reviewRating === 0}
+            >
+              {submittingReview ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Mengirim...
+                </>
+              ) : (
+                <>
+                  <Star className="w-4 h-4" />
+                  Kirim Ulasan
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

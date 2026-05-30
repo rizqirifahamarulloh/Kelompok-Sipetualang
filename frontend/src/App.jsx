@@ -51,11 +51,19 @@ import TransaksiPage from '@/features/customer/pages/TransaksiPage'
 function Unauthorized() {
   return (
     <div className="flex h-screen items-center justify-center bg-background">
-      <div className="text-center">
+      <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold">403</h1>
-        <p className="mt-2 text-muted-foreground">
-          Unauthorized access
+        <p className="text-muted-foreground">
+          Anda tidak memiliki akses ke halaman ini
         </p>
+        <div className="flex gap-3 justify-center pt-2">
+          <a href="/" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition no-underline">
+            Kembali ke Beranda
+          </a>
+          <a href="/login" className="px-4 py-2 bg-muted text-foreground rounded-lg text-sm font-medium hover:opacity-80 transition no-underline">
+            Login Ulang
+          </a>
+        </div>
       </div>
     </div>
   )
@@ -110,8 +118,8 @@ function App() {
                   </Route>
                 </Route>
 
-                {/* Customer routes — customer only */}
-                <Route element={<ProtectedRoute roles={['customer']} />}>
+                {/* Customer routes — customer & perental */}
+                <Route element={<ProtectedRoute roles={['customer', 'perental']} />}>
                   <Route path="/customer/chat" element={<ChatPage />} />
                   <Route path="/customer/cart" element={<CartPage />} />
                   <Route path="/profile/transactions" element={<TransactionsPage />} />

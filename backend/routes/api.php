@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Customer\RentalController;
 use App\Http\Controllers\Api\Customer\ChatController;
 use App\Http\Controllers\Api\Customer\TransaksiController;
 use App\Http\Controllers\Api\Customer\PengajuanPengembalianController;
+use App\Http\Controllers\Api\Customer\UlasanController;
 use App\Http\Controllers\Api\Admin\KategoriController;
 use App\Http\Controllers\Api\Admin\DestinasiController;
 use App\Http\Controllers\Api\Admin\BarangController as AdminBarangController;
@@ -38,6 +39,9 @@ Route::get('/rental/barang/{id}', [RentalController::class, 'getBarangById']);
 Route::get('/toko/pengguna/{id}', [TokoController::class, 'getPengguna']);
 Route::get('/toko/barang/{ownerId}', [TokoController::class, 'getBarangByOwner']);
 Route::post('/payment/midtrans/notification', [TransaksiController::class, 'handleNotification']);
+
+// PUBLIC ULASAN ROUTES
+Route::get('/ulasan/barang/{id}', [UlasanController::class, 'getByBarang']);
 
 /*
 |--------------------------------------------------------------------------
@@ -111,6 +115,12 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::post('/', [PengajuanPengembalianController::class, 'store']);
             Route::get('/', [PengajuanPengembalianController::class, 'myRequests']);
             Route::get('/sebagai-pemilik', [PengajuanPengembalianController::class, 'getByPemilik']);
+        });
+
+        // ⭐ ULASAN ROUTES
+        Route::prefix('ulasan')->group(function () {
+            Route::post('/', [UlasanController::class, 'store']);
+            Route::get('/check/{id_transaksi}', [UlasanController::class, 'check']);
         });
     });
 
