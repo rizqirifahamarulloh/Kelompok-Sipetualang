@@ -45,6 +45,7 @@ import {
   Truck,
   Layers,
   RotateCcw,
+  Wallet,
 } from 'lucide-react'
 
 function useMenuGroups() {
@@ -74,6 +75,7 @@ function useMenuGroups() {
         { label: 'Barang Disewakan', icon: Layers, href: '/admin/disewa' },
         { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments' },
         { label: 'Pengembalian Barang', icon: RotateCcw, href: '/admin/pengembalian' },
+        { label: 'Refund Deposit', icon: Wallet, href: '/admin/deposit-refund' },
       ],
     },
     {

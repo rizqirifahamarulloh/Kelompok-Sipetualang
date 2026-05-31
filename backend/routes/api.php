@@ -169,6 +169,10 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::post('/pengembalian/{id}/approve', [PengajuanPengembalianController::class, 'approve']);
         Route::post('/pengembalian/{id}/reject', [PengajuanPengembalianController::class, 'reject']);
         Route::post('/pengembalian/{id}/confirm-refund', [PengajuanPengembalianController::class, 'confirmRefund']);
+
+        // 💰 Admin Deposit Refund
+        Route::get('/deposit-refund', [\App\Http\Controllers\Api\Admin\DepositRefundController::class, 'index']);
+        Route::post('/deposit-refund/{id}/process', [\App\Http\Controllers\Api\Admin\DepositRefundController::class, 'process']);
     });
 
     /*

@@ -240,6 +240,7 @@ class DummyRentalSeeder extends Seeder
             'status_sewa' => 'selesai',
             'status_pembayaran' => 'sukses',
             'tanggal_kembali_real' => '2024-12-20',
+            'deposit_status' => 'pending',
         ]);
 
         DetailTransaksi::create([
@@ -279,6 +280,7 @@ class DummyRentalSeeder extends Seeder
             'status_sewa' => 'selesai',
             'status_pembayaran' => 'sukses',
             'tanggal_kembali_real' => '2024-11-03',
+            'deposit_status' => 'pending',
         ]);
 
         DetailTransaksi::create([
@@ -307,6 +309,7 @@ class DummyRentalSeeder extends Seeder
             'status_sewa' => 'selesai',
             'status_pembayaran' => 'sukses',
             'tanggal_kembali_real' => '2024-10-17',
+            'deposit_status' => 'pending',
         ]);
 
         DetailTransaksi::create([
@@ -314,6 +317,32 @@ class DummyRentalSeeder extends Seeder
             'id_barang' => $barang2->id_barang,
             'jumlah_pinjam' => 1,
             'subtotal' => 105000,
+        ]);
+
+        // Pengembalian untuk transaksi4b (Tenda Dome - tepat waktu, kondisi baik)
+        \App\Models\Pengembalian::create([
+            'id_transaksi' => $transaksi4b->id_transaksi,
+            'tanggal_kembali' => '2024-11-03',
+            'jumlah_kembali' => 1,
+            'denda_per_hari' => 20000,
+            'total_denda' => 0,
+            'denda_kerusakan' => 0,
+            'status_pengembalian' => 'tepat_waktu',
+            'kondisi_barang' => 'baik',
+            'catatan' => 'Barang kembali dalam kondisi sempurna.'
+        ]);
+
+        // Pengembalian untuk transaksi4c (Kompor - tepat waktu, kondisi baik)
+        \App\Models\Pengembalian::create([
+            'id_transaksi' => $transaksi4c->id_transaksi,
+            'tanggal_kembali' => '2024-10-17',
+            'jumlah_kembali' => 1,
+            'denda_per_hari' => 20000,
+            'total_denda' => 0,
+            'denda_kerusakan' => 0,
+            'status_pengembalian' => 'tepat_waktu',
+            'kondisi_barang' => 'baik',
+            'catatan' => 'Kompor kembali dengan kondisi baik.'
         ]);
 
         // ===== 5b. ULASAN (Review untuk transaksi selesai) =====
