@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import TablePagination, { paginateArray } from '@/components/TablePagination'
+import WithdrawalManagement from '../components/WithdrawalManagement'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs' // ⚠️ INI KURANG!
 import {
   Table,
   TableBody,
@@ -367,6 +369,7 @@ function RevenueSkeleton() {
 export default function AdminRevenue() {
   const [data, setData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('revenue') // ⚠️ TAMBAHKAN INI
 
   useEffect(() => {
     const fetchData = async () => {
@@ -388,22 +391,33 @@ export default function AdminRevenue() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Pembagian Hasil</h1>
-        <p className="text-muted-foreground">Manajemen pendapatan dari transaksi rental</p>
+        <h1 className="text-2xl font-bold tracking-tight">Manajemen Keuangan</h1>
+        <p className="text-muted-foreground">Kelola pendapatan dan penarikan saldo</p>
       </div>
 
-      <RevenueStatsCards stats={data?.stats} />
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <RevenueChart data={data?.stats} />
-        </div>
-        <div className="lg:col-span-2">
-          <OwnerEarningsList earnings={data?.owner_earnings} />
-        </div>
-      </div>
-
-      <TransactionList transactions={data?.transactions} />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="revenue">Pembagian Hasil</TabsTrigger>
+          <TabsTrigger value="withdrawals">Penarikan Saldo</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="revenue" className="space-y-6 mt-6">
+          <RevenueStatsCards stats={data?.stats} />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-1">
+              <RevenueChart data={data?.stats} />
+            </div>
+            <div className="lg:col-span-2">
+              <OwnerEarningsList earnings={data?.owner_earnings} />
+            </div>
+          </div>
+          <TransactionList transactions={data?.transactions} />
+        </TabsContent>
+        
+        <TabsContent value="withdrawals" className="mt-6">
+          <WithdrawalManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

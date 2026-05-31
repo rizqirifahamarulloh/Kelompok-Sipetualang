@@ -16,6 +16,8 @@ import SewaAlat from '@/features/landing/pages/SewaAlat'
 import TokoPage from '@/features/landing/pages/TokoPage'
 import CaraSewa from '@/features/landing/pages/CaraSewa'
 import BukaRental from '@/features/landing/pages/BukaRental'
+import Saldo from '@/features/bukarental/components/Saldo'
+
 import Login from '@/features/auth/pages/Login'
 import Register from '@/features/auth/pages/Register'
 import ForgotPassword from '@/features/auth/pages/ForgotPassword'
@@ -128,6 +130,7 @@ function App() {
                   <Route path="/customer/transactions" element={<TransactionsPage />} />
                   <Route path="/customer/verification" element={<VerifikasiCustomer />} />
                   <Route path="/rental-dashboard" element={<DashboardRental />} />
+                  <Route path="/bukarental/saldo" element={<Saldo />} />
 
                   {/* Fallback routes untuk keselarasan link template */}
                   <Route path="/chat" element={<ChatPage />} />

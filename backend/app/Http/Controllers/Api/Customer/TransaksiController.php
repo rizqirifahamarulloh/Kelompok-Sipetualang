@@ -7,6 +7,7 @@ use App\Models\Barang;
 use App\Models\DetailTransaksi;
 use App\Models\Transaksi;
 use App\Models\Pengembalian;
+use App\Models\Pengguna;
 use App\Services\MidtransService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -334,51 +335,66 @@ class TransaksiController extends Controller
         ]);
     }
 
-    /**
-     * Handle Midtrans payment notification.
-     * For multi-item transactions, decrement stock for ALL items in detail_transaksi.
-     */
-    public function handleNotification(Request $request)
-    {
-        $result = $this->midtrans->handleNotification();
+/**
+ * Handle Midtrans payment notification.
+ * For multi-item transactions, decrement stock for ALL items in detail_transaksi.
+ * Also add balance to owner (perental) and admin.
+ */
+public function handleNotification(Request $request)
+{
+    $result = $this->midtrans->handleNotification();
 
-        $transaksi = Transaksi::where('midtrans_order_id', $result['order_id'])->first();
+    $transaksi = Transaksi::where('midtrans_order_id', $result['order_id'])->first();
 
-        if (!$transaksi) {
-            return response()->json(['error' => 'Transaction not found'], 404);
+    if (!$transaksi) {
+        return response()->json(['error' => 'Transaction not found'], 404);
+    }
+
+    if ($result['status'] === 'capture' || $result['status'] === 'settlement') {
+        $transaksi->update([
+            'status_pembayaran' => 'sukses',
+            'status_sewa' => 'dibayar',
+        ]);
+
+        // ========== TAMBAH SALDO PEMILIK (PERENTAL) ==========
+        $pemilik = \App\Models\Pengguna::find($transaksi->id_pemilik);
+        if ($pemilik) {
+            $pemilik->increment('balance', $transaksi->pendapatan_pemilik);
+            $pemilik->increment('total_earned', $transaksi->pendapatan_pemilik);
         }
 
-        if ($result['status'] === 'capture' || $result['status'] === 'settlement') {
-            $transaksi->update([
-                'status_pembayaran' => 'sukses',
-                'status_sewa' => 'dibayar',
-            ]);
+        // ========== TAMBAH SALDO ADMIN ==========
+        $admin = \App\Models\Pengguna::where('peran_pengguna', 'admin')->first();
+        if ($admin) {
+            $admin->increment('balance', $transaksi->fee_admin);
+            $admin->increment('total_earned', $transaksi->fee_admin);
+        }
 
-            // Decrement stock for ALL items in this transaction
-            $details = DetailTransaksi::where('id_transaksi', $transaksi->id_transaksi)->get();
+        // Decrement stock for ALL items in this transaction
+        $details = DetailTransaksi::where('id_transaksi', $transaksi->id_transaksi)->get();
 
-            if ($details->isNotEmpty()) {
-                // Multi-item: use detail_transaksi
-                foreach ($details as $detail) {
-                    $barang = Barang::find($detail->id_barang);
-                    if ($barang) {
-                        $barang->decrement('jumlah_stok', $detail->jumlah_pinjam);
-                    }
-                }
-            } else {
-                // Backward compatibility: single-item from transaksi table
-                $barang = Barang::find($transaksi->id_barang);
+        if ($details->isNotEmpty()) {
+            // Multi-item: use detail_transaksi
+            foreach ($details as $detail) {
+                $barang = Barang::find($detail->id_barang);
                 if ($barang) {
-                    $barang->decrement('jumlah_stok', $transaksi->jumlah);
+                    $barang->decrement('jumlah_stok', $detail->jumlah_pinjam);
                 }
             }
-        } elseif ($result['status'] === 'deny' || $result['status'] === 'expire' || $result['status'] === 'cancel') {
-            $transaksi->update([
-                'status_pembayaran' => 'gagal',
-                'status_sewa' => 'dibatalkan',
-            ]);
+        } else {
+            // Backward compatibility: single-item from transaksi table
+            $barang = Barang::find($transaksi->id_barang);
+            if ($barang) {
+                $barang->decrement('jumlah_stok', $transaksi->jumlah);
+            }
         }
-
-        return response()->json(['status' => 'ok']);
+    } elseif ($result['status'] === 'deny' || $result['status'] === 'expire' || $result['status'] === 'cancel') {
+        $transaksi->update([
+            'status_pembayaran' => 'gagal',
+            'status_sewa' => 'dibatalkan',
+        ]);
     }
+
+    return response()->json(['status' => 'ok']);
+}
 }

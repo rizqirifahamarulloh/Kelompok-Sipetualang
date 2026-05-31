@@ -32,7 +32,8 @@ import {
   Store,
   Truck,
   RotateCcw,
-  ImageIcon
+  ImageIcon,
+  Wallet,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -932,6 +933,15 @@ export default function DashboardRental() {
                     {stats.activeRefunds > 0 && (
                       <Badge className="ml-auto bg-rose-500 text-white hover:bg-rose-500 scale-90">{stats.activeRefunds} Proses</Badge>
                     )}
+                  </Button>
+
+                  <Button 
+                    onClick={() => navigate('/bukarental/saldo')}
+                    variant="ghost" 
+                    className="w-full justify-start rounded-xl font-medium text-gray-600 dark:text-gray-300 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/20 dark:hover:text-emerald-400"
+                  >
+                    <Wallet className="size-4 mr-3" />
+                    Saldo & Penarikan
                   </Button>
                   
                   <div className="border-t my-4" />

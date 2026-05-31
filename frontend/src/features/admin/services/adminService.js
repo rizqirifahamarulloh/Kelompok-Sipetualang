@@ -124,5 +124,32 @@ export const adminService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     return response.data
-  }
+  },
+
+  // ========== 💰 WITHDRAWAL METHODS (TAMBAHKAN INI) ==========
+  
+  // Get all withdrawals (riwayat semua penarikan)
+  async getWithdrawals(status = null) {
+    const params = status ? { status } : {};
+    const response = await api.get('/admin/withdrawals/all', { params });
+    return response.data;
+  },
+
+  // Get withdrawal statistics
+  async getWithdrawalStats() {
+    const response = await api.get('/admin/withdrawals/stats');
+    return response.data;
+  },
+
+  // Get admin balance
+  async getAdminBalance() {
+    const response = await api.get('/customer/withdrawal/balance');
+    return response.data;
+  },
+
+  // Admin withdrawal (instant)
+  async adminWithdrawal(data) {
+    const response = await api.post('/admin/withdrawals/instant', data);
+    return response.data;
+  },
 }

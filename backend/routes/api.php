@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\Admin\BarangController as AdminBarangController;
 use App\Http\Controllers\Api\NotifikasiController;
 use App\Http\Middleware\RoleMiddleware;
 
+use App\Http\Controllers\Api\Customer\WithdrawalController;
+use App\Http\Controllers\Api\Admin\WithdrawalAdminController;
+
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES (TANPA LOGIN)
@@ -32,6 +35,8 @@ Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::post('/refresh', [AuthController::class, 'refresh']);
+
+
 
 // PUBLIC RENTAL ROUTES
 Route::get('/rental/barang', [RentalController::class, 'getAvailableBarang']);
@@ -93,6 +98,14 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::put('/{id}/status', [TransaksiController::class, 'updateStatus']);
         });
 
+        // ========== 💰 WITHDRAWAL ROUTES FOR PERENTAL ==========
+        Route::prefix('withdrawal')->group(function () {
+            Route::get('/balance', [WithdrawalController::class, 'getBalance']);
+            Route::post('/request', [WithdrawalController::class, 'requestWithdrawal']);
+            Route::get('/history', [WithdrawalController::class, 'withdrawalHistory']);
+        });
+
+
         // CHAT ROUTES
         Route::prefix('chat')->group(function () {
             Route::get('/conversations', [ChatController::class, 'getConversations']);
@@ -149,6 +162,11 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/transactions', [AdminController::class, 'getAllTransactions']);
         Route::get('/owner-earnings', [AdminController::class, 'getOwnerEarnings']);
 
+        // ========== 💰 WITHDRAWAL ROUTES FOR ADMIN ==========
+        Route::get('/withdrawals/all', [WithdrawalAdminController::class, 'getAllWithdrawals']);
+        Route::get('/withdrawals/stats', [WithdrawalAdminController::class, 'getStats']);
+        Route::post('/withdrawals/instant', [WithdrawalAdminController::class, 'adminWithdrawal']);
+
         // 🔥 Kategori & Destinasi
         Route::apiResource('/kategori', KategoriController::class);
         Route::apiResource('/destinasi', DestinasiController::class);
@@ -175,6 +193,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/deposit-refund', [\App\Http\Controllers\Api\Admin\DepositRefundController::class, 'index']);
         Route::post('/deposit-refund/{id}/process', [\App\Http\Controllers\Api\Admin\DepositRefundController::class, 'process']);
     });
+
 
     /*
     |--------------------------------------------------------------------------

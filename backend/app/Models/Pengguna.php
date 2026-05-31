@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Verifikasi;
+use App\Models\Withdrawal;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -29,6 +30,9 @@ class Pengguna extends Authenticatable implements JWTSubject
         'profile_photo',
         'rental',
         'tanggal_lahir',
+        'balance',
+        'total_earned',
+        'total_withdrawn',
     ];
 
     protected $hidden = [
@@ -37,14 +41,15 @@ class Pengguna extends Authenticatable implements JWTSubject
 
     protected $casts = [
         'tanggal_lahir' => 'date',
+        'balance' => 'decimal:2',
+        'total_earned' => 'decimal:2',
+        'total_withdrawn' => 'decimal:2',
     ];
 
     public function verifikasi()
     {
         return $this->hasMany(Verifikasi::class, 'id_pengguna', 'id_pengguna')->orderBy('id_verifikasi', 'desc');
     }
-
-
 
     public function getIsVerifiedAttribute()
     {
@@ -63,8 +68,6 @@ class Pengguna extends Authenticatable implements JWTSubject
         return $latest ? $latest->catatan_admin : null;
     }
 
-
-
     // JWT Methods
     public function getJWTIdentifier()
     {
@@ -82,6 +85,7 @@ class Pengguna extends Authenticatable implements JWTSubject
             'tanggal_lahir' => $this->tanggal_lahir,
             'verification_status' => $this->verification_status,
             'verification_note' => $this->verification_note,
+            'balance' => $this->balance,
         ];
     }
 
@@ -100,8 +104,15 @@ class Pengguna extends Authenticatable implements JWTSubject
     {
         return $this->peran_pengguna === 'perental';
     }
+
     public function barang()
-{
-    return $this->hasMany(Barang::class, 'id_pemilik', 'id_pengguna');
-}
+    {
+        return $this->hasMany(Barang::class, 'id_pemilik', 'id_pengguna');
+    }
+
+    // Relasi ke withdrawals
+    public function withdrawals()
+    {
+        return $this->hasMany(Withdrawal::class, 'user_id', 'id_pengguna');
+    }
 }
