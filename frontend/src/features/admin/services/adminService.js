@@ -38,6 +38,12 @@ export const adminService = {
     return response
   },
 
+  // Get sidebar badge counts (lightweight)
+  async getSidebarBadges() {
+    const response = await api.get('/admin/sidebar-badges')
+    return response
+  },
+
   // Get verifications
   async getVerifications() {
     const response = await api.get('/admin/verifikasi')

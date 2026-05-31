@@ -132,6 +132,7 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::middleware([RoleMiddleware::class . ':admin'])->prefix('admin')->group(function () {
 
         Route::get('/dashboard', [AdminController::class, 'dashboard']);
+        Route::get('/sidebar-badges', [AdminController::class, 'sidebarBadges']);
         Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword']);
         Route::apiResource('/users', AdminController::class);
         Route::get('/verifikasi', [VerifikasiController::class, 'index']);
