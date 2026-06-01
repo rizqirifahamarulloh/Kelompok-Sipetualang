@@ -8,10 +8,11 @@ class StandarAlat extends Model
 {
     protected $table = 'standar_alat';
     protected $primaryKey = 'id_standar';
-    protected $fillable = ['id_destinasi', 'id_kategori'];
+    public $timestamps = false;
+    protected $fillable = ['id_destinasi', 'id_barang'];
 
-    public function kategori() {
-        return $this->belongsTo(Kategori::class, 'id_kategori', 'id_kategori');
+    public function barang() {
+        return $this->belongsTo(Barang::class, 'id_barang', 'id_barang');
     }
 
     public function jenisDestinasi() {

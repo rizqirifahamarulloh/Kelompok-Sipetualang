@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Calendar, Search, MapPin } from 'lucide-react';
+import { Calendar, Search, MapPin, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL, BASE_URL } from '@/services/api';
@@ -13,121 +13,7 @@ import KatalogProduk from '@/features/landing/components/KatalogProduk';
 import '@/features/landing/landing.css';
 import bannerBg from '@/assets/sewaalat/banner BG.png';
 
-// Daftar Destinasi (bisa diambil dari API nanti)
-// DAFTAR DESTINASI WISATA INDONESIA (100+)
-const DESTINATIONS = [
-  // JAWA TIMUR
-  { id: 1, name: 'Gunung Bromo', location: 'Probolinggo, Jawa Timur', keywords: ['bromo', 'gunung bromo'] },
-  { id: 2, name: 'Gunung Semeru', location: 'Lumajang, Jawa Timur', keywords: ['semeru', 'mahameru'] },
-  { id: 3, name: 'Gunung Ijen', location: 'Banyuwangi, Jawa Timur', keywords: ['ijen', 'kawah ijen'] },
-  { id: 4, name: 'Gunung Kawi', location: 'Malang, Jawa Timur', keywords: ['kawi', 'gunung kawi'] },
-  { id: 5, name: 'Gunung Arjuno', location: 'Pasuruan, Jawa Timur', keywords: ['arjuno', 'gunung arjuno'] },
-  { id: 6, name: 'Gunung Welirang', location: 'Pasuruan, Jawa Timur', keywords: ['welirang', 'gunung welirang'] },
-  { id: 7, name: 'Gunung Penanggungan', location: 'Mojokerto, Jawa Timur', keywords: ['penanggungan'] },
-  { id: 8, name: 'Ranu Kumbolo', location: 'Lumajang, Jawa Timur', keywords: ['ranu', 'kumbolo'] },
-  { id: 9, name: 'Ranu Pani', location: 'Lumajang, Jawa Timur', keywords: ['ranu pani'] },
-  { id: 10, name: 'Ranu Regulo', location: 'Lumajang, Jawa Timur', keywords: ['ranu regulo'] },
-  { id: 11, name: 'Tumpak Sewu', location: 'Lumajang, Jawa Timur', keywords: ['tumpak sewu', 'air terjun'] },
-  { id: 12, name: 'Madakaripura', location: 'Probolinggo, Jawa Timur', keywords: ['madakaripura', 'air terjun'] },
-  { id: 13, name: 'Pantai Balekambang', location: 'Malang, Jawa Timur', keywords: ['balekambang'] },
-  { id: 14, name: 'Pantai Goa Cina', location: 'Malang, Jawa Timur', keywords: ['goa cina'] },
-  { id: 15, name: 'Pantai Teluk Asmara', location: 'Malang, Jawa Timur', keywords: ['teluk asmara'] },
-
-  // JAWA TENGAH
-  { id: 16, name: 'Gunung Merapi', location: 'Yogyakarta/Jawa Tengah', keywords: ['merapi', 'gunung merapi'] },
-  { id: 17, name: 'Gunung Merbabu', location: 'Boyolali, Jawa Tengah', keywords: ['merbabu', 'gunung merbabu'] },
-  { id: 18, name: 'Gunung Lawu', location: 'Karanganyar, Jawa Tengah', keywords: ['lawu', 'gunung lawu'] },
-  { id: 19, name: 'Gunung Slamet', location: 'Banyumas, Jawa Tengah', keywords: ['slamet', 'gunung slamet'] },
-  { id: 20, name: 'Gunung Sindoro', location: 'Temanggung, Jawa Tengah', keywords: ['sindoro', 'gunung sindoro'] },
-  { id: 21, name: 'Gunung Sumbing', location: 'Temanggung, Jawa Tengah', keywords: ['sumbing', 'gunung sumbing'] },
-  { id: 22, name: 'Gunung Prau', location: 'Wonosobo, Jawa Tengah', keywords: ['prau', 'gunung prau'] },
-  { id: 23, name: 'Gunung Andong', location: 'Magelang, Jawa Tengah', keywords: ['andong', 'gunung andong'] },
-  { id: 24, name: 'Gunung Ungaran', location: 'Semarang, Jawa Tengah', keywords: ['ungaran', 'gunung ungaran'] },
-  { id: 25, name: 'Gunung Telomoyo', location: 'Magelang, Jawa Tengah', keywords: ['telomoyo'] },
-  { id: 26, name: 'Dieng Plateau', location: 'Wonosobo, Jawa Tengah', keywords: ['dieng', 'plateau'] },
-  { id: 27, name: 'Kawah Sikidang', location: 'Dieng, Jawa Tengah', keywords: ['sikidang'] },
-  { id: 28, name: 'Telaga Warna', location: 'Dieng, Jawa Tengah', keywords: ['telaga warna'] },
-  { id: 29, name: 'Candi Borobudur', location: 'Magelang, Jawa Tengah', keywords: ['borobudur'] },
-  { id: 30, name: 'Candi Prambanan', location: 'Yogyakarta', keywords: ['prambanan'] },
-  { id: 31, name: 'Pantai Parangtritis', location: 'Yogyakarta', keywords: ['parangtritis'] },
-  { id: 32, name: 'Pantai Indrayanti', location: 'Gunungkidul, Jogja', keywords: ['indrayanti'] },
-  { id: 33, name: 'Pantai Ngobaran', location: 'Gunungkidul, Jogja', keywords: ['ngobaran'] },
-  { id: 34, name: 'Pantai Wediombo', location: 'Gunungkidul, Jogja', keywords: ['wediombo'] },
-  { id: 35, name: 'Pantai Sadranan', location: 'Gunungkidul, Jogja', keywords: ['sadranan'] },
-  { id: 36, name: 'Pantai Siung', location: 'Gunungkidul, Jogja', keywords: ['siung'] },
-
-  // JAWA BARAT
-  { id: 37, name: 'Gunung Gede Pangrango', location: 'Bogor, Jawa Barat', keywords: ['gede', 'pangrango'] },
-  { id: 38, name: 'Gunung Ciremai', location: 'Kuningan, Jawa Barat', keywords: ['ciremai', 'gunung ciremai'] },
-  { id: 39, name: 'Gunung Papandayan', location: 'Garut, Jawa Barat', keywords: ['papandayan'] },
-  { id: 40, name: 'Gunung Galunggung', location: 'Tasikmalaya, Jawa Barat', keywords: ['galunggung'] },
-  { id: 41, name: 'Gunung Tangkuban Perahu', location: 'Bandung, Jawa Barat', keywords: ['tangkuban perahu'] },
-  { id: 42, name: 'Gunung Patuha', location: 'Bandung, Jawa Barat', keywords: ['patuha'] },
-  { id: 43, name: 'Kawah Putih', location: 'Ciwidey, Bandung', keywords: ['kawah putih'] },
-  { id: 44, name: 'Situ Patenggang', location: 'Ciwidey, Bandung', keywords: ['situ patenggang'] },
-  { id: 45, name: 'Ranca Upas', location: 'Ciwidey, Bandung', keywords: ['ranca upas'] },
-  { id: 46, name: 'Gunung Karang', location: 'Pandeglang, Banten', keywords: ['karang', 'gunung karang'] },
-  { id: 47, name: 'Pantai Pangumbahan', location: 'Sukabumi, Jawa Barat', keywords: ['pangumbahan'] },
-  { id: 48, name: 'Pantai Pelabuhan Ratu', location: 'Sukabumi, Jawa Barat', keywords: ['pelabuhan ratu'] },
-  { id: 49, name: 'Pantai Carita', location: 'Pandeglang, Banten', keywords: ['carita'] },
-  { id: 50, name: 'Pantai Anyer', location: 'Banten', keywords: ['anyer'] },
-  { id: 51, name: 'Ujung Genteng', location: 'Sukabumi, Jawa Barat', keywords: ['ujung genteng'] },
-
-  // BALI & NUSA TENGGARA
-  { id: 52, name: 'Gunung Agung', location: 'Bali', keywords: ['agung', 'gunung agung'] },
-  { id: 53, name: 'Gunung Batur', location: 'Kintamani, Bali', keywords: ['batur', 'gunung batur'] },
-  { id: 54, name: 'Gunung Rinjani', location: 'Lombok, NTB', keywords: ['rinjani', 'gunung rinjani'] },
-  { id: 55, name: 'Gunung Tambora', location: 'Sumbawa, NTB', keywords: ['tambora'] },
-  { id: 56, name: 'Gunung Kelimutu', location: 'Flores, NTT', keywords: ['kelimutu'] },
-  { id: 57, name: 'Pantai Kuta', location: 'Bali', keywords: ['kuta'] },
-  { id: 58, name: 'Pantai Sanur', location: 'Bali', keywords: ['sanur'] },
-  { id: 59, name: 'Pantai Nusa Dua', location: 'Bali', keywords: ['nusa dua'] },
-  { id: 60, name: 'Pantai Padang Padang', location: 'Bali', keywords: ['padang padang'] },
-  { id: 61, name: 'Pantai Dreamland', location: 'Bali', keywords: ['dreamland'] },
-  { id: 62, name: 'Pantai Tanjung Tinggi', location: 'Belitung', keywords: ['tanjung tinggi'] },
-  { id: 63, name: 'Pantai Tanjung Kelayang', location: 'Belitung', keywords: ['kelayang'] },
-  { id: 64, name: 'Pink Beach', location: 'Komodo, NTT', keywords: ['pink beach'] },
-  { id: 65, name: 'Pulau Komodo', location: 'NTT', keywords: ['komodo'] },
-  { id: 66, name: 'Pulau Padar', location: 'NTT', keywords: ['padar'] },
-  { id: 67, name: 'Danau Toba', location: 'Medan, Sumut', keywords: ['toba', 'danau toba'] },
-  { id: 68, name: 'Pulau Samosir', location: 'Danau Toba', keywords: ['samosir'] },
-
-  // SUMATRA
-  { id: 69, name: 'Gunung Kerinci', location: 'Jambi, Sumatra', keywords: ['kerinci', 'gunung kerinci'] },
-  { id: 70, name: 'Gunung Sinabung', location: 'Karo, Sumut', keywords: ['sinabung'] },
-  { id: 71, name: 'Gunung Sibayak', location: 'Karo, Sumut', keywords: ['sibayak'] },
-  { id: 72, name: 'Danau Maninjau', location: 'Agam, Sumbar', keywords: ['maninjau'] },
-  { id: 73, name: 'Danau Singkarak', location: 'Sumbar', keywords: ['singkarak'] },
-  { id: 74, name: 'Ngarai Sianok', location: 'Bukittinggi, Sumbar', keywords: ['sianok'] },
-  { id: 75, name: 'Pantai Air Manis', location: 'Padang, Sumbar', keywords: ['air manis'] },
-  { id: 76, name: 'Pantai Pangandaran', location: 'Jabar', keywords: ['pangandaran'] },
-  { id: 77, name: 'Pantai Batu Hiu', location: 'Pangandaran', keywords: ['batu hiu'] },
-  { id: 78, name: 'Pantai Karang Bolong', location: 'Pangandaran', keywords: ['karang bolong'] },
-  { id: 79, name: 'Green Canyon', location: 'Pangandaran', keywords: ['green canyon'] },
-  { id: 80, name: 'Gunung Puntang', location: 'Bandung', keywords: ['puntang'] },
-  { id: 81, name: 'Orchid Forest Cikole', location: 'Lembang', keywords: ['orchid forest'] },
-  { id: 82, name: 'Floating Market', location: 'Lembang', keywords: ['floating market'] },
-  { id: 83, name: 'Dusun Bambu', location: 'Bandung', keywords: ['dusun bambu'] },
-  { id: 84, name: 'Taman Safari', location: 'Bogor', keywords: ['safari'] },
-  { id: 85, name: 'Kebun Raya Bogor', location: 'Bogor', keywords: ['kebun raya'] },
-  { id: 86, name: 'Puncak Pass', location: 'Bogor', keywords: ['puncak'] },
-  { id: 87, name: 'Taman Bunga Nusantara', location: 'Puncak', keywords: ['taman bunga'] },
-  { id: 88, name: 'Gunung Halimun', location: 'Bogor', keywords: ['halimun'] },
-  { id: 89, name: 'Pantai Karang Hawu', location: 'Sukabumi', keywords: ['karang hawu'] },
-  { id: 90, name: 'Curug Cimarinjung', location: 'Sukabumi', keywords: ['cimarinjung'] },
-  { id: 91, name: 'Curug Cikaso', location: 'Sukabumi', keywords: ['cikaso'] },
-  { id: 92, name: 'Curug Bugbrug', location: 'Sukabumi', keywords: ['bugbrug'] },
-  { id: 93, name: 'Curug Cilember', location: 'Bogor', keywords: ['cilember'] },
-  { id: 94, name: 'Curug Leuwi Hejo', location: 'Bogor', keywords: ['leuwi hejo'] },
-  { id: 95, name: 'Curug Cibaliung', location: 'Pandeglang', keywords: ['cibaliung'] },
-  { id: 96, name: 'Curug Gendang', location: 'Pandeglang', keywords: ['gendang'] },
-  { id: 97, name: 'Curug Ciherang', location: 'Bogor', keywords: ['ciherang'] },
-  { id: 98, name: 'Curug Cibeureum', location: 'Bogor', keywords: ['cibeureum'] },
-  { id: 99, name: 'Kepulauan Seribu', location: 'Jakarta', keywords: ['kepulauan seribu'] },
-  { id: 100, name: 'Pulau Pramuka', location: 'Kepulauan Seribu', keywords: ['pramuka'] },
-
-];
-
+// Daftar Destinasi diambil dari API secara dinamis
 export default function SewaAlat() {
   const { isAuthenticated } = useAuth();
   const [barangList, setBarangList] = useState([]);
@@ -139,38 +25,63 @@ export default function SewaAlat() {
   const [selectedKategori, setSelectedKategori] = useState('');
 
   // DESTINASI STATES (BARU)
+  const [destinasiList, setDestinasiList] = useState([]);
   const [destinasiSearch, setDestinasiSearch] = useState('');
   const [showDestinasiDropdown, setShowDestinasiDropdown] = useState(false);
   const [selectedDestinasi, setSelectedDestinasi] = useState(null);
   const [tanggalMulai, setTanggalMulai] = useState('');
-  const [durasi, setDurasi] = useState(1);
+  const [tanggalSelesai, setTanggalSelesai] = useState('');
   const [recommendedGears, setRecommendedGears] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isDateFiltered, setIsDateFiltered] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
 
   // CART STATE
   const [cartItems, setCartItems] = useState([]);
 
-  // Filter destinasi berdasarkan pencarian
+  // Filter destinasi berdasarkan pencarian (dinamis dari database)
   const filteredDestinations = useMemo(() => {
     if (!destinasiSearch) return [];
-    return DESTINATIONS.filter(dest =>
-      dest.name.toLowerCase().includes(destinasiSearch.toLowerCase()) ||
-      dest.location.toLowerCase().includes(destinasiSearch.toLowerCase())
-    );
-  }, [destinasiSearch]);
+    return destinasiList.filter(dest => {
+      const name = (dest.nama_destinasi || '').toLowerCase();
+      const location = (dest.lokasi || '').toLowerCase();
+      return name.includes(destinasiSearch.toLowerCase()) || 
+             location.includes(destinasiSearch.toLowerCase());
+    });
+  }, [destinasiSearch, destinasiList]);
 
-  // Hitung tanggal kembali
-  const tanggalKembali = useMemo(() => {
-    if (!tanggalMulai) return '';
-    const date = new Date(tanggalMulai);
-    date.setDate(date.getDate() + durasi);
-    return date.toISOString().split('T')[0];
-  }, [tanggalMulai, durasi]);
+  // Hitung durasi dari tanggal
+  const durasi = useMemo(() => {
+    if (!tanggalMulai || !tanggalSelesai) return 0;
+    const start = new Date(tanggalMulai + 'T00:00:00');
+    const end = new Date(tanggalSelesai + 'T00:00:00');
+    const diff = Math.ceil((end - start) / 86400000);
+    return diff > 0 ? diff : 0;
+  }, [tanggalMulai, tanggalSelesai]);
 
-  // FETCH BARANG
-  const fetchBarang = async () => {
-    setIsLoading(true);
+  // FETCH BARANG (with optional date-based and destination-based availability filter)
+  const fetchBarang = async (startDate = null, endDate = null, destinasiId = null, isInitial = false) => {
+    // Only show full-page spinner on initial load
+    if (isInitial) {
+      setIsLoading(true);
+    } else {
+      setIsRefetching(true);
+    }
     try {
-      const response = await axios.get(`${API_URL}/rental/barang`);
+      let url = `${API_URL}/rental/barang`;
+      const params = new URLSearchParams();
+      if (startDate && endDate) {
+        params.append('tanggal_mulai', startDate);
+        params.append('tanggal_selesai', endDate);
+      }
+      if (destinasiId) {
+        params.append('id_destinasi', destinasiId);
+      }
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+      const response = await axios.get(url);
       if (response.data && Array.isArray(response.data)) {
         setBarangList(response.data);
       }
@@ -178,6 +89,7 @@ export default function SewaAlat() {
       console.error(err);
     } finally {
       setIsLoading(false);
+      setIsRefetching(false);
     }
   };
 
@@ -198,6 +110,18 @@ export default function SewaAlat() {
     }
   };
 
+  // FETCH DESTINASI (dinamis dari database)
+  const fetchDestinasi = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/rental/destinasi`);
+      if (response.data && response.data.status === 'success') {
+        setDestinasiList(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Gagal fetch destinasi:', err);
+    }
+  };
+
   // LOAD CART dari localStorage
   const loadCart = useCallback(async () => {
     try {
@@ -206,47 +130,226 @@ export default function SewaAlat() {
     } catch (err) {
       console.error('Gagal load cart:', err);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // LOAD DATA
+  // LOAD DATA (initial)
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([fetchBarang(), fetchKategori()]);
+      await Promise.all([fetchBarang(null, null, null, true), fetchKategori(), fetchDestinasi()]);
       loadCart();
     };
     loadData();
   }, [loadCart]);
 
+  // AUTO-FETCH when tanggalMulai or tanggalSelesai or selectedDestinasi changes (reactive filtering)
+  useEffect(() => {
+    const destinasiId = selectedDestinasi?.id_destinasi || null;
+    if (tanggalMulai && tanggalSelesai) {
+      fetchBarang(tanggalMulai, tanggalSelesai, destinasiId);
+      setIsDateFiltered(true);
+    } else if (tanggalMulai && !tanggalSelesai) {
+      fetchBarang(tanggalMulai, tanggalMulai, destinasiId);
+      setIsDateFiltered(true);
+    } else if (!tanggalMulai && (isDateFiltered || destinasiId)) {
+      fetchBarang(null, null, destinasiId);
+      setIsDateFiltered(!!tanggalMulai);
+    } else if (destinasiId) {
+      fetchBarang(null, null, destinasiId);
+    } else {
+      fetchBarang();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tanggalMulai, tanggalSelesai, selectedDestinasi]);
+
+  // ==========================================
+  // SMART RECOMMENDATION SYSTEM
+  // Klasifikasi destinasi → tipe aktivitas → essential gear
+  // ==========================================
+
+  // Classify destination type based on name/keywords
+  const getDestinationType = (destinasi) => {
+    const name = (destinasi.nama_destinasi || destinasi.name || '').toLowerCase();
+    const keywords = (destinasi.keywords || []).map(k => k.toLowerCase());
+    const all = [name, ...keywords].join(' ');
+
+    if (all.includes('gunung') || all.includes('summit') || all.includes('puncak') ||
+        all.includes('merapi') || all.includes('merbabu') || all.includes('semeru') ||
+        all.includes('rinjani') || all.includes('kerinci') || all.includes('lawu') ||
+        all.includes('slamet') || all.includes('sindoro') || all.includes('sumbing') ||
+        all.includes('prau') || all.includes('andong') || all.includes('arjuno') ||
+        all.includes('welirang') || all.includes('bromo') || all.includes('ijen') ||
+        all.includes('agung') || all.includes('batur') || all.includes('tambora') ||
+        all.includes('gede') || all.includes('pangrango') || all.includes('ciremai') ||
+        all.includes('papandayan') || all.includes('kelimutu') || all.includes('sibayak') ||
+        all.includes('sinabung') || all.includes('halimun') || all.includes('puntang') ||
+        all.includes('penanggungan') || all.includes('ungaran') || all.includes('telomoyo')) {
+      return 'gunung';
+    }
+    if (all.includes('ranu') || all.includes('kumbolo') || all.includes('danau') ||
+        all.includes('toba') || all.includes('maninjau') || all.includes('singkarak') ||
+        all.includes('telaga') || all.includes('situ') || all.includes('samosir')) {
+      return 'danau_camp'; // camping di tepi danau/ranu
+    }
+    if (all.includes('pantai') || all.includes('beach') || all.includes('pulau') ||
+        all.includes('kepulauan') || all.includes('nusa') || all.includes('komodo') ||
+        all.includes('padar') || all.includes('genteng')) {
+      return 'pantai';
+    }
+    if (all.includes('curug') || all.includes('air terjun') || all.includes('tumpak') ||
+        all.includes('madakaripura') || all.includes('green canyon') || all.includes('ngarai')) {
+      return 'air_terjun';
+    }
+    if (all.includes('kawah') || all.includes('dieng') || all.includes('plateau') ||
+        all.includes('sikidang')) {
+      return 'kawah'; // kawah/dataran tinggi dingin
+    }
+    if (all.includes('ranca upas') || all.includes('orchid') || all.includes('cikole') ||
+        all.includes('dusun bambu') || all.includes('puncak') || all.includes('safari') ||
+        all.includes('kebun raya') || all.includes('taman bunga') || all.includes('floating')) {
+      return 'wisata_alam'; // wisata alam ringan
+    }
+    if (all.includes('candi') || all.includes('borobudur') || all.includes('prambanan')) {
+      return 'wisata_budaya';
+    }
+    // Default: jika tidak terklasifikasi, asumsikan outdoor camping
+    return 'outdoor';
+  };
+
+  // Essential gear keywords per destination type
+  // Each keyword is checked against nama_barang (case-insensitive partial match)
+  const ESSENTIAL_GEAR_BY_TYPE = {
+    gunung: [
+      // Perlengkapan WAJIB pendakian gunung
+      'tenda', 'sleeping bag', 'carrier', 'kompor', 'nesting',
+      'matras', 'headlamp', 'senter', 'trekking pole', 'tracking pole',
+      'jaket', 'rain coat', 'jas hujan', 'raincoat',
+      'gaiter', 'sarung tangan', 'glove', 'buff',
+      'flysheet', 'trash bag', 'dry bag',
+      'logistik', 'p3k', 'first aid',
+    ],
+    danau_camp: [
+      // Camping di tepi danau/ranu — mirip gunung tapi + alat masak
+      'tenda', 'sleeping bag', 'matras', 'kompor', 'nesting',
+      'headlamp', 'senter', 'jaket', 'carrier',
+      'flysheet', 'kursi lipat', 'meja lipat',
+      'cooler', 'termos', 'tumbler',
+      'hammock', 'trash bag', 'p3k',
+    ],
+    pantai: [
+      // Camping/kegiatan pantai
+      'tenda', 'matras', 'hammock', 'kursi lipat', 'meja lipat',
+      'cooler', 'termos', 'kompor', 'nesting',
+      'dry bag', 'tas waterproof', 'lampu', 'lentera',
+      'snorkeling', 'pelampung', 'fin',
+      'payung', 'shelter', 'canopy',
+    ],
+    air_terjun: [
+      // Trekking ke air terjun
+      'dry bag', 'tas waterproof', 'sandal gunung', 'sepatu',
+      'trekking pole', 'tracking pole', 'jaket', 'rain coat', 'jas hujan',
+      'headlamp', 'senter', 'p3k', 'first aid',
+      'carrier', 'daypack',
+    ],
+    kawah: [
+      // Kawah/dataran tinggi dingin
+      'jaket', 'masker', 'buff', 'sarung tangan', 'glove',
+      'trekking pole', 'tracking pole', 'headlamp', 'senter',
+      'tenda', 'sleeping bag', 'matras', 'kompor',
+      'carrier', 'rain coat', 'jas hujan',
+    ],
+    wisata_alam: [
+      // Wisata alam ringan (camping ground, dll)
+      'tenda', 'matras', 'sleeping bag', 'hammock',
+      'kursi lipat', 'meja lipat', 'kompor', 'nesting',
+      'cooler', 'lampu', 'lentera', 'power bank',
+    ],
+    wisata_budaya: [
+      // Wisata budaya — minimal gear
+      'daypack', 'tas', 'topi', 'payung',
+    ],
+    outdoor: [
+      // Default outdoor
+      'tenda', 'sleeping bag', 'matras', 'kompor', 'nesting',
+      'headlamp', 'senter', 'carrier', 'jaket',
+    ],
+  };
+
+  // Compute recommended gear IDs based on selected destination (dinamis dari database!)
+  const recommendedGearIds = useMemo(() => {
+    if (!selectedDestinasi || barangList.length === 0) return new Set();
+
+    const destId = selectedDestinasi.id_destinasi;
+    const ids = new Set();
+    barangList.forEach(barang => {
+      const hasDestinasi = barang.destinasi?.some(d => d.id_destinasi === destId) ||
+                           barang.destinasi_ids?.includes(destId);
+      if (hasDestinasi) {
+        ids.add(barang.id_barang);
+      }
+    });
+
+    return ids;
+  }, [selectedDestinasi, barangList]);
+
   // Pilih destinasi
   const handleSelectDestinasi = (destinasi) => {
     setSelectedDestinasi(destinasi);
-    setDestinasiSearch(destinasi.name);
+    setDestinasiSearch(destinasi.nama_destinasi);
     setShowDestinasiDropdown(false);
-
-    // Rekomendasi alat berdasarkan destinasi
-    const gearMapping = {
-      'Gunung Ijen': ['Tenda', 'Sleeping Bag', 'Headlamp', 'Jaket Gunung', 'Trekking Pole'],
-      'Gunung Bromo': ['Jaket Tebal', 'Masker', 'Sarung Tangan', 'Tenda'],
-      'Pantai Kuta': ['Matras', 'Payung Pantai', 'Cooler Box', 'Kursi Lipat'],
-      'Ranu Kumbolo': ['Tenda', 'Sleeping Bag', 'Kompor Portable', 'Matras'],
-      'Hutan Pinus Pengger': ['Matras', 'Kursi Lipat', 'Power Bank', 'Tenda'],
-      'Kawah Putih': ['Jaket', 'Masker', 'Kamera', 'Trekking Pole'],
-    };
-
-    const keywords = gearMapping[destinasi.name] || [];
-    const filtered = barangList.filter(barang =>
-      keywords.some(keyword => barang.nama_barang.includes(keyword))
-    );
-    setRecommendedGears(filtered);
   };
 
-  // Filter barang (dari search + kategori + rekomendasi destinasi)
+  // Sinkronisasi recommendedGears dinamis dari database untuk info banner
+  useEffect(() => {
+    if (selectedDestinasi && barangList.length > 0) {
+      const destId = selectedDestinasi.id_destinasi;
+      const filtered = barangList.filter(barang => {
+        return barang.destinasi?.some(d => d.id_destinasi === destId) ||
+               barang.destinasi_ids?.includes(destId);
+      });
+      setRecommendedGears(filtered);
+    } else {
+      setRecommendedGears([]);
+    }
+  }, [selectedDestinasi, barangList]);
+
+  // Filter barang (dari search + kategori + tanggal) — semua barang ditampilkan, recommended di-sort ke atas
   const filteredBarang = useMemo(() => {
     let filtered = [...barangList];
 
-    // Filter by rekomendasi destinasi (jika ada)
-    if (recommendedGears.length > 0) {
-      filtered = recommendedGears;
+    // Filter by min_tanggal_sewa (if customer selected a pickup date)
+    // Using string comparison on YYYY-MM-DD format to avoid timezone issues
+    if (tanggalMulai) {
+      const selectedDate = tanggalMulai; // Already in YYYY-MM-DD format
+      filtered = filtered.filter((barang) => {
+        if (!barang.min_tanggal_sewa) return true; // no restriction, always show
+        // Normalize: extract YYYY-MM-DD from possible ISO timestamp
+        const minDate = (barang.min_tanggal_sewa || '').split('T')[0];
+        if (!minDate) return true;
+        // Show item only if selected pickup date >= item's minimum date
+        return selectedDate >= minDate;
+      });
+    }
+
+    // Filter by max_tanggal_pengembalian (if customer selected a return date)
+    if (tanggalSelesai) {
+      const selectedReturnDate = tanggalSelesai;
+      filtered = filtered.filter((barang) => {
+        if (!barang.max_tanggal_pengembalian) return true; // no restriction, always show
+        const maxDate = (barang.max_tanggal_pengembalian || '').split('T')[0];
+        if (!maxDate) return true;
+        // Show item only if selected return date <= item's maximum return date
+        return selectedReturnDate <= maxDate;
+      });
+    } else if (tanggalMulai) {
+      // If only pickup date is selected, treat it as a single-day rent and check it doesn't exceed maximum return date
+      const selectedReturnDate = tanggalMulai;
+      filtered = filtered.filter((barang) => {
+        if (!barang.max_tanggal_pengembalian) return true;
+        const maxDate = (barang.max_tanggal_pengembalian || '').split('T')[0];
+        if (!maxDate) return true;
+        return selectedReturnDate <= maxDate;
+      });
     }
 
     // Filter by search term
@@ -263,22 +366,46 @@ export default function SewaAlat() {
       );
     }
 
+    // Filter by destinasi (exclusive filter)
+    if (selectedDestinasi) {
+      const destId = selectedDestinasi.id_destinasi;
+      filtered = filtered.filter((barang) => {
+        return barang.destinasi?.some(d => d.id_destinasi === destId) ||
+               barang.destinasi_ids?.includes(destId);
+      });
+    }
+
+    // Sort: recommended items first (if destination selected)
+    if (selectedDestinasi && recommendedGearIds.size > 0) {
+      filtered.sort((a, b) => {
+        const aRec = recommendedGearIds.has(a.id_barang) ? 1 : 0;
+        const bRec = recommendedGearIds.has(b.id_barang) ? 1 : 0;
+        return bRec - aRec; // recommended first
+      });
+    }
+
     return filtered;
-  }, [barangList, searchTerm, selectedKategori, recommendedGears]);
+  }, [barangList, searchTerm, selectedKategori, selectedDestinasi, recommendedGearIds, tanggalMulai]);
 
-  // Cari rekomendasi alat berdasarkan destinasi + filter
-  const handleSearchDestinasi = () => {
-    if (!selectedDestinasi) {
-      alert('Pilih destinasi terlebih dahulu');
-      return;
-    }
+  // Cari rekomendasi alat berdasarkan destinasi + filter by date availability
+  const handleSearchDestinasi = async () => {
     if (!tanggalMulai) {
-      alert('Pilih tanggal ambil');
+      alert('Pilih tanggal ambil terlebih dahulu');
       return;
     }
 
-    // Sudah otomatis filter via useEffect, tinggal scroll ke katalog
-    document.getElementById('katalog-section')?.scrollIntoView({ behavior: 'smooth' });
+    setIsSearching(true);
+    try {
+      // Data already fetched by auto-fetch useEffect, just scroll to katalog
+      // Scroll ke katalog
+      setTimeout(() => {
+        document.getElementById('katalog-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const getImageUrl = (barang) => {
@@ -425,6 +552,7 @@ export default function SewaAlat() {
                       setDestinasiSearch(e.target.value);
                       setShowDestinasiDropdown(true);
                       setSelectedDestinasi(null);
+                      setRecommendedGears([]);
                     }}
                     onFocus={() => setShowDestinasiDropdown(true)}
                     className="w-full bg-transparent border-0 p-0 text-xs font-bold text-gray-800 placeholder-gray-400 focus:ring-0 focus:outline-none"
@@ -433,14 +561,14 @@ export default function SewaAlat() {
                     <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 z-50 max-h-60 overflow-y-auto">
                       {filteredDestinations.map(dest => (
                         <div
-                          key={dest.id}
+                          key={dest.id_destinasi || dest.id}
                           onClick={() => handleSelectDestinasi(dest)}
                           className="p-3 hover:bg-gray-50 cursor-pointer flex items-center gap-2 border-b last:border-0"
                         >
                           <MapPin className="w-4 h-4 text-emerald-500" />
                           <div>
-                            <p className="font-semibold text-sm">{dest.name}</p>
-                            <p className="text-xs text-gray-500">{dest.location}</p>
+                            <p className="font-semibold text-sm">{dest.nama_destinasi || dest.name}</p>
+                            <p className="text-xs text-gray-500">{dest.lokasi || dest.location || 'Indonesia'}</p>
                           </div>
                         </div>
                       ))}
@@ -449,7 +577,7 @@ export default function SewaAlat() {
                 </div>
                 {selectedDestinasi && (
                   <p className="text-[10px] text-emerald-600 mt-1">
-                    ✓ {selectedDestinasi.name}, {selectedDestinasi.location}
+                    ✓ {selectedDestinasi.nama_destinasi || selectedDestinasi.name}
                   </p>
                 )}
               </div>
@@ -462,36 +590,50 @@ export default function SewaAlat() {
                 <input
                   type="date"
                   value={tanggalMulai}
-                  onChange={(e) => setTanggalMulai(e.target.value)}
+                  onChange={(e) => {
+                    setTanggalMulai(e.target.value);
+                    // Auto-clear tanggalSelesai if it's before the new start date
+                    if (tanggalSelesai && e.target.value && tanggalSelesai <= e.target.value) {
+                      setTanggalSelesai('');
+                    }
+                  }}
                   min={new Date().toISOString().split('T')[0]}
                   className="text-xs font-bold text-gray-800 border-0 p-0 focus:ring-0"
                 />
               </div>
 
-              {/* DURASI */}
-              <div className="md:col-span-2 flex flex-col gap-1.5 border-r border-gray-200 px-4">
+              {/* TGL PENGEMBALIAN (manual) */}
+              <div className="md:col-span-3 flex flex-col gap-1.5 border-r border-gray-200 px-4">
+                <label className="text-[11px] font-bold text-gray-500 tracking-wide">
+                  Tgl Pengembalian
+                </label>
+                <input
+                  type="date"
+                  value={tanggalSelesai}
+                  onChange={(e) => setTanggalSelesai(e.target.value)}
+                  min={tanggalMulai ? (() => {
+                    const d = new Date(tanggalMulai + 'T00:00:00');
+                    d.setDate(d.getDate() + 1);
+                    return d.toISOString().split('T')[0];
+                  })() : new Date().toISOString().split('T')[0]}
+                  disabled={!tanggalMulai}
+                  className={`text-xs font-bold border-0 p-0 focus:ring-0 ${!tanggalMulai ? 'text-gray-300 cursor-not-allowed' : 'text-gray-800'}`}
+                />
+                {!tanggalMulai && (
+                  <p className="text-[9px] text-gray-400 mt-0.5">Pilih tgl ambil dulu</p>
+                )}
+              </div>
+
+              {/* DURASI (auto-calculated) */}
+              <div className="md:col-span-1 flex flex-col gap-1.5 px-4">
                 <label className="text-[11px] font-bold text-gray-500 tracking-wide">
                   Durasi
                 </label>
-                <select
-                  value={durasi}
-                  onChange={(e) => setDurasi(parseInt(e.target.value))}
-                  className="text-xs font-bold text-gray-800 border-0 p-0 bg-transparent focus:ring-0"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(d => (
-                    <option key={d} value={d}>{d} hari</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* PENGEMBALIAN */}
-              <div className="md:col-span-2 flex flex-col gap-1.5 px-4">
-                <label className="text-[11px] font-bold text-gray-500 tracking-wide">
-                  Maks. Pengembalian
-                </label>
-                <div className="flex items-center gap-2 text-xs font-bold text-gray-800">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <span>{tanggalKembali || 'Pilih tanggal'}</span>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-800">
+                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                  <span className={durasi > 0 ? 'text-emerald-600' : 'text-gray-400'}>
+                    {durasi > 0 ? `${durasi} hari` : '-'}
+                  </span>
                 </div>
               </div>
 
@@ -499,10 +641,20 @@ export default function SewaAlat() {
               <div className="md:col-span-2 flex justify-end pl-2">
                 <button
                   onClick={handleSearchDestinasi}
-                  className="w-full bg-[#00A779] hover:bg-[#008f68] text-white font-bold text-xs py-3 px-4 rounded-full flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.97] shadow-sm"
+                  disabled={isSearching}
+                  className="w-full bg-[#00A779] hover:bg-[#008f68] text-white font-bold text-xs py-3 px-4 rounded-full flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.97] shadow-sm disabled:opacity-60"
                 >
-                  <Search className="w-3.5 h-3.5 stroke-[3]" />
-                  <span>Cari Alat</span>
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Mencari...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Cari Alat</span>
+                    </>
+                  )}
                 </button>
               </div>
 
@@ -511,22 +663,80 @@ export default function SewaAlat() {
         </div>
       </section>
 
+      {/* DATE FILTER ACTIVE BANNER */}
+      {isDateFiltered && tanggalMulai && (
+        <div className="max-w-[1200px] mx-auto px-6 mt-6">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-blue-700">
+                📅 Menampilkan barang tersedia: {new Date(tanggalMulai + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}{tanggalSelesai && ` — ${new Date(tanggalSelesai + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`}{durasi > 0 && ` (${durasi} hari)`}
+              </p>
+              <p className="text-xs text-blue-500 mt-0.5">
+                Hanya barang yang tersedia pada tanggal tersebut yang ditampilkan ({filteredBarang.length} item)
+              </p>
+            </div>
+            <button
+              onClick={() => { 
+                setTanggalMulai(''); 
+                setTanggalSelesai('');
+                setIsDateFiltered(false); 
+                setSelectedDestinasi(null);
+                setDestinasiSearch('');
+                setRecommendedGears([]);
+              }}
+              className="text-[11px] font-bold text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+            >
+              ✕ Reset Filter
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* REKOMENDASI DESTINASI (jika ada) */}
       {selectedDestinasi && recommendedGears.length > 0 && (
         <div className="max-w-[1200px] mx-auto px-6 mt-6">
           <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-100">
             <p className="text-sm font-semibold text-emerald-700">
-              🏕️ Rekomendasi untuk {selectedDestinasi.name}:
+              {(() => {
+                const type = getDestinationType(selectedDestinasi);
+                const emojiMap = {
+                  gunung: '🏔️', danau_camp: '🏕️', pantai: '🏖️',
+                  air_terjun: '🌊', kawah: '🌋', wisata_alam: '🌿',
+                  wisata_budaya: '🏛️', outdoor: '⛺',
+                };
+                return `${emojiMap[type] || '⛺'} Rekomendasi untuk ${selectedDestinasi.nama_destinasi || selectedDestinasi.name}:`;
+              })()}
             </p>
             <p className="text-xs text-gray-600 mt-1">
-              Berdasarkan destinasi yang dipilih, kami rekomendasikan {recommendedGears.length} perlengkapan berikut
+              {(() => {
+                const type = getDestinationType(selectedDestinasi);
+                const descMap = {
+                  gunung: 'Pendakian gunung membutuhkan perlengkapan lengkap untuk keamanan dan kenyamanan.',
+                  danau_camp: 'Camping di tepi danau memerlukan perlengkapan camp dan alat masak outdoor.',
+                  pantai: 'Aktivitas pantai membutuhkan perlengkapan tahan air dan camping ringan.',
+                  air_terjun: 'Trekking ke air terjun butuh perlengkapan waterproof dan trekking.',
+                  kawah: 'Kawah dan dataran tinggi memerlukan perlengkapan tahan dingin dan masker.',
+                  wisata_alam: 'Wisata alam ringan dengan perlengkapan camping santai.',
+                  wisata_budaya: 'Wisata budaya memerlukan perlengkapan ringan dan praktis.',
+                  outdoor: 'Aktivitas outdoor membutuhkan perlengkapan camping standar.',
+                };
+                return `${descMap[type] || descMap.outdoor} Kami merekomendasikan ${recommendedGears.length} perlengkapan esensial — ditandai dengan badge ⭐ Recommended.`;
+              })()}
             </p>
           </div>
         </div>
       )}
 
       {/* KATALOG PRODUK */}
-      <div id="katalog-section">
+      <div id="katalog-section" className="relative">
+        {isRefetching && (
+          <div className="absolute inset-0 bg-white/60 dark:bg-black/30 z-20 flex items-start justify-center pt-20 rounded-xl backdrop-blur-[1px]">
+            <div className="flex items-center gap-2 bg-white shadow-lg rounded-full px-4 py-2 border">
+              <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs font-semibold text-gray-600">Memperbarui katalog...</span>
+            </div>
+          </div>
+        )}
         <KatalogProduk
           filteredBarang={filteredBarang}
           kategoriList={kategoriList}
@@ -540,6 +750,8 @@ export default function SewaAlat() {
           onRemoveFromCart={handleRemoveFromCart}
           onUpdateQuantity={handleUpdateQuantity}
           isAuthenticated={isAuthenticated}
+          recommendedGearIds={recommendedGearIds}
+          selectedDestinasi={selectedDestinasi}
         />
       </div>
 

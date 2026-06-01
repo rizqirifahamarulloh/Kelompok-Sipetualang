@@ -34,6 +34,12 @@ import {
   RotateCcw,
   ImageIcon,
   Wallet,
+  Eye,
+  AlertTriangle,
+  ZoomIn,
+  Calendar,
+  Tag,
+  MapPin,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -83,6 +89,8 @@ export default function DashboardRental() {
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedGear, setSelectedGear] = useState(null)
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [viewGear, setViewGear] = useState(null)
   
   // Add Form State
   const [addForm, setAddForm] = useState({
@@ -90,6 +98,8 @@ export default function DashboardRental() {
     deskripsi: '',
     harga_sewa: '',
     min_durasi_sewa: 1,
+    min_tanggal_sewa: '',
+    max_tanggal_pengembalian: '',
     nominal_deposit: '',
     jumlah_stok: '',
     id_kategori: '',
@@ -105,6 +115,8 @@ export default function DashboardRental() {
     deskripsi: '',
     harga_sewa: '',
     min_durasi_sewa: 1,
+    min_tanggal_sewa: '',
+    max_tanggal_pengembalian: '',
     nominal_deposit: '',
     jumlah_stok: '',
     id_kategori: '',
@@ -507,6 +519,12 @@ export default function DashboardRental() {
       formData.append('deskripsi', addForm.deskripsi)
       formData.append('harga_sewa', addForm.harga_sewa)
       formData.append('min_durasi_sewa', addForm.min_durasi_sewa || 1)
+      if (addForm.min_tanggal_sewa) {
+        formData.append('min_tanggal_sewa', addForm.min_tanggal_sewa)
+      }
+      if (addForm.max_tanggal_pengembalian) {
+        formData.append('max_tanggal_pengembalian', addForm.max_tanggal_pengembalian)
+      }
       formData.append('nominal_deposit', addForm.nominal_deposit || 0)
       formData.append('jumlah_stok', addForm.jumlah_stok)
       formData.append('id_kategori', addForm.id_kategori)
@@ -530,6 +548,8 @@ export default function DashboardRental() {
           deskripsi: '',
           harga_sewa: '',
           min_durasi_sewa: 1,
+          min_tanggal_sewa: '',
+          max_tanggal_pengembalian: '',
           nominal_deposit: '',
           jumlah_stok: '',
           id_kategori: '',
@@ -554,6 +574,8 @@ export default function DashboardRental() {
       deskripsi: gear.deskripsi || '',
       harga_sewa: gear.harga_sewa || '',
       min_durasi_sewa: gear.min_durasi_sewa || 1,
+      min_tanggal_sewa: gear.min_tanggal_sewa ? gear.min_tanggal_sewa.split('T')[0] : '',
+      max_tanggal_pengembalian: gear.max_tanggal_pengembalian ? gear.max_tanggal_pengembalian.split('T')[0] : '',
       nominal_deposit: gear.nominal_deposit || '',
       jumlah_stok: gear.jumlah_stok || '',
       id_kategori: gear.id_kategori || '',
@@ -594,6 +616,16 @@ export default function DashboardRental() {
       formData.append('deskripsi', editForm.deskripsi)
       formData.append('harga_sewa', editForm.harga_sewa)
       formData.append('min_durasi_sewa', editForm.min_durasi_sewa || 1)
+      if (editForm.min_tanggal_sewa) {
+        formData.append('min_tanggal_sewa', editForm.min_tanggal_sewa)
+      } else {
+        formData.append('min_tanggal_sewa', '')
+      }
+      if (editForm.max_tanggal_pengembalian) {
+        formData.append('max_tanggal_pengembalian', editForm.max_tanggal_pengembalian)
+      } else {
+        formData.append('max_tanggal_pengembalian', '')
+      }
       formData.append('nominal_deposit', editForm.nominal_deposit || 0)
       formData.append('jumlah_stok', editForm.jumlah_stok)
       formData.append('id_kategori', editForm.id_kategori)
@@ -1498,9 +1530,25 @@ export default function DashboardRental() {
                                   }>
                                     {gear.status_approval.toUpperCase()}
                                   </Badge>
+                                  {gear.status_approval === 'ditolak' && gear.alasan_ditolak && (
+                                    <p className="text-[9px] text-red-500 mt-0.5 truncate max-w-[120px]" title={gear.alasan_ditolak}>
+                                      ⚠ {gear.alasan_ditolak}
+                                    </p>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-right pr-6 shrink-0">
-                                  <div className="flex gap-2 justify-end">
+                                  <div className="flex gap-1.5 justify-end">
+                                    {/* View detail barang */}
+                                    <Button 
+                                      onClick={() => { setViewGear(gear); setViewModalOpen(true); }}
+                                      variant="outline" 
+                                      size="icon" 
+                                      className="size-8 rounded-lg hover:border-blue-500 hover:text-blue-600"
+                                      title="Lihat Detail Barang"
+                                    >
+                                      <Eye className="size-3.5" />
+                                    </Button>
+
                                     {/* Edit diizinkan untuk semua status, perubahan data pada barang approved akan me-reset status ke pending */}
                                     <Button 
                                       onClick={() => openEditModal(gear)}
@@ -2051,6 +2099,48 @@ export default function DashboardRental() {
                 </div>
               </div>
 
+              {/* Minimum Tanggal Sewa */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="add_min_tgl" className="text-right font-medium mt-2">Min. Tgl Ambil</Label>
+                <div className="col-span-3">
+                  <Input 
+                    id="add_min_tgl" 
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    className="rounded-lg w-48"
+                    value={addForm.min_tanggal_sewa}
+                    onChange={(e) => setAddForm(prev => ({ ...prev, min_tanggal_sewa: e.target.value }))}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+                    📅 Customer hanya bisa menyewa mulai dari tanggal <strong className="text-blue-600">{addForm.min_tanggal_sewa ? new Date(addForm.min_tanggal_sewa).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'kapan saja'}</strong>. Kosongkan jika tidak ada batasan.
+                  </p>
+                </div>
+              </div>
+
+              {/* Maks. Tanggal Pengembalian */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="add_max_tgl" className="text-right font-medium mt-2">Maks. Tgl Kembali</Label>
+                <div className="col-span-3">
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      id="add_max_tgl" 
+                      type="date"
+                      min={addForm.min_tanggal_sewa || new Date().toISOString().split('T')[0]}
+                      className="rounded-lg w-48"
+                      value={addForm.max_tanggal_pengembalian}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, max_tanggal_pengembalian: e.target.value }))}
+                    />
+                    {addForm.max_tanggal_pengembalian && (
+                      <button type="button" onClick={() => setAddForm(prev => ({ ...prev, max_tanggal_pengembalian: '' }))}
+                        className="text-xs text-red-500 hover:text-red-700 font-semibold">✕ Hapus</button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+                    📅 Batas akhir customer harus mengembalikan barang: <strong className={addForm.max_tanggal_pengembalian ? 'text-orange-600' : 'text-gray-500'}>{addForm.max_tanggal_pengembalian ? new Date(addForm.max_tanggal_pengembalian).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'tidak ada batasan'}</strong>. Opsional.
+                  </p>
+                </div>
+              </div>
+
               {/* Jumlah Stok */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="add_stok" className="text-right font-medium">Jumlah Stok*</Label>
@@ -2283,6 +2373,63 @@ export default function DashboardRental() {
                 </div>
               </div>
 
+              {/* Minimum Tanggal Sewa */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit_min_tgl" className="text-right font-medium mt-2">Min. Tgl Ambil</Label>
+                <div className="col-span-3">
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      id="edit_min_tgl" 
+                      type="date"
+                      className="rounded-lg w-48"
+                      value={editForm.min_tanggal_sewa}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, min_tanggal_sewa: e.target.value }))}
+                    />
+                    {editForm.min_tanggal_sewa && (
+                      <button
+                        type="button"
+                        onClick={() => setEditForm(prev => ({ ...prev, min_tanggal_sewa: '' }))}
+                        className="text-xs text-red-500 hover:text-red-700 font-semibold whitespace-nowrap"
+                      >
+                        ✕ Hapus
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+                    📅 Customer hanya bisa menyewa mulai dari tanggal <strong className="text-blue-600">{editForm.min_tanggal_sewa ? new Date(editForm.min_tanggal_sewa).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'kapan saja'}</strong>. Kosongkan jika tidak ada batasan.
+                  </p>
+                  {selectedGear?.status_approval === 'disetujui' && (
+                    <p className="text-[11px] text-emerald-600 mt-1 leading-snug font-semibold">
+                      ✅ Perubahan tanggal langsung tersimpan tanpa perlu persetujuan ulang admin.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Maks. Tanggal Pengembalian (Edit) */}
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit_max_tgl" className="text-right font-medium mt-2">Maks. Tgl Kembali</Label>
+                <div className="col-span-3">
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      id="edit_max_tgl" 
+                      type="date"
+                      min={editForm.min_tanggal_sewa || new Date().toISOString().split('T')[0]}
+                      className="rounded-lg w-48"
+                      value={editForm.max_tanggal_pengembalian}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, max_tanggal_pengembalian: e.target.value }))}
+                    />
+                    {editForm.max_tanggal_pengembalian && (
+                      <button type="button" onClick={() => setEditForm(prev => ({ ...prev, max_tanggal_pengembalian: '' }))}
+                        className="text-xs text-red-500 hover:text-red-700 font-semibold whitespace-nowrap">✕ Hapus</button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+                    📅 Batas akhir customer harus mengembalikan: <strong className={editForm.max_tanggal_pengembalian ? 'text-orange-600' : 'text-gray-500'}>{editForm.max_tanggal_pengembalian ? new Date(editForm.max_tanggal_pengembalian).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'tidak ada batasan'}</strong>. Opsional.
+                  </p>
+                </div>
+              </div>
+
               {/* Jumlah Stok */}
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="edit_stok" className="text-right font-medium mt-2">Jumlah Stok*</Label>
@@ -2399,6 +2546,186 @@ export default function DashboardRental() {
               <Button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700">Simpan Perubahan</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Detail Gear Modal */}
+      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <DialogContent className="max-w-2xl rounded-2xl bg-card dark:bg-slate-900 border max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Eye className="size-5 text-blue-600" />
+              Detail Barang
+            </DialogTitle>
+            <DialogDescription>
+              Informasi lengkap mengenai barang yang Anda daftarkan.
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewGear && (
+            <div className="space-y-5">
+              {/* Rejection Banner */}
+              {viewGear.status_approval === 'ditolak' && viewGear.alasan_ditolak && (
+                <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="size-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center shrink-0">
+                      <AlertTriangle className="size-5 text-red-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-red-700 dark:text-red-400">Barang Ditolak oleh Admin</p>
+                      <p className="text-sm text-red-600 dark:text-red-300 mt-1 leading-relaxed">{viewGear.alasan_ditolak}</p>
+                      <p className="text-[11px] text-red-400 dark:text-red-500 mt-2 font-medium">
+                        💡 Anda bisa memperbaiki barang ini dan mengajukan ulang melalui tombol "Edit" di tabel inventaris.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pending Banner */}
+              {viewGear.status_approval === 'pending' && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2">
+                  <Clock className="size-4 text-amber-500 animate-pulse" />
+                  <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                    Barang ini sedang menunggu verifikasi dan persetujuan admin sebelum bisa tampil di katalog customer.
+                  </p>
+                </div>
+              )}
+
+              {/* Photo Section */}
+              <div className="relative rounded-xl overflow-hidden bg-muted border border-border group" style={{ aspectRatio: '16/10' }}>
+                {viewGear.foto_barang ? (
+                  <>
+                    <img 
+                      src={getGearPhoto(viewGear.foto_barang)} 
+                      alt={viewGear.nama_barang} 
+                      className="w-full h-full object-contain bg-slate-50 dark:bg-slate-800/50 p-2" 
+                    />
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
+                    <Package size={40} className="mb-2 opacity-30" />
+                    <span className="text-sm font-medium">Belum ada foto</span>
+                  </div>
+                )}
+                {/* Status Badges on photo */}
+                <div className="absolute top-3 left-3 flex gap-2">
+                  <Badge className={
+                    viewGear.status_barang === 'tersedia' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+                  }>
+                    {viewGear.status_barang === 'tersedia' ? '✓ Tersedia' : 'Habis'}
+                  </Badge>
+                  <Badge className={
+                    viewGear.status_approval === 'disetujui' ? 'bg-emerald-100 text-emerald-700' :
+                    viewGear.status_approval === 'pending' ? 'bg-amber-100 text-amber-700' :
+                    'bg-red-100 text-red-700'
+                  }>
+                    {viewGear.status_approval.toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Item Info */}
+              <div>
+                <h3 className="text-xl font-bold">{viewGear.nama_barang}</h3>
+                <p className="text-2xl font-extrabold text-emerald-600 mt-1">
+                  {formatRupiah(viewGear.harga_sewa)}
+                  <span className="text-sm font-normal text-muted-foreground"> / hari</span>
+                </p>
+              </div>
+
+              {/* Detail Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Kategori</p>
+                  <p className="text-sm font-bold flex items-center gap-1.5">
+                    <Tag className="size-3.5 text-emerald-600" />
+                    {viewGear.kategori?.nama_kategori || '-'}
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Jumlah Stok</p>
+                  <p className={`text-sm font-bold ${viewGear.jumlah_stok <= 1 ? 'text-red-500' : ''}`}>
+                    <Layers className="size-3.5 inline mr-1.5 text-blue-500" />
+                    {viewGear.jumlah_stok} Unit
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Min. Durasi Sewa</p>
+                  <p className="text-sm font-bold">
+                    <Calendar className="size-3.5 inline mr-1.5 text-amber-500" />
+                    {viewGear.min_durasi_sewa || 1} Hari
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Min. Tanggal Ambil</p>
+                  <p className={`text-sm font-bold ${viewGear.min_tanggal_sewa ? 'text-blue-600' : 'text-muted-foreground'}`}>
+                    <Calendar className="size-3.5 inline mr-1.5 text-blue-500" />
+                    {viewGear.min_tanggal_sewa 
+                      ? new Date(viewGear.min_tanggal_sewa).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) 
+                      : 'Kapan saja'}
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Maks. Tgl Kembali</p>
+                  <p className={`text-sm font-bold ${viewGear.max_tanggal_pengembalian ? 'text-orange-600' : 'text-muted-foreground'}`}>
+                    <Calendar className="size-3.5 inline mr-1.5 text-orange-500" />
+                    {viewGear.max_tanggal_pengembalian 
+                      ? new Date(viewGear.max_tanggal_pengembalian).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) 
+                      : 'Tidak ada batasan'}
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Deposit</p>
+                  <p className="text-sm font-bold text-emerald-600">
+                    {formatRupiah(viewGear.nominal_deposit || Math.round((viewGear.harga_sewa || 0) * 0.2))}
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Penyerahan ke Gudang</p>
+                  <p className="text-sm font-bold">
+                    {viewGear.metode_penyerahan === 'delivery' ? '🚚 Kirim via Kurir' : '🏪 Datang Langsung'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Penyerahan Info */}
+              {viewGear.metode_penyerahan === 'delivery' && viewGear.no_resi_penyerahan && (
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">No. Resi Pengiriman</p>
+                  <p className="text-sm font-mono font-bold">{viewGear.no_resi_penyerahan}</p>
+                </div>
+              )}
+
+              {/* Deskripsi */}
+              {viewGear.deskripsi && (
+                <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Deskripsi</p>
+                  <p className="text-sm text-foreground leading-relaxed">{viewGear.deskripsi}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 mt-2">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={() => setViewModalOpen(false)}
+            >
+              Tutup
+            </Button>
+            <Button 
+              type="button" 
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+              onClick={() => { 
+                setViewModalOpen(false); 
+                if (viewGear) openEditModal(viewGear); 
+              }}
+            >
+              <Edit className="size-4 mr-2" /> Edit Barang Ini
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

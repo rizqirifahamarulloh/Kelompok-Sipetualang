@@ -22,17 +22,42 @@ class Barang extends Model
         'foto_barang',
         'harga_sewa',
         'min_durasi_sewa',
+        'min_tanggal_sewa',
+        'max_tanggal_pengembalian',
         'nominal_deposit',
         'jumlah_stok',
         'status_barang',
         'status_approval',
+        'alasan_ditolak',
         'butuh_verifikasi',
         'metode_penyerahan',
         'no_resi_penyerahan',
         'status_penyerahan'
     ];
 
-    protected $appends = ['avg_rating', 'total_ulasan'];
+    protected $casts = [
+        'min_tanggal_sewa' => 'date:Y-m-d',
+        'max_tanggal_pengembalian' => 'date:Y-m-d',
+    ];
+
+    protected $appends = ['avg_rating', 'total_ulasan', 'destinasi_ids'];
+
+    public function destinasi()
+    {
+        return $this->belongsToMany(
+            JenisDestinasi::class,
+            'standar_alat',
+            'id_barang',
+            'id_destinasi',
+            'id_barang',
+            'id_destinasi'
+        );
+    }
+
+    public function getDestinasiIdsAttribute()
+    {
+        return $this->destinasi()->pluck('jenis_destinasi.id_destinasi')->toArray();
+    }
 
     public function pemilik()
     {

@@ -14,7 +14,9 @@ export default function KatalogProduk({
   onAddToCart,
   onRemoveFromCart,
   onUpdateQuantity,
-  isAuthenticated = false
+  isAuthenticated = false,
+  recommendedGearIds = new Set(),
+  selectedDestinasi = null,
 }) {
   const navigate = useNavigate();
   const [addedFeedback, setAddedFeedback] = useState(null);
@@ -242,10 +244,12 @@ export default function KatalogProduk({
                         className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-500"
                       />
 
-                      {/* Badge Rekomendasi */}
-                      <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide">
-                        Recomended
-                      </span>
+                      {/* Badge Rekomendasi - hanya muncul jika destinasi dipilih DAN barang ini essential */}
+                      {selectedDestinasi && recommendedGearIds.has(barang.id_barang) && (
+                        <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide shadow-lg animate-[pulse_2s_infinite]">
+                          ⭐ Recommended
+                        </span>
+                      )}
 
                       {/* Badge sudah di keranjang */}
                       {isInCart(barang.id_barang) && (
@@ -313,10 +317,28 @@ export default function KatalogProduk({
                       Rp {Number(barang.harga_sewa).toLocaleString()} <span className="font-normal text-gray-400">/ Hari</span>
                     </p>
 
+                    {/* Badge stok tersedia (muncul saat filter tanggal aktif) */}
+                    {barang.stok_tersedia !== undefined && (
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                        barang.stok_tersedia <= 2
+                          ? 'text-red-700 bg-red-50 border border-red-200'
+                          : 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+                      }`}>
+                        📦 Stok tersedia: {barang.stok_tersedia} unit
+                      </span>
+                    )}
+
                     {/* Badge minimum durasi sewa */}
                     {(barang.min_durasi_sewa || 1) > 1 && (
                       <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                         📅 Min. {barang.min_durasi_sewa} hari
+                      </span>
+                    )}
+
+                    {/* Badge min tanggal sewa */}
+                    {barang.min_tanggal_sewa && new Date(barang.min_tanggal_sewa) > new Date() && (
+                      <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                        🗓️ Tersedia mulai {new Date(barang.min_tanggal_sewa).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                       </span>
                     )}
 

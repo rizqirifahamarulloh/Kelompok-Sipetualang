@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, ArrowLeft, Edit, Trash2, Tag, Star, MapPin, ExternalLink, ShieldAlert } from "lucide-react";
+import { Package, ArrowLeft, Edit, Trash2, Tag, Star, MapPin, ExternalLink, ShieldAlert, ZoomIn, X, Eye, AlertTriangle } from "lucide-react";
 import EditGearModal from "../components/Gears/EditGearModal";
 import DeleteGearModal from "../components/Gears/DeleteGearModal";
 import { gearService } from "../services/GearService";
@@ -35,6 +35,10 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
   const [activeTab, setActiveTab] = useState("transaksi");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [imageZoom, setImageZoom] = useState(false);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleUpdateStatus = async (status_barang) => {
     try {
@@ -51,22 +55,41 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
     }
   };
 
-  const handleUpdateApproval = async (status_approval, status_barang = null) => {
+  const handleUpdateApproval = async (status_approval, status_barang = null, alasan = null) => {
+    setIsSubmitting(true);
     try {
       const payload = { status_approval };
       if (status_barang) payload.status_barang = status_barang;
+      if (alasan) payload.alasan_ditolak = alasan;
       
       const res = await gearService.updateGear(gear.id_barang, payload);
       if (res.status === 'success') {
-        const updated = { ...gear, status_approval, ...(status_barang ? { status_barang } : {}) };
+        const updated = { 
+          ...gear, 
+          status_approval, 
+          ...(status_barang ? { status_barang } : {}),
+          alasan_ditolak: status_approval === 'ditolak' ? alasan : null
+        };
         setGear(updated);
         onGearUpdate(updated);
+        setShowRejectForm(false);
+        setRejectReason("");
         toast.success(`Persetujuan alat berhasil diubah menjadi: ${status_approval.toUpperCase()}`);
       }
     } catch (err) {
       console.error(err);
       toast.error("Gagal memperbarui persetujuan alat");
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleReject = () => {
+    if (!rejectReason.trim()) {
+      toast.error("Harap isi alasan penolakan!");
+      return;
+    }
+    handleUpdateApproval("ditolak", "habis", rejectReason.trim());
   };
 
   useEffect(() => {
@@ -142,23 +165,57 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Foto & Stats */}
         <div className="bg-card border border-border rounded-xl p-6 shadow-xs">
-          <div className="relative rounded-xl overflow-hidden bg-muted border border-border mb-4 h-64 flex items-center justify-center">
+          {/* Improved Photo Display */}
+          <div 
+            className="relative rounded-xl overflow-hidden bg-muted border border-border mb-4 cursor-pointer group"
+            style={{ aspectRatio: '4/3' }}
+            onClick={() => gear.foto_barang && setImageZoom(true)}
+          >
             {gear.foto_barang ? (
-              <img src={getStorageUrl(gear.foto_barang)} alt={gear.nama_barang} className="w-full h-full object-cover" />
+              <>
+                <img 
+                  src={getStorageUrl(gear.foto_barang)} 
+                  alt={gear.nama_barang} 
+                  className="w-full h-full object-contain bg-slate-50 dark:bg-slate-800/50 p-2" 
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-slate-900/90 rounded-full p-3 shadow-lg">
+                    <ZoomIn size={20} className="text-emerald-600" />
+                  </div>
+                </div>
+              </>
             ) : (
-              <div className="flex flex-col items-center text-gray-300">
-                <Package size={48} className="mb-3" />
-                <span className="text-sm">Belum ada foto</span>
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-16">
+                <Package size={48} className="mb-3 opacity-30" />
+                <span className="text-sm font-medium">Belum ada foto</span>
+                <span className="text-xs text-muted-foreground mt-1">Perental belum mengunggah foto barang</span>
               </div>
             )}
-            <div className="absolute top-3 left-3">
+            <div className="absolute top-3 left-3 flex gap-2">
               <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusCfg.badge}`}>
                 <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${statusCfg.dot}`}></span>
                 {statusCfg.label}
               </span>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${APPROVAL_CONFIG[gear.status_approval]?.className || ''}`}>
+                {APPROVAL_CONFIG[gear.status_approval]?.label || gear.status_approval}
+              </span>
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-2 mt-4">
+
+          {/* Rejection Reason Banner */}
+          {gear.status_approval === 'ditolak' && gear.alasan_ditolak && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={16} className="text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-red-700 dark:text-red-400">Alasan Penolakan:</p>
+                  <p className="text-sm text-red-600 dark:text-red-300 mt-0.5 leading-relaxed">{gear.alasan_ditolak}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-4 gap-2">
             {statsItems.map((s, i) => (
               <div key={i} className="bg-muted rounded-xl p-3 text-center border border-border">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-tight mb-1">{s.label}</p>
@@ -191,6 +248,11 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
                 📅 Minimum sewa: <span className="font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800">{gear.min_durasi_sewa} hari</span>
               </p>
             )}
+            {gear.min_tanggal_sewa && (
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+                🗓️ Tersedia mulai: <span className="font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/20 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-800">{formatTanggal(gear.min_tanggal_sewa)}</span>
+              </p>
+            )}
           </div>
 
           <p className="text-sm text-muted-foreground leading-relaxed">{gear.deskripsi || "Tidak ada deskripsi."}</p>
@@ -205,6 +267,26 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${APPROVAL_CONFIG[gear.status_approval]?.className || ""}`}>
                 {APPROVAL_CONFIG[gear.status_approval]?.label || gear.status_approval}
               </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Min. Durasi Sewa</span>
+              <span className="font-semibold text-foreground">{gear.min_durasi_sewa || 1} Hari</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Min. Tanggal Ambil</span>
+              <span className={`font-semibold ${gear.min_tanggal_sewa ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'}`}>
+                {gear.min_tanggal_sewa ? formatTanggal(gear.min_tanggal_sewa) : 'Kapan saja'}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Maks. Tgl Pengembalian</span>
+              <span className={`font-semibold ${gear.max_tanggal_pengembalian ? 'text-orange-600 dark:text-orange-400' : 'text-muted-foreground'}`}>
+                {gear.max_tanggal_pengembalian ? formatTanggal(gear.max_tanggal_pengembalian) : 'Tidak ada batasan'}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Deposit</span>
+              <span className="font-semibold text-foreground">{formatHarga(gear.nominal_deposit || 0)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Metode Penyerahan Barang</span>
@@ -277,7 +359,7 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
               
               <button
                 type="button"
-                onClick={() => handleUpdateApproval("ditolak", "habis")}
+                onClick={() => setShowRejectForm(true)}
                 className={`px-3 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
                   gear.status_approval === "ditolak"
                     ? "bg-slate-300 text-foreground cursor-not-allowed"
@@ -288,6 +370,40 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
                 ✕ Tolak Barang
               </button>
             </div>
+
+            {/* Rejection Reason Form */}
+            {showRejectForm && (
+              <div className="pt-3 border-t border-border space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <label className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                  <AlertTriangle size={12} />
+                  Alasan Penolakan Barang *
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Tuliskan alasan mengapa barang ini ditolak. Misalnya: Foto tidak jelas, kondisi barang kurang layak, barang tidak sesuai kategori, dsb."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-red-400 resize-none placeholder:text-red-300 dark:placeholder:text-red-800"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={isSubmitting || !rejectReason.trim()}
+                    className="flex-1 px-3 py-2 text-xs font-semibold text-white bg-rose-600 rounded-lg hover:bg-rose-700 transition disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Mengirim...' : '✕ Konfirmasi Penolakan'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowRejectForm(false); setRejectReason(""); }}
+                    className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted border border-border rounded-lg hover:bg-background transition"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="pt-2 border-t border-border flex justify-between items-center gap-2">
               <span className="text-xs text-muted-foreground font-semibold">Status Barang:</span>
@@ -395,6 +511,29 @@ export default function GearDetail({ gearId, onBack, onGearUpdate, onGearDelete,
       <DeleteGearModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={() => { setIsDeleteModalOpen(false); onGearDelete(gear.id_barang); onBack(); }}
         itemName={gear?.nama_barang || "Alat ini"} />
+
+      {/* Full-screen Image Zoom Modal */}
+      {imageZoom && gear.foto_barang && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setImageZoom(false)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={() => setImageZoom(false)}
+              className="absolute -top-12 right-0 text-white/80 hover:text-white p-2 rounded-full hover:bg-white/10 transition z-10"
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={getStorageUrl(gear.foto_barang)} 
+              alt={gear.nama_barang} 
+              className="w-full h-full object-contain rounded-xl max-h-[85vh]" 
+            />
+            <p className="text-center text-white/70 text-sm mt-3 font-medium">{gear.nama_barang}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

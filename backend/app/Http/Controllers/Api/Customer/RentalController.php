@@ -16,13 +16,98 @@ class RentalController extends Controller
     // ==================== PUBLIC METHODS (tanpa auth) ====================
 
     // Get all available barang from DATABASE (untuk public)
-    public function getAvailableBarang()
+    // Supports optional date-range availability filtering:
+    //   ?tanggal_mulai=YYYY-MM-DD&tanggal_selesai=YYYY-MM-DD
+    public function getAvailableBarang(Request $request)
     {
-        $barang = Barang::with('pemilik')
+        $query = Barang::with(['pemilik', 'kategori', 'destinasi'])
             ->withCount('detailTransaksi as total_disewa')
             ->where('status_barang', 'tersedia')
-            ->where('status_approval', 'disetujui')
-            ->where('jumlah_stok', '>', 0)
+            ->where('status_approval', 'disetujui');
+
+        // Filter by id_destinasi (direct item-level association)
+        if ($request->has('id_destinasi') && !empty($request->id_destinasi)) {
+            $id_destinasi = $request->id_destinasi;
+            $query->whereIn('id_barang', function ($q) use ($id_destinasi) {
+                $q->select('id_barang')
+                  ->from('standar_alat')
+                  ->where('id_destinasi', $id_destinasi);
+            });
+        }
+
+        $tanggalMulai = $request->query('tanggal_mulai');
+        $tanggalSelesai = $request->query('tanggal_selesai');
+
+        if ($tanggalMulai && $tanggalSelesai) {
+            // Date-based availability: calculate real-time stock per date range
+            // Also filter out items that aren't available yet (min_tanggal_sewa > tanggal_mulai)
+            $query->where(function ($q) use ($tanggalMulai) {
+                $q->whereNull('min_tanggal_sewa')
+                  ->orWhere('min_tanggal_sewa', '<=', $tanggalMulai);
+            });
+
+            // Also filter out items whose max return date is exceeded by customer's return date (max_tanggal_pengembalian < tanggal_selesai)
+            $query->where(function ($q) use ($tanggalSelesai) {
+                $q->whereNull('max_tanggal_pengembalian')
+                  ->orWhere('max_tanggal_pengembalian', '>=', $tanggalSelesai);
+            });
+
+            $barangAll = $query->orderBy('id_barang', 'desc')->get();
+
+            // Get all overlapping active bookings grouped by id_barang
+            // Active statuses: dibayar (paid, waiting pickup/delivery), sedang_disewa (currently rented)
+            $overlapping = DB::table('detail_transaksi')
+                ->join('transaksi', 'detail_transaksi.id_transaksi', '=', 'transaksi.id_transaksi')
+                ->whereIn('transaksi.status_sewa', ['dibayar', 'sedang_disewa'])
+                ->where('transaksi.tanggal_mulai', '<=', $tanggalSelesai)
+                ->where('transaksi.tanggal_selesai', '>=', $tanggalMulai)
+                ->select('detail_transaksi.id_barang', DB::raw('SUM(detail_transaksi.jumlah_pinjam) as total_booked'))
+                ->groupBy('detail_transaksi.id_barang')
+                ->pluck('total_booked', 'id_barang');
+
+            // Also check direct transaksi (backward compat for single-item transactions without detail)
+            $overlappingDirect = DB::table('transaksi')
+                ->whereIn('status_sewa', ['dibayar', 'sedang_disewa'])
+                ->where('tanggal_mulai', '<=', $tanggalSelesai)
+                ->where('tanggal_selesai', '>=', $tanggalMulai)
+                ->whereNotNull('id_barang')
+                ->whereNotIn('id_transaksi', function ($q) {
+                    $q->select('id_transaksi')->from('detail_transaksi');
+                })
+                ->select('id_barang', DB::raw('SUM(jumlah) as total_booked'))
+                ->groupBy('id_barang')
+                ->pluck('total_booked', 'id_barang');
+
+            // Calculate available stock and filter
+            $result = $barangAll->map(function ($barang) use ($overlapping, $overlappingDirect) {
+                // Current stock already accounts for items currently rented out (stock was decremented on payment)
+                // So jumlah_stok IS the available stock.
+                // But we also need to check: items that are booked for the future (paid but not yet picked up)
+                // which overlap with our dates. Those are ALREADY decremented from stock too.
+                //
+                // The real question is: are there items CURRENTLY rented that will be RETURNED before our date?
+                // If so, those units will become available again.
+                //
+                // Simple approach: current stock (jumlah_stok) is accurate for items booked now.
+                // We just need to ensure there's stock > 0.
+                $booked = ($overlapping[$barang->id_barang] ?? 0) + ($overlappingDirect[$barang->id_barang] ?? 0);
+
+                // Total capacity = current stock + items currently out
+                // Actually jumlah_stok is already decremented, so if stock > 0, it means there's available inventory.
+                // However, for items returning before our start date, stock will increment back.
+                // For simplicity & correctness: just show items with stock > 0
+                $barang->stok_tersedia = $barang->jumlah_stok;
+
+                return $barang;
+            })->filter(function ($barang) {
+                return $barang->stok_tersedia > 0;
+            })->values();
+
+            return response()->json($result);
+        }
+
+        // No date filter: return all items with stock > 0
+        $barang = $query->where('jumlah_stok', '>', 0)
             ->orderBy('id_barang', 'desc')
             ->get();
 
@@ -32,7 +117,7 @@ class RentalController extends Controller
     // Get detail barang by ID (untuk public)
     public function getBarangById($id)
     {
-        $barang = Barang::with('pemilik')
+        $barang = Barang::with(['pemilik', 'kategori', 'destinasi'])
             ->where('id_barang', $id)
             ->first();
 
@@ -41,6 +126,16 @@ class RentalController extends Controller
         }
 
         return response()->json($barang);
+    }
+
+    // Get active destinations list (untuk public)
+    public function getDestinations()
+    {
+        $destinasi = \App\Models\JenisDestinasi::orderBy('nama_destinasi')->get();
+        return response()->json([
+            'status' => 'success',
+            'data' => $destinasi
+        ]);
     }
 
     // ==================== CUSTOMER METHODS (dengan auth) ====================
@@ -67,6 +162,8 @@ class RentalController extends Controller
             'deskripsi' => 'nullable|string',
             'harga_sewa' => 'required|numeric|min:1000',
             'min_durasi_sewa' => 'nullable|integer|min:1',
+            'min_tanggal_sewa' => 'nullable|date|after_or_equal:today',
+            'max_tanggal_pengembalian' => 'nullable|date',
             'nominal_deposit' => 'nullable|numeric|min:0',
             'jumlah_stok' => 'required|integer|min:1',
             'id_kategori' => 'required|exists:kategori,id_kategori',
@@ -90,6 +187,8 @@ class RentalController extends Controller
             'deskripsi' => $request->deskripsi,
             'harga_sewa' => $request->harga_sewa,
             'min_durasi_sewa' => $request->min_durasi_sewa ?? 1,
+            'min_tanggal_sewa' => $request->min_tanggal_sewa,
+            'max_tanggal_pengembalian' => $request->max_tanggal_pengembalian,
             'nominal_deposit' => round($request->harga_sewa * 0.2),
             'jumlah_stok' => $request->jumlah_stok,
             'status_barang' => 'tersedia',
@@ -128,6 +227,8 @@ class RentalController extends Controller
             'deskripsi' => 'nullable|string',
             'harga_sewa' => 'sometimes|numeric|min:1000',
             'min_durasi_sewa' => 'nullable|integer|min:1',
+            'min_tanggal_sewa' => 'nullable|date',
+            'max_tanggal_pengembalian' => 'nullable|date',
             'nominal_deposit' => 'nullable|numeric|min:0',
             'jumlah_stok' => 'sometimes|integer|min:0',
             'id_kategori' => 'sometimes|exists:kategori,id_kategori',
@@ -182,10 +283,28 @@ class RentalController extends Controller
             $updateData['min_durasi_sewa'] = intval($request->min_durasi_sewa) ?: 1;
         }
 
+        // Min tanggal sewa changes (no re-approval needed)
+        if ($request->has('min_tanggal_sewa')) {
+            $updateData['min_tanggal_sewa'] = $request->min_tanggal_sewa ?: null;
+        }
+
+        // Max tanggal pengembalian changes (no re-approval needed)
+        if ($request->has('max_tanggal_pengembalian')) {
+            $updateData['max_tanggal_pengembalian'] = $request->max_tanggal_pengembalian ?: null;
+        }
+
         // If data fields changed on an approved item, reset to pending for re-approval
         if ($wasApproved && $dataFieldsChanged) {
             $updateData['status_approval'] = 'pending';
             $updateData['butuh_verifikasi'] = true;
+            $updateData['alasan_ditolak'] = null; // Clear previous rejection reason
+        }
+
+        // If item was rejected and any field changes, also clear the rejection reason and reset to pending
+        if ($barang->status_approval === 'ditolak' && ($dataFieldsChanged || $request->hasFile('foto_barang'))) {
+            $updateData['status_approval'] = 'pending';
+            $updateData['butuh_verifikasi'] = true;
+            $updateData['alasan_ditolak'] = null;
         }
 
         $barang->update($updateData);

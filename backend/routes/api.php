@@ -41,6 +41,7 @@ Route::post('/refresh', [AuthController::class, 'refresh']);
 // PUBLIC RENTAL ROUTES
 Route::get('/rental/barang', [RentalController::class, 'getAvailableBarang']);
 Route::get('/rental/barang/{id}', [RentalController::class, 'getBarangById']);
+Route::get('/rental/destinasi', [RentalController::class, 'getDestinations']);
 Route::get('/toko/pengguna/{id}', [TokoController::class, 'getPengguna']);
 Route::get('/toko/barang/{ownerId}', [TokoController::class, 'getBarangByOwner']);
 Route::post('/payment/midtrans/notification', [TransaksiController::class, 'handleNotification']);

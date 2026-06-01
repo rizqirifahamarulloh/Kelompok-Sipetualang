@@ -4,7 +4,7 @@ import { X, ImageIcon, CheckCircle2 } from "lucide-react";
 export default function EditGearModal({ isOpen, onClose, gear, categories = [], destinations = [], onSave }) {
   const [formData, setFormData] = useState({
     nama_barang: "", deskripsi: "", id_kategori: "", harga_sewa: "",
-    min_durasi_sewa: 1, jumlah_stok: "", status_barang: "tersedia", status_approval: "pending", destinasi_ids: [],
+    min_durasi_sewa: 1, min_tanggal_sewa: "", max_tanggal_pengembalian: "", jumlah_stok: "", status_barang: "tersedia", status_approval: "pending", destinasi_ids: [],
   });
   const [errors, setErrors] = useState({});
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -19,6 +19,8 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
       id_kategori: gear.id_kategori ? String(gear.id_kategori) : "",
       harga_sewa: gear.harga_sewa || "",
       min_durasi_sewa: gear.min_durasi_sewa || 1,
+      min_tanggal_sewa: gear.min_tanggal_sewa ? gear.min_tanggal_sewa.split('T')[0] : "",
+      max_tanggal_pengembalian: gear.max_tanggal_pengembalian ? gear.max_tanggal_pengembalian.split('T')[0] : "",
       jumlah_stok: gear.jumlah_stok || "",
       status_barang: gear.status_barang || "tersedia",
       status_approval: gear.status_approval || "pending",
@@ -139,6 +141,42 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
                 className="w-full px-3 py-2 border rounded border-border focus:outline-none focus:border-emerald-500 text-sm" />
               <p className="text-[10px] text-muted-foreground mt-1">Customer harus sewa minimal {formData.min_durasi_sewa || 1} hari</p>
             </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Min. Tanggal Ambil</label>
+              <div className="flex items-center gap-2">
+                <input type="date" name="min_tanggal_sewa" value={formData.min_tanggal_sewa} onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded border-border focus:outline-none focus:border-emerald-500 text-sm bg-card" />
+                {formData.min_tanggal_sewa && (
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, min_tanggal_sewa: '' }))}
+                    className="text-xs text-red-500 hover:text-red-700 font-semibold whitespace-nowrap">✕</button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {formData.min_tanggal_sewa 
+                  ? `Tersedia mulai ${new Date(formData.min_tanggal_sewa).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}` 
+                  : 'Tidak ada batasan tanggal (kapan saja)'}
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Maks. Tgl Pengembalian</label>
+              <div className="flex items-center gap-2">
+                <input type="date" name="max_tanggal_pengembalian" value={formData.max_tanggal_pengembalian} onChange={handleChange}
+                  min={formData.min_tanggal_sewa || undefined}
+                  className="w-full px-3 py-2 border rounded border-border focus:outline-none focus:border-emerald-500 text-sm bg-card" />
+                {formData.max_tanggal_pengembalian && (
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, max_tanggal_pengembalian: '' }))}
+                    className="text-xs text-red-500 hover:text-red-700 font-semibold whitespace-nowrap">✕</button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {formData.max_tanggal_pengembalian 
+                  ? `Harus dikembalikan sebelum ${new Date(formData.max_tanggal_pengembalian).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}` 
+                  : 'Tidak ada batasan pengembalian'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Status Approval</label>
               <select name="status_approval" value={formData.status_approval} onChange={handleChange}

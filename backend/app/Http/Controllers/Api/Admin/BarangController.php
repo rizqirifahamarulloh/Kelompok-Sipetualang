@@ -16,7 +16,7 @@ class BarangController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Barang::with(['kategori', 'pemilik']);
+            $query = Barang::with(['kategori', 'pemilik', 'destinasi']);
 
             // Filter by Kategori
             if ($request->has('id_kategori') && !empty($request->id_kategori)) {
@@ -86,7 +86,7 @@ class BarangController extends Controller
     public function show($id)
     {
         try {
-            $barang = Barang::with(['kategori', 'pemilik'])->find($id);
+            $barang = Barang::with(['kategori', 'pemilik', 'destinasi'])->find($id);
 
             if (!$barang) {
                 return response()->json([
@@ -126,12 +126,16 @@ class BarangController extends Controller
                 'nama_barang' => 'sometimes|required|string|max:100',
                 'harga_sewa' => 'sometimes|required|numeric',
                 'min_durasi_sewa' => 'nullable|integer|min:1',
+                'min_tanggal_sewa' => 'nullable|date',
+                'max_tanggal_pengembalian' => 'nullable|date',
                 'jumlah_stok' => 'sometimes|required|integer',
                 'id_kategori' => 'sometimes|required|exists:kategori,id_kategori',
                 'status_barang' => 'sometimes|required|in:tersedia,habis',
                 'status_approval' => 'sometimes|required|in:pending,disetujui,ditolak',
+                'alasan_ditolak' => 'nullable|string|max:500',
                 'deskripsi' => 'nullable|string',
                 'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+                'destinasi_ids' => 'nullable',
             ]);
 
             // Update attributes if provided
@@ -148,9 +152,22 @@ class BarangController extends Controller
                 $barang->status_approval = $request->status_approval;
                 if ($request->status_approval === 'disetujui') {
                     $barang->status_penyerahan = 'diterima';
+                    $barang->alasan_ditolak = null; // Clear rejection reason when approved
+                }
+                if ($request->status_approval === 'pending') {
+                    $barang->alasan_ditolak = null; // Clear rejection reason when reset to pending
+                }
+                if ($request->status_approval === 'ditolak' && $request->has('alasan_ditolak')) {
+                    $barang->alasan_ditolak = $request->alasan_ditolak;
                 }
             }
             if ($request->has('deskripsi')) $barang->deskripsi = $request->deskripsi;
+            if ($request->has('min_tanggal_sewa')) {
+                $barang->min_tanggal_sewa = $request->min_tanggal_sewa ?: null;
+            }
+            if ($request->has('max_tanggal_pengembalian')) {
+                $barang->max_tanggal_pengembalian = $request->max_tanggal_pengembalian ?: null;
+            }
 
             // Handle photo upload
             if ($request->hasFile('foto_barang')) {
@@ -158,12 +175,40 @@ class BarangController extends Controller
                 $barang->foto_barang = $path;
             }
 
+            // Sync destinasi_ids to standar_alat (direct item-level association)
+            if ($request->has('destinasi_ids')) {
+                $destinasiIds = $request->destinasi_ids;
+                if (is_string($destinasiIds)) {
+                    $decoded = json_decode($destinasiIds, true);
+                    if (is_array($decoded)) {
+                        $destinasiIds = $decoded;
+                    } else {
+                        $destinasiIds = explode(',', $destinasiIds);
+                    }
+                }
+                
+                // Delete old mappings for this specific gear item (id_barang)
+                \App\Models\StandarAlat::where('id_barang', $barang->id_barang)->delete();
+                
+                // Insert new mappings for this specific gear item (id_barang)
+                if (is_array($destinasiIds)) {
+                    foreach ($destinasiIds as $destId) {
+                        if (!empty($destId)) {
+                            \App\Models\StandarAlat::create([
+                                'id_destinasi' => intval($destId),
+                                'id_barang' => $barang->id_barang
+                            ]);
+                        }
+                    }
+                }
+            }
+
             $barang->save();
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Alat berhasil diperbarui',
-                'data' => $barang->load(['kategori', 'pemilik'])
+                'data' => $barang->load(['kategori', 'pemilik', 'destinasi'])
             ]);
         } catch (\Exception $e) {
             return response()->json([
