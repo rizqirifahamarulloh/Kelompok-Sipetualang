@@ -209,9 +209,9 @@ class TransaksiController extends Controller
                 $midtransItems,
                 $customerDetails,
                 [
-                    'finish' => 'http://localhost:5173/customer/transactions',
-                    'error' => 'http://localhost:5173/customer/transactions',
-                    'pending' => 'http://localhost:5173/customer/transactions',
+                    'finish' => 'http://petualang.fakerryugan.my.id/customer/transactions',
+                    'error' => 'http://petualang.fakerryugan.my.id/customer/transactions',
+                    'pending' => 'http://petualang.fakerryugan.my.id/customer/transactions',
                 ]
             );
             if (isset($result['error'])) {
