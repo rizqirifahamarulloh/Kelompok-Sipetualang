@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Store, Search, Minus, Plus, X, ShoppingCart, Check, LogIn, UserPlus, ShieldAlert, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Store, Search, Minus, Plus, X, ShoppingCart, Check, LogIn, UserPlus, ShieldAlert, Star, CalendarClock, Package } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '@/services/api';
 
 export default function KatalogProduk({
   filteredBarang,
@@ -14,15 +16,104 @@ export default function KatalogProduk({
   onAddToCart,
   onRemoveFromCart,
   onUpdateQuantity,
-  isAuthenticated = false
+  isAuthenticated = false,
+  token = null
 }) {
   const navigate = useNavigate();
   const [addedFeedback, setAddedFeedback] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [rentedItems, setRentedItems] = useState({}); // { id_barang: jumlah_disewa }
+
+  // Fungsi untuk cek barang yang sedang disewa (hitung jumlah unit yang disewa)
+  const checkRentedStatus = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await axios.get(`${API_URL}/customer/transaksi/sebagai-penyewa`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const transactions = response.data.data || [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const rentedCountMap = {};
+      
+      transactions.forEach(trans => {
+        if (trans.status_sewa === 'sedang_disewa') {
+          const startDate = new Date(trans.tanggal_mulai);
+          const endDate = new Date(trans.tanggal_selesai);
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
+          
+          const isCurrentlyRented = today >= startDate && today <= endDate;
+          
+          if (isCurrentlyRented) {
+            // Dari transaksi langsung
+            if (trans.id_barang) {
+              const jumlahDisewa = trans.jumlah || 1;
+              rentedCountMap[trans.id_barang] = (rentedCountMap[trans.id_barang] || 0) + jumlahDisewa;
+            }
+            
+            // Dari detail_transaksi (multi-item)
+            if (trans.detail_transaksi && trans.detail_transaksi.length > 0) {
+              trans.detail_transaksi.forEach(detail => {
+                if (detail.id_barang) {
+                  rentedCountMap[detail.id_barang] = (rentedCountMap[detail.id_barang] || 0) + detail.jumlah_pinjam;
+                }
+              });
+            }
+          }
+        }
+      });
+      
+      setRentedItems(rentedCountMap);
+    } catch (err) {
+      console.error('Gagal cek status sewa:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      checkRentedStatus();
+    }
+  }, [isAuthenticated, token]);
 
   // Check if item is already in cart
   const isInCart = (idBarang) => {
     return cartItems.some(item => item.id_barang === idBarang);
+  };
+
+  // Get stock status for badge
+  const getStockStatus = (barang) => {
+    const rentedCount = rentedItems[barang.id_barang] || 0;
+    const availableStock = barang.jumlah_stok - rentedCount;
+    
+    // Kasus: stok habis karena disewa semua
+    if (availableStock <= 0 && barang.jumlah_stok > 0) {
+      return { type: 'rented', label: 'Disewa', className: 'bg-red-500 text-white', borderClass: 'border-red-500' };
+    }
+    // Kasus: stok habis total (0)
+    if (barang.jumlah_stok === 0 && rentedCount === 0) {
+      return { type: 'out_of_stock', label: 'Stok Habis', className: 'bg-gray-500 text-white', borderClass: 'border-gray-400' };
+    }
+    // Kasus: stok tipis (1-3 unit)
+    if (barang.jumlah_stok <= 3 && barang.jumlah_stok > 0) {
+      return { type: 'low_stock', label: `Stok Tipis (${barang.jumlah_stok})`, className: 'bg-amber-400 text-amber-900', borderClass: '' };
+    }
+    // Kasus: stok aman
+    return { type: 'available', label: null, className: '', borderClass: '' };
+  };
+
+  // Determine card status
+  const getCardStatus = (barang) => {
+    const stockStatus = getStockStatus(barang);
+    const isDisabled = stockStatus.type === 'rented' || stockStatus.type === 'out_of_stock';
+    const isRented = stockStatus.type === 'rented';
+    const isStockEmpty = stockStatus.type === 'out_of_stock';
+    const isLowStock = stockStatus.type === 'low_stock';
+    
+    return { stockStatus, isDisabled, isRented, isStockEmpty, isLowStock };
   };
 
   // Gate: require auth before action
@@ -36,7 +127,6 @@ export default function KatalogProduk({
 
   // Handle product card click
   const handleProductClick = (barang) => {
-    // Product detail page is viewable without login
     navigate(`/barang/${barang.id_barang}`);
   };
 
@@ -46,6 +136,19 @@ export default function KatalogProduk({
       setShowAuthModal(true);
       return;
     }
+    
+    const { stockStatus } = getCardStatus(barang);
+    
+    if (stockStatus.type === 'rented') {
+      alert(`Barang "${barang.nama_barang}" sedang disewa oleh customer lain. Silakan cek kembali nanti.`);
+      return;
+    }
+    
+    if (stockStatus.type === 'out_of_stock') {
+      alert(`Barang "${barang.nama_barang}" sedang habis stok. Silakan cek kembali nanti.`);
+      return;
+    }
+    
     if (onAddToCart) {
       onAddToCart(barang);
       setAddedFeedback(barang.id_barang);
@@ -61,7 +164,7 @@ export default function KatalogProduk({
           Pilihan Terbaik Minggu Ini!
         </h2>
         <p className="text-xs text-gray-400 max-w-xl mx-auto leading-relaxed">
-          Gear Pilihan Pendaki, Siap Temani Petualanganmu. Gear Pilihan Pendaki, Siap Temani Petualanganmu.
+          Gear Pilihan Pendaki, Siap Temani Petualanganmu.
         </p>
       </div>
 
@@ -97,7 +200,7 @@ export default function KatalogProduk({
             </div>
           </div>
 
-          {/* Box Barang Terbaru (Dynamic from DB) */}
+          {/* Box Barang Terbaru */}
           <div className="text-left">
             <h3 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b-2 border-emerald-500 w-fit">
               Barang Terbaru
@@ -134,7 +237,7 @@ export default function KatalogProduk({
             </div>
           </div>
 
-          {/* Box Barang Terlaku (Dynamic from DB) */}
+          {/* Box Barang Terlaku */}
           <div className="text-left">
             <h3 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b-2 border-amber-500 w-fit flex items-center gap-1.5">
               🔥 Barang Terlaku
@@ -200,7 +303,7 @@ export default function KatalogProduk({
         {/* ================= RIGHT MAIN CATALOG ================= */}
         <main className="lg:col-span-9">
 
-          {/* Top Bar Meta Grid (Jumlah baris & Search Input internal) */}
+          {/* Top Bar Meta Grid */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <span className="text-[11px] font-semibold text-gray-400 self-start sm:self-auto">
               Showing 1–{filteredBarang.length} of {filteredBarang.length} results
@@ -225,114 +328,170 @@ export default function KatalogProduk({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10">
-              {filteredBarang.map((barang) => (
-                <div
-                  key={barang.id_barang}
-                  className="flex flex-col text-center relative group cursor-pointer"
-                  onClick={() => requireAuth(() => navigate(`/barang/${barang.id_barang}`))}
-                >
+              {filteredBarang.map((barang) => {
+                const { stockStatus, isDisabled, isRented, isStockEmpty, isLowStock } = getCardStatus(barang);
+                
+                return (
+                  <div
+                    key={barang.id_barang}
+                    className="flex flex-col text-center relative group cursor-pointer"
+                    onClick={() => handleProductClick(barang)}
+                  >
 
-                  {/* IMAGE + CART BUTTON WRAPPER */}
-                  <div className="relative">
-                    {/* CONTAINER GAMBAR */}
-                    <div className="relative aspect-square w-full rounded-[24px] bg-[#E9ECEF]/60 overflow-hidden flex items-center justify-center">
-                      <img
-                        src={getImageUrl(barang)}
-                        alt={barang.nama_barang}
-                        className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-500"
-                      />
+                    {/* IMAGE + CART BUTTON WRAPPER */}
+                    <div className="relative">
+                      {/* CONTAINER GAMBAR */}
+                      <div className={`relative aspect-square w-full rounded-[24px] bg-[#E9ECEF]/60 overflow-hidden flex items-center justify-center transition-all duration-300
+                        ${stockStatus.borderClass ? `border-4 ${stockStatus.borderClass}` : 'border border-gray-100'}`}
+                      >
+                        <img
+                          src={getImageUrl(barang)}
+                          alt={barang.nama_barang}
+                          className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-500 ${stockStatus.type !== 'available' ? 'opacity-70' : ''}`}
+                        />
 
-                      {/* Badge Rekomendasi */}
-                      <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide">
-                        Recomended
-                      </span>
+                        {/* Badge Rekomendasi (hanya jika stok available) */}
+                        {stockStatus.type === 'available' && (
+                          <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide z-10">
+                            Recommended
+                          </span>
+                        )}
 
-                      {/* Badge sudah di keranjang */}
-                      {isInCart(barang.id_barang) && (
-                        <span className="absolute top-4 right-4 bg-emerald-500 text-[9px] font-bold text-white px-2 py-1 rounded-full tracking-wide flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Di Keranjang
+                        {/* Badge sudah di keranjang */}
+                        {stockStatus.type === 'available' && isInCart(barang.id_barang) && (
+                          <span className="absolute top-4 right-4 bg-emerald-500 text-[9px] font-bold text-white px-2 py-1 rounded-full tracking-wide flex items-center gap-1 z-10">
+                            <Check className="w-3 h-3" /> Di Keranjang
+                          </span>
+                        )}
+
+                        {/* Badge Stok Tipis (pojok kanan atas) */}
+                        {stockStatus.type === 'low_stock' && (
+                          <div className="absolute top-3 right-3 bg-amber-400 text-amber-900 text-[9px] font-bold px-2 py-0.5 rounded-full z-20 flex items-center gap-1 shadow-md">
+                            <Package className="w-2.5 h-2.5" />
+                            Stok Tipis
+                          </div>
+                        )}
+
+                        {/* Badge Disewa */}
+                        {stockStatus.type === 'rented' && (
+                          <div className="absolute top-3 right-3 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full z-20 flex items-center gap-1 shadow-md">
+                            <CalendarClock className="w-2.5 h-2.5" />
+                            Disewa
+                          </div>
+                        )}
+
+                        {/* Badge Habis */}
+                        {stockStatus.type === 'out_of_stock' && (
+                          <div className="absolute top-3 right-3 bg-gray-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full z-20 flex items-center gap-1 shadow-md">
+                            <Package className="w-2.5 h-2.5" />
+                            Habis
+                          </div>
+                        )}
+                      </div>
+
+                      {/* TOMBOL KERANJANG — disable jika sedang disewa atau stok habis */}
+                      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(barang);
+                          }}
+                          disabled={isDisabled}
+                          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,167,121,0.25)] transition-all active:scale-95 border-[3px] border-white cursor-pointer ${
+                            isDisabled ? 'bg-gray-400 cursor-not-allowed opacity-50' :
+                            addedFeedback === barang.id_barang ? 'bg-emerald-600 scale-110' :
+                            isInCart(barang.id_barang) ? 'bg-emerald-700 hover:bg-emerald-800' :
+                            'bg-[#00A779] hover:bg-[#008f68]'
+                          }`}
+                        >
+                          {addedFeedback === barang.id_barang ? (
+                            <Check className="w-5 h-5 text-white" />
+                          ) : (
+                            <ShoppingCart className="w-5 h-5 text-white" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* DETAIL TEKS BAWAH */}
+                    <div className="mt-8 flex flex-col items-center gap-1">
+                      <h3 className="font-bold text-gray-900 text-sm tracking-tight">
+                        {barang.nama_barang}
+                      </h3>
+
+                      {/* Star Rating */}
+                      {(() => {
+                        const rating = barang.avg_rating || 0;
+                        const reviewCount = barang.total_ulasan || 0;
+                        return (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="flex items-center gap-px">
+                              {[1, 2, 3, 4, 5].map((s) => {
+                                const fill = Math.min(1, Math.max(0, rating - (s - 1)));
+                                return (
+                                  <div key={s} className="relative w-3.5 h-3.5">
+                                    <Star className="w-3.5 h-3.5" fill="#e5e7eb" strokeWidth={0} />
+                                    <div className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+                                      <Star className="w-3.5 h-3.5" fill="#fbbf24" strokeWidth={0} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <span className="text-[11px] font-bold text-gray-700">{rating > 0 ? rating.toFixed(1) : '0.0'}</span>
+                            <span className="text-[10px] text-gray-400">({reviewCount})</span>
+                          </div>
+                        );
+                      })()}
+
+                      <p className="text-xs font-semibold text-gray-500/90 mb-0.5">
+                        Rp {Number(barang.harga_sewa).toLocaleString()} <span className="font-normal text-gray-400">/ Hari</span>
+                      </p>
+
+                      {/* Badge minimum durasi sewa */}
+                      {(barang.min_durasi_sewa || 1) > 1 && stockStatus.type === 'available' && (
+                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                          📅 Min. {barang.min_durasi_sewa} hari
                         </span>
                       )}
-                    </div>
 
-                    {/* TOMBOL KERANJANG — di luar overflow-hidden, overlap bottom edge */}
-                    <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-10">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(barang);
-                        }}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,167,121,0.25)] transition-all active:scale-95 border-[3px] border-white cursor-pointer ${addedFeedback === barang.id_barang
-                            ? 'bg-emerald-600 scale-110'
-                            : isInCart(barang.id_barang)
-                              ? 'bg-emerald-700 hover:bg-emerald-800'
-                              : 'bg-[#00A779] hover:bg-[#008f68]'
-                          }`}
+                      {/* Badge stok tipis di bawah */}
+                      {isLowStock && (
+                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full mt-1">
+                          ⚠️ Stok tersisa {barang.jumlah_stok} unit
+                        </span>
+                      )}
+
+                      {/* Status sedang disewa indicator (teks) */}
+                      {isRented && (
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full flex items-center gap-1 mt-1">
+                          <CalendarClock className="w-3 h-3" />
+                          Semua Stok Disewa
+                        </span>
+                      )}
+
+                      {/* Status stok habis indicator (teks) */}
+                      {isStockEmpty && (
+                        <span className="text-[9px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full flex items-center gap-1 mt-1">
+                          <Package className="w-3 h-3" />
+                          Stok Habis
+                        </span>
+                      )}
+
+                      {/* NAMA TOKO */}
+                      <Link
+                        to={`/toko/${barang.id_pemilik}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[10px] text-gray-400 font-medium flex items-center gap-1 no-underline hover:text-emerald-500 transition-colors"
                       >
-                        {addedFeedback === barang.id_barang ? (
-                          <Check className="w-5 h-5 text-white" />
-                        ) : (
-                          <ShoppingCart className="w-5 h-5 text-white" />
-                        )}
-                      </button>
+                        <Store className="w-2.5 h-2.5" />
+                        <span>{barang.pemilik?.nama || 'SiPetualang'}</span>
+                      </Link>
                     </div>
+
                   </div>
-
-                  {/* DETAIL TEKS BAWAH (Harga & Nama Toko Tetap Ada!) */}
-                  <div className="mt-8 flex flex-col items-center gap-1">
-                    <h3 className="font-bold text-gray-900 text-sm tracking-tight">
-                      {barang.nama_barang}
-                    </h3>
-
-                    {/* Star Rating - Dynamic from DB */}
-                    {(() => {
-                      const rating = barang.avg_rating || 0;
-                      const reviewCount = barang.total_ulasan || 0;
-                      return (
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <div className="flex items-center gap-px">
-                            {[1, 2, 3, 4, 5].map((s) => {
-                              const fill = Math.min(1, Math.max(0, rating - (s - 1)));
-                              return (
-                                <div key={s} className="relative w-3.5 h-3.5">
-                                  <Star className="w-3.5 h-3.5" fill="#e5e7eb" strokeWidth={0} />
-                                  <div className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
-                                    <Star className="w-3.5 h-3.5" fill="#fbbf24" strokeWidth={0} />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <span className="text-[11px] font-bold text-gray-700">{rating > 0 ? (typeof rating === 'number' ? rating.toFixed(1) : rating) : '0.0'}</span>
-                          <span className="text-[10px] text-gray-400">({reviewCount})</span>
-                        </div>
-                      );
-                    })()}
-
-                    <p className="text-xs font-semibold text-gray-500/90 mb-0.5">
-                      Rp {Number(barang.harga_sewa).toLocaleString()} <span className="font-normal text-gray-400">/ Hari</span>
-                    </p>
-
-                    {/* Badge minimum durasi sewa */}
-                    {(barang.min_durasi_sewa || 1) > 1 && (
-                      <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                        📅 Min. {barang.min_durasi_sewa} hari
-                      </span>
-                    )}
-
-                    {/* NAMA TOKO AMAN & TETAP DITAMPILKAN */}
-                    <Link
-                      to={`/toko/${barang.id_pemilik}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-[10px] text-gray-400 font-medium flex items-center gap-1 no-underline hover:text-emerald-500 transition-colors"
-                    >
-                      <Store className="w-2.5 h-2.5" />
-                      <span>{barang.pemilik?.nama || 'SiPetualang'}</span>
-                    </Link>
-                  </div>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -358,7 +517,6 @@ export default function KatalogProduk({
               </div>
 
               <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden">
-                {/* Table Header */}
                 <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-[#F8F9FA] border-b border-gray-100">
                   <div className="col-span-1"></div>
                   <div className="col-span-1"></div>
@@ -368,14 +526,12 @@ export default function KatalogProduk({
                   <div className="col-span-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Subtotal</div>
                 </div>
 
-                {/* Cart Items */}
                 {cartItems.map((item, index) => (
                   <div
                     key={item.id_cart}
                     className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-6 py-5 transition-colors hover:bg-gray-50/50 ${index < cartItems.length - 1 ? 'border-b border-gray-100' : ''
                       }`}
                   >
-                    {/* Remove Button */}
                     <div className="md:col-span-1 flex items-center">
                       <button
                         onClick={() => onRemoveFromCart && onRemoveFromCart(item.id_cart)}
@@ -385,7 +541,6 @@ export default function KatalogProduk({
                       </button>
                     </div>
 
-                    {/* Product Image */}
                     <div className="md:col-span-1">
                       <div className="w-14 h-14 rounded-xl bg-[#F1F3F5] overflow-hidden flex items-center justify-center">
                         <img
@@ -397,19 +552,16 @@ export default function KatalogProduk({
                       </div>
                     </div>
 
-                    {/* Product Name */}
                     <div className="md:col-span-3">
                       <h4 className="text-sm font-bold text-gray-800">{item.nama_barang}</h4>
                     </div>
 
-                    {/* Price */}
                     <div className="md:col-span-2 text-center">
                       <p className="text-sm font-semibold text-gray-500">
                         Rp {Number(item.harga_sewa).toLocaleString()}
                       </p>
                     </div>
 
-                    {/* Quantity Controls */}
                     <div className="md:col-span-3 flex items-center justify-center">
                       <div className="flex items-center border border-gray-200 rounded-full overflow-hidden">
                         <button
@@ -429,7 +581,6 @@ export default function KatalogProduk({
                       </div>
                     </div>
 
-                    {/* Subtotal */}
                     <div className="md:col-span-2 text-right">
                       <p className="text-sm font-extrabold text-gray-900">
                         Rp {(Number(item.harga_sewa) * item.jumlah).toLocaleString()}
@@ -438,7 +589,6 @@ export default function KatalogProduk({
                   </div>
                 ))}
 
-                {/* Cart Footer - Total */}
                 <div className="px-6 py-5 bg-[#F8F9FA] border-t border-gray-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -480,16 +630,13 @@ export default function KatalogProduk({
             className="bg-white rounded-[28px] max-w-md w-full mx-4 overflow-hidden shadow-2xl animate-[fadeInUp_0.3s_ease-out]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Top accent */}
             <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600" />
 
             <div className="p-8 text-center">
-              {/* Icon */}
               <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full flex items-center justify-center border-2 border-emerald-100">
                 <ShieldAlert className="w-10 h-10 text-emerald-500" />
               </div>
 
-              {/* Title */}
               <h3 className="text-2xl font-black text-gray-900 mb-2">
                 Akses Terbatas
               </h3>
@@ -497,7 +644,6 @@ export default function KatalogProduk({
                 Untuk menambahkan barang ke keranjang, kamu perlu login atau daftar akun terlebih dahulu.
               </p>
 
-              {/* Buttons */}
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => {
@@ -521,7 +667,6 @@ export default function KatalogProduk({
                 </button>
               </div>
 
-              {/* Dismiss */}
               <button
                 onClick={() => setShowAuthModal(false)}
                 className="mt-4 text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors cursor-pointer bg-transparent border-none"

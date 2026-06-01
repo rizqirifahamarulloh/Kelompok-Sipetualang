@@ -23,8 +23,6 @@ import {
   Search,
   ArrowDown,
   ArrowUp,
-  CalendarDays,
-  History,
   Star,
   Camera,
   X,
@@ -40,9 +38,6 @@ import { toast } from 'sonner';
 // ─── Helpers ──────────────────────────────────────
 const formatRupiah = (val) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val || 0);
-
-const formatDate = (dateStr) =>
-  dateStr ? new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 
 const formatDateTime = (dateStr) =>
   dateStr ? new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
@@ -80,14 +75,14 @@ export default function TransaksiPage() {
   const [sortOrder, setSortOrder] = useState('newest');
   const [processingId, setProcessingId] = useState(null);
 
-  // Review state
+  // Review state - PER BARANG (bukan per transaksi)
   const [reviewModal, setReviewModal] = useState(null);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewPhotos, setReviewPhotos] = useState([]);
   const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState([]);
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [reviewedTransactions, setReviewedTransactions] = useState(new Set());
+  const [reviewedItems, setReviewedItems] = useState({}); // ← GANTI jadi object
   const [depositProofView, setDepositProofView] = useState(null);
 
   const token = localStorage.getItem('token');
@@ -105,23 +100,32 @@ export default function TransaksiPage() {
     }
   };
 
-  useEffect(() => { fetchTransactions(); }, []);
+  useEffect(() => {
+    fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Cek ulasan per barang (bukan per transaksi)
   useEffect(() => {
     const checkReviews = async () => {
       const selesai = transactions.filter(t => t.status_sewa === 'selesai');
-      const reviewed = new Set();
+      const reviewedMap = {};
+      
       for (const t of selesai) {
         try {
           const res = await axios.get(`${API_URL}/customer/ulasan/check/${t.id_transaksi}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          if (res.data?.has_review) reviewed.add(t.id_transaksi);
+          const data = res.data?.data || [];
+          data.forEach(item => {
+            reviewedMap[`${t.id_transaksi}_${item.id_barang}`] = item.has_reviewed;
+          });
         } catch { /* skip */ }
       }
-      setReviewedTransactions(reviewed);
+      setReviewedItems(reviewedMap);
     };
     if (transactions.length > 0) checkReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactions]);
 
   // ── Filtered & sorted
@@ -184,9 +188,13 @@ export default function TransaksiPage() {
   const getPhotoUrl = () => getStorageUrl(user?.profile_photo);
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
 
-  // ── Review handlers
-  const openReviewModal = (trans) => {
-    setReviewModal(trans);
+  // ── Review handlers (per barang)
+  const openReviewModal = (trans, id_barang, nama_barang) => {
+    setReviewModal({
+      ...trans,
+      id_barang: id_barang,
+      nama_barang: nama_barang
+    });
     setReviewRating(0);
     setReviewComment('');
     setReviewPhotos([]);
@@ -214,14 +222,15 @@ export default function TransaksiPage() {
     try {
       const formData = new FormData();
       formData.append('id_transaksi', reviewModal.id_transaksi);
+      formData.append('id_barang', reviewModal.id_barang); // ← TAMBAHKAN
       formData.append('rating', reviewRating);
       if (reviewComment.trim()) formData.append('komentar', reviewComment);
       reviewPhotos.forEach((file) => formData.append('foto_ulasan[]', file));
       await axios.post(`${API_URL}/customer/ulasan`, formData, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
-      toast.success('Ulasan berhasil dikirim!');
-      setReviewedTransactions(prev => new Set([...prev, reviewModal.id_transaksi]));
+      toast.success(`Ulasan untuk "${reviewModal.nama_barang}" berhasil dikirim!`);
+      setReviewedItems(prev => ({ ...prev, [`${reviewModal.id_transaksi}_${reviewModal.id_barang}`]: true }));
       setReviewModal(null);
     } catch (err) {
       const data = err.response?.data;
@@ -316,17 +325,31 @@ export default function TransaksiPage() {
             </Button>
           )}
 
-          {trans.status_sewa === 'selesai' && (
-            <div className="pt-1">
-              {reviewedTransactions.has(trans.id_transaksi) ? (
-                <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold justify-center py-2 bg-emerald-50 dark:bg-emerald-950/10 rounded-xl border border-emerald-100">
-                  <CheckCircle className="w-3.5 h-3.5" /> Sudah Diulas
-                </div>
-              ) : (
-                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white h-10 text-xs gap-2 rounded-xl" onClick={() => openReviewModal(trans)}>
-                  <Star className="w-3.5 h-3.5" /> Beri Ulasan
-                </Button>
-              )}
+          {/* Tombol Ulasan PER BARANG */}
+          {trans.status_sewa === 'selesai' && trans.detail_transaksi?.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <p className="text-xs font-semibold text-muted-foreground">Ulasan per Barang:</p>
+              {trans.detail_transaksi.map((detail) => {
+                const hasReviewed = reviewedItems[`${trans.id_transaksi}_${detail.id_barang}`];
+                return (
+                  <div key={detail.id_detail} className="flex items-center justify-between bg-muted/30 p-2 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{detail.nama_barang}</span>
+                    </div>
+                    {hasReviewed ? (
+                      <Badge className="bg-green-100 text-green-700">Sudah Diulas</Badge>
+                    ) : (
+                      <Button 
+                        size="sm"
+                        className="bg-amber-500 hover:bg-amber-600 text-white"
+                        onClick={() => openReviewModal(trans, detail.id_barang, detail.nama_barang)}
+                      >
+                        <Star className="w-3 h-3 mr-1" /> Ulas
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

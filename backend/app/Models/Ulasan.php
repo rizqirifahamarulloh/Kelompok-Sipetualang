@@ -14,6 +14,8 @@ class Ulasan extends Model
         'id_pengguna',
         'id_barang',
         'rating',
+        'edited_count',
+        'edited_at',
         'komentar',
         'foto_ulasan',
     ];
@@ -36,5 +38,12 @@ class Ulasan extends Model
     public function transaksi()
     {
         return $this->belongsTo(Transaksi::class, 'id_transaksi', 'id_transaksi');
+    }
+
+
+    public function detailTransaksi()
+    {
+        return $this->hasOne(DetailTransaksi::class, 'id_barang', 'id_barang')
+            ->where('id_transaksi', $this->id_transaksi);
     }
 }

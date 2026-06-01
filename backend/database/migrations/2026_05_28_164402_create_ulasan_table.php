@@ -20,7 +20,12 @@ return new class extends Migration {
             $table->text('foto_ulasan')->nullable(); // JSON array of paths
             $table->timestamps();
 
-            $table->unique('id_transaksi'); // 1 transaksi = 1 ulasan
+            // HAPUS baris ini:
+            // $table->unique('id_transaksi'); // 1 transaksi = 1 ulasan
+
+            // GANTI dengan ini (1 transaksi + 1 barang = 1 ulasan):
+            $table->unique(['id_transaksi', 'id_barang'], 'ulasan_transaksi_barang_unique');
+
             $table->index('id_barang');
             $table->index('id_pengguna');
         });

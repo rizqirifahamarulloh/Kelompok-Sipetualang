@@ -22,7 +22,7 @@ class RentalController extends Controller
             ->withCount('detailTransaksi as total_disewa')
             ->where('status_barang', 'tersedia')
             ->where('status_approval', 'disetujui')
-            ->where('jumlah_stok', '>', 0)
+            //->where('jumlah_stok', '>', 0)
             ->orderBy('id_barang', 'desc')
             ->get();
 

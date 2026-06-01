@@ -114,7 +114,7 @@ class DummyRentalSeeder extends Seeder
                 'deskripsi' => 'Kompor camping portable + gas',
                 'harga_sewa' => 35000,
                 'nominal_deposit' => 20000,
-                'jumlah_stok' => 4,
+                'jumlah_stok' => 1,
                 'status_barang' => 'tersedia',
                 'status_approval' => 'disetujui',
                 'foto_barang' => 'barang/kompor-portable.png',

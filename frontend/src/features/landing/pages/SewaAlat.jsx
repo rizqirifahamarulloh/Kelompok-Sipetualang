@@ -528,19 +528,20 @@ export default function SewaAlat() {
       {/* KATALOG PRODUK */}
       <div id="katalog-section">
         <KatalogProduk
-          filteredBarang={filteredBarang}
-          kategoriList={kategoriList}
-          selectedKategori={selectedKategori}
-          setSelectedKategori={setSelectedKategori}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          getImageUrl={getImageUrl}
-          cartItems={cartItems}
-          onAddToCart={handleAddToCart}
-          onRemoveFromCart={handleRemoveFromCart}
-          onUpdateQuantity={handleUpdateQuantity}
-          isAuthenticated={isAuthenticated}
-        />
+        filteredBarang={filteredBarang}
+        kategoriList={kategoriList}
+        selectedKategori={selectedKategori}
+        setSelectedKategori={setSelectedKategori}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        getImageUrl={getImageUrl}
+        cartItems={cartItems}
+        onAddToCart={handleAddToCart}
+        onRemoveFromCart={handleRemoveFromCart}
+        onUpdateQuantity={handleUpdateQuantity}
+        isAuthenticated={isAuthenticated}
+        token={localStorage.getItem('token')}
+      />
       </div>
 
       <Footer />

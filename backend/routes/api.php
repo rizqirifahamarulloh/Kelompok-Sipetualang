@@ -38,6 +38,8 @@ Route::post('/refresh', [AuthController::class, 'refresh']);
 
 
 
+
+
 // PUBLIC RENTAL ROUTES
 Route::get('/rental/barang', [RentalController::class, 'getAvailableBarang']);
 Route::get('/rental/barang/{id}', [RentalController::class, 'getBarangById']);
@@ -133,6 +135,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         // ⭐ ULASAN ROUTES
         Route::prefix('ulasan')->group(function () {
             Route::post('/', [UlasanController::class, 'store']);
+            Route::put('/{id}', [UlasanController::class, 'update']);
             Route::get('/check/{id_transaksi}', [UlasanController::class, 'check']);
         });
     });
