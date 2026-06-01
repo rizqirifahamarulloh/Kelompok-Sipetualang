@@ -15,17 +15,17 @@ import { toast } from "sonner";
 
 
 const STATUS_CONFIG = {
-  tersedia: { label: "Tersedia", dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
-  habis:    { label: "Habis",    dot: "bg-red-500",     badge: "bg-red-50 text-red-700 border border-red-200" },
+  tersedia: { label: "Tersedia", dot: "bg-emerald-500", badge: "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" },
+  habis:    { label: "Habis",    dot: "bg-red-500",     badge: "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800" },
 };
 
 const formatHarga = (val) => `Rp ${Number(val || 0).toLocaleString("id-ID")}`;
 
 const getStokColor = (stok) => {
-  if (stok <= 0) return "bg-red-100 text-red-700 font-bold";
-  if (stok <= 1) return "bg-red-100 text-red-700 font-bold";
-  if (stok <= 5) return "bg-orange-100 text-orange-700 font-semibold";
-  return "bg-emerald-100 text-emerald-700 font-semibold";
+  if (stok <= 0) return "bg-red-100 dark:bg-red-950/20 text-red-700 dark:text-red-400 font-bold";
+  if (stok <= 1) return "bg-red-100 dark:bg-red-950/20 text-red-700 dark:text-red-400 font-bold";
+  if (stok <= 5) return "bg-orange-100 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 font-semibold";
+  return "bg-emerald-100 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold";
 };
 
 function StatusBadge({ status }) {
@@ -50,7 +50,7 @@ function ActionMenu({ onView, onEdit, onDelete }) {
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen(!open)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-gray-100 rounded-lg transition">
+      <button onClick={() => setOpen(!open)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition">
         <MoreHorizontal size={16} />
       </button>
       {open && (
@@ -64,7 +64,7 @@ function ActionMenu({ onView, onEdit, onDelete }) {
             <Edit size={14} /> Edit Data
           </button>
           <button onClick={() => { onDelete(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-red-50 text-red-600 text-left">
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 text-left">
             <Trash2 size={14} /> Hapus Alat
           </button>
         </div>
@@ -208,7 +208,7 @@ export default function Gears() {
         </p>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <h1 className="text-2xl font-bold">Manajemen Alat</h1>
-          <button className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-muted transition">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted transition">
             <Download size={15} /> Ekspor CSV
           </button>
         </div>
@@ -217,10 +217,10 @@ export default function Gears() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Alat", value: stats.total_alat, icon: <Package size={18} />, color: "bg-blue-50 text-blue-600" },
-          { label: "Alat Tersedia", value: stats.tersedia, icon: <PackageCheck size={18} />, color: "bg-emerald-50 text-emerald-600" },
-          { label: "Stok Habis", value: stats.habis, icon: <PackageX size={18} />, color: "bg-red-50 text-red-600" },
-          { label: "Stok Kritis", value: stats.stok_kritis, icon: <AlertTriangle size={18} />, color: "bg-orange-50 text-orange-600",
+          { label: "Total Alat", value: stats.total_alat, icon: <Package size={18} />, color: "bg-blue-50 dark:bg-blue-950/30 text-blue-600" },
+          { label: "Alat Tersedia", value: stats.tersedia, icon: <PackageCheck size={18} />, color: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600" },
+          { label: "Stok Habis", value: stats.habis, icon: <PackageX size={18} />, color: "bg-red-50 dark:bg-red-950/30 text-red-600" },
+          { label: "Stok Kritis", value: stats.stok_kritis, icon: <AlertTriangle size={18} />, color: "bg-orange-50 dark:bg-orange-950/30 text-orange-600",
             extra: stats.stok_kritis > 0 ? <span className="text-sm text-red-500 ml-2 font-medium">item kritis</span> : null },
         ].map((card) => (
           <div key={card.label} className="bg-card border border-border rounded-xl p-6 shadow-xs">
@@ -238,15 +238,15 @@ export default function Gears() {
 
       {/* Peringatan Stok Kritis */}
       {kritisItems.length > 0 && (
-        <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-5 py-3 shadow-xs">
+        <div className="flex items-center justify-between bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl px-5 py-3 shadow-xs">
           <div className="flex items-center gap-3">
-            <AlertTriangle size={18} className="text-red-500 shrink-0" />
+            <AlertTriangle size={18} className="text-red-500 dark:text-red-400 shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-red-700">Peringatan Stok Kritis (≤ 1)</p>
-              <p className="text-xs text-red-500 mt-0.5">{kritisItems.map((i) => i.nama_barang).join(", ")}</p>
+              <p className="text-sm font-semibold text-red-700 dark:text-red-400">Peringatan Stok Kritis (≤ 1)</p>
+              <p className="text-xs text-red-500 dark:text-red-400/70 mt-0.5">{kritisItems.map((i) => i.nama_barang).join(", ")}</p>
             </div>
           </div>
-          <button onClick={() => { setFilterStatus("habis"); setCurrentPage(1); }} className="px-4 py-1.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition">
+          <button onClick={() => { setFilterStatus("habis"); setCurrentPage(1); }} className="px-4 py-1.5 text-xs font-semibold text-white bg-red-600 dark:bg-red-700 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition">
             Lihat Stok Kritis
           </button>
         </div>
@@ -325,11 +325,11 @@ export default function Gears() {
                 {paginated.length === 0 ? (
                   <tr><td colSpan={9} className="text-center py-10 text-muted-foreground">Tidak ada alat ditemukan.</td></tr>
                 ) : paginated.map((gear, index) => (
-                  <tr key={gear.id_barang} className="border-b border-gray-50 hover:bg-muted/50 transition">
+                  <tr key={gear.id_barang} className="border-b border-border hover:bg-muted/50 transition">
                     <td className="px-4 py-3 text-center text-muted-foreground">{(currentPage - 1) * PER_PAGE + index + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center border border-border shrink-0 overflow-hidden">
+                        <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center border border-border shrink-0 overflow-hidden">
                           {gear.foto_barang ? (
                             <img src={getStorageUrl(gear.foto_barang)} alt={gear.nama_barang} className="w-full h-full object-cover" />
                           ) : (
@@ -340,7 +340,7 @@ export default function Gears() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs bg-slate-100 text-muted-foreground px-2.5 py-0.5 rounded-full">
+                      <span className="text-xs bg-slate-100 dark:bg-slate-800 text-muted-foreground px-2.5 py-0.5 rounded-full">
                         {gear.kategori?.nama_kategori || "-"}
                       </span>
                     </td>
@@ -352,9 +352,9 @@ export default function Gears() {
                     <td className="px-4 py-3"><StatusBadge status={gear.status_barang} /></td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
-                        gear.status_approval === "disetujui" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
-                        gear.status_approval === "pending" ? "bg-amber-50 text-amber-700 border-amber-100" :
-                        "bg-red-50 text-red-700 border-red-100"
+                        gear.status_approval === "disetujui" ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800" :
+                        gear.status_approval === "pending" ? "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-800" :
+                        "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-100 dark:border-red-800"
                       }`}>
                         {gear.status_approval}
                       </span>

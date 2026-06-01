@@ -25,11 +25,11 @@ const STATUS_CONFIG = {
 };
 
 const SEWA_CONFIG = {
-  menunggu_pembayaran: { label: 'Menunggu Bayar', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  dibayar:             { label: 'Dibayar',        cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-  sedang_disewa:       { label: 'Disewa',         cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  selesai:             { label: 'Selesai',        cls: 'bg-gray-100 text-gray-600 border-gray-200' },
-  dibatalkan:          { label: 'Dibatalkan',     cls: 'bg-red-50 text-red-700 border-red-200' },
+  menunggu_pembayaran: { label: 'Menunggu Bayar', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/20 dark:text-yellow-400 dark:border-yellow-800' },
+  dibayar:             { label: 'Dibayar',        cls: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800' },
+  sedang_disewa:       { label: 'Disewa',         cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800' },
+  selesai:             { label: 'Selesai',        cls: 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700' },
+  dibatalkan:          { label: 'Dibatalkan',     cls: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-800' },
 };
 
 export default function Payment() {

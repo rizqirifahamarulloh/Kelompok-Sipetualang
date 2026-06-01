@@ -49,17 +49,17 @@ const formatDateTime = (dateStr) =>
 
 // ── Status configs
 const STATUS_CONFIG = {
-  menunggu_pembayaran: { label: 'Menunggu Pembayaran', icon: Clock, cls: 'bg-yellow-100 text-yellow-800 border-yellow-200', dot: 'bg-yellow-500' },
-  dibayar:             { label: 'Dibayar',             icon: CreditCard, cls: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
-  sedang_disewa:       { label: 'Sedang Disewa',       icon: Package, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
-  selesai:             { label: 'Selesai',             icon: CheckCircle, cls: 'bg-gray-100 text-gray-600 border-gray-200', dot: 'bg-gray-400' },
-  dibatalkan:          { label: 'Dibatalkan',          icon: XCircle, cls: 'bg-red-100 text-red-700 border-red-200', dot: 'bg-red-400' },
+  menunggu_pembayaran: { label: 'Menunggu Pembayaran', icon: Clock, cls: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800', dot: 'bg-yellow-500' },
+  dibayar:             { label: 'Dibayar',             icon: CreditCard, cls: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800', dot: 'bg-blue-500' },
+  sedang_disewa:       { label: 'Sedang Disewa',       icon: Package, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800', dot: 'bg-emerald-500' },
+  selesai:             { label: 'Selesai',             icon: CheckCircle, cls: 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700', dot: 'bg-gray-400' },
+  dibatalkan:          { label: 'Dibatalkan',          icon: XCircle, cls: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800', dot: 'bg-red-400' },
 };
 
 const PAYMENT_CONFIG = {
-  pending: { label: 'Belum Bayar', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  sukses:  { label: 'Lunas',      cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  gagal:   { label: 'Gagal',      cls: 'bg-red-50 text-red-700 border-red-200' },
+  pending: { label: 'Belum Bayar', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/20 dark:text-yellow-400 dark:border-yellow-800' },
+  sukses:  { label: 'Lunas',      cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800' },
+  gagal:   { label: 'Gagal',      cls: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-800' },
 };
 
 const FILTER_TABS = [

@@ -460,13 +460,13 @@ export default function CartPage() {
   // BELUM LOGIN
   if (!user) {
     return (
-      <div className="bg-white min-h-screen">
+      <div className="bg-background min-h-screen">
         <Navbar forceScrolled />
         <div className="min-h-screen flex items-center justify-center px-5">
-          <div className="bg-white p-10 rounded-[30px] shadow-xl text-center max-w-md w-full">
-            <ShoppingBag className="w-20 h-20 text-gray-300 mx-auto mb-5" />
-            <h1 className="text-3xl font-black text-gray-900 mb-2">Login Dulu</h1>
-            <p className="text-gray-500 text-sm mb-7">Kamu harus login untuk melihat keranjang rental.</p>
+          <div className="bg-card p-10 rounded-[30px] shadow-xl text-center max-w-md w-full border">
+            <ShoppingBag className="w-20 h-20 text-muted-foreground/30 mx-auto mb-5" />
+            <h1 className="text-3xl font-black text-foreground mb-2">Login Dulu</h1>
+            <p className="text-muted-foreground text-sm mb-7">Kamu harus login untuk melihat keranjang rental.</p>
             <Link to="/login" className="bg-emerald-500 hover:bg-emerald-600 text-white px-7 py-3 rounded-2xl font-semibold inline-flex items-center gap-2 no-underline">
               Login Sekarang <ArrowRight className="w-4 h-4" />
             </Link>
@@ -480,12 +480,12 @@ export default function CartPage() {
   // CART KOSONG
   if (cart.length === 0) {
     return (
-      <div className="bg-white min-h-screen">
+      <div className="bg-background min-h-screen">
         <Navbar forceScrolled />
 
         {/* HERO BANNER */}
         <section
-          className="relative w-full bg-white"
+          className="relative w-full bg-background"
           style={{ padding: '16px 16px 0 16px' }}
         >
           <div className="relative w-full">
@@ -525,10 +525,10 @@ export default function CartPage() {
 
         {/* Empty State */}
         <div className="flex items-center justify-center px-5 py-20">
-          <div className="bg-white p-10 rounded-[30px] shadow-xl text-center max-w-md w-full">
-            <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-5" />
-            <h1 className="text-3xl font-black text-gray-900 mb-2">Keranjang Kosong</h1>
-            <p className="text-gray-500 text-sm mb-7">Yuk cari alat petualangan favoritmu sekarang.</p>
+          <div className="bg-card p-10 rounded-[30px] shadow-xl text-center max-w-md w-full border">
+            <ShoppingBag className="w-24 h-24 text-muted-foreground/30 mx-auto mb-5" />
+            <h1 className="text-3xl font-black text-foreground mb-2">Keranjang Kosong</h1>
+            <p className="text-muted-foreground text-sm mb-7">Yuk cari alat petualangan favoritmu sekarang.</p>
             <Link to="/sewa-alat" className="bg-emerald-500 hover:bg-emerald-600 text-white px-7 py-3 rounded-2xl font-semibold inline-flex items-center gap-2 no-underline">
               Mulai Rental <ArrowRight className="w-4 h-4" />
             </Link>
@@ -540,12 +540,12 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-background min-h-screen">
       <Navbar forceScrolled />
 
       {/* HERO BANNER */}
       <section
-        className="relative w-full bg-white"
+        className="relative w-full bg-background"
         style={{ padding: '16px 16px 0 16px' }}
       >
         <div className="relative w-full">
@@ -588,60 +588,60 @@ export default function CartPage() {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
           {/* LEFT */}
           <div className="xl:col-span-8">
-            <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-5 flex items-center justify-between">
+            <div className="bg-card rounded-3xl p-5 shadow-sm border border-border mb-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <input type="checkbox" checked={isAllSelected} onChange={handleSelectAll} className="w-5 h-5 accent-emerald-500" />
-                <span className="font-semibold text-gray-700">Pilih Semua Barang</span>
+                <span className="font-semibold text-foreground">Pilih Semua Barang</span>
               </div>
-              <span className="text-sm text-gray-400">{cart.length} Item</span>
+              <span className="text-sm text-muted-foreground">{cart.length} Item</span>
             </div>
 
             <div className="space-y-5">
               {cart.map((item) => (
-                <div key={item.id_cart} className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
+                <div key={item.id_cart} className="bg-card rounded-[32px] shadow-sm border border-border overflow-hidden">
                   <div className="p-5 flex flex-col lg:flex-row gap-5">
                     <div className="pt-1">
                       <input type="checkbox" checked={selectedItems[item.id_cart] || false} onChange={() => handleToggleSelect(item.id_cart)} className="w-5 h-5 accent-emerald-500" />
                     </div>
-                    <Link to={`/barang/${item.id_barang}`} className="w-full lg:w-44 h-44 bg-[#f7f7f7] rounded-[28px] overflow-hidden">
+                    <Link to={`/barang/${item.id_barang}`} className="w-full lg:w-44 h-44 bg-muted rounded-[28px] overflow-hidden">
                       <img src={getStorageUrl(item.foto_barang, "https://via.placeholder.com/300")} alt={item.nama_barang} className="w-full h-full object-cover" />
                     </Link>
                     <div className="flex-1">
                       <div className="flex justify-between gap-4">
                         <div>
                           <Link to={`/barang/${item.id_barang}`} className="hover:text-emerald-500 transition-colors">
-                            <h2 className="text-2xl font-black text-gray-900 mb-2">{item.nama_barang}</h2>
+                            <h2 className="text-2xl font-black text-foreground mb-2">{item.nama_barang}</h2>
                           </Link>
-                          <Link to={`/toko/${item.id_pemilik}`} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-emerald-500">
+                          <Link to={`/toko/${item.id_pemilik}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-emerald-500">
                             <Store className="w-4 h-4" /> {item.pemilik?.nama || "SiPetualang"}
                           </Link>
-                          <div className="mt-4 bg-gray-50 rounded-2xl px-4 py-3 inline-block">
-                            <p className="text-xs text-gray-400">Tanggal Rental</p>
-                            <p className="text-sm font-semibold text-gray-700">{item.tanggal_mulai} — {item.tanggal_selesai}</p>
+                          <div className="mt-4 bg-muted rounded-2xl px-4 py-3 inline-block">
+                            <p className="text-xs text-muted-foreground">Tanggal Rental</p>
+                            <p className="text-sm font-semibold text-foreground">{item.tanggal_mulai} — {item.tanggal_selesai}</p>
                           </div>
                         </div>
-                        <button onClick={() => handleRemoveItem(item.id_cart)} className="w-12 h-12 rounded-2xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center">
+                        <button onClick={() => handleRemoveItem(item.id_cart)} className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center">
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mt-8">
                         <div>
-                          <p className="text-sm text-gray-400 mb-1">Harga Rental</p>
+                          <p className="text-sm text-muted-foreground mb-1">Harga Rental</p>
                           <h3 className="text-3xl font-black text-emerald-500">Rp {Number(item.harga_sewa).toLocaleString("id-ID")}</h3>
-                          <span className="text-sm text-gray-400 block mb-1">/hari</span>
+                          <span className="text-sm text-muted-foreground block mb-1">/hari</span>
                           {Number(item.nominal_deposit) > 0 && (
-                            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">Deposit: Rp {Number(item.nominal_deposit).toLocaleString("id-ID")}</span>
+                            <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-lg">Deposit: Rp {Number(item.nominal_deposit).toLocaleString("id-ID")}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-5">
-                          <div className="flex items-center bg-gray-100 rounded-2xl overflow-hidden">
+                          <div className="flex items-center bg-muted rounded-2xl overflow-hidden">
                             <button onClick={() => handleUpdateQuantity(item.id_cart, item.jumlah - 1)} className="w-12 h-12"><Minus className="w-4 h-4" /></button>
-                            <div className="w-14 text-center font-bold text-gray-800">{item.jumlah}</div>
+                            <div className="w-14 text-center font-bold text-foreground">{item.jumlah}</div>
                             <button onClick={() => handleUpdateQuantity(item.id_cart, item.jumlah + 1)} className="w-12 h-12"><Plus className="w-4 h-4" /></button>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs text-gray-400">Total</p>
-                            <p className="text-2xl font-black text-gray-900">Rp {Number(item.total_harga).toLocaleString("id-ID")}</p>
+                            <p className="text-xs text-muted-foreground">Total</p>
+                            <p className="text-2xl font-black text-foreground">Rp {Number(item.total_harga).toLocaleString("id-ID")}</p>
                           </div>
                         </div>
                       </div>
@@ -655,22 +655,22 @@ export default function CartPage() {
           {/* RIGHT */}
           <div className="xl:col-span-4">
             <div className="sticky top-32">
-              <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-6">
-                <div className="bg-[#f8fafc] rounded-3xl p-5 mb-6">
+              <div className="bg-card rounded-[32px] shadow-sm border border-border p-6">
+                <div className="bg-muted rounded-3xl p-5 mb-6">
                   <div className="flex items-center gap-4 mb-3">
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center"><Store className="w-6 h-6 text-emerald-500" /></div>
-                    <div><h3 className="font-black text-gray-900">{storeLocation.name}</h3><p className="text-xs text-gray-400">Official Store</p></div>
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center"><Store className="w-6 h-6 text-emerald-500" /></div>
+                    <div><h3 className="font-black text-foreground">{storeLocation.name}</h3><p className="text-xs text-muted-foreground">Official Store</p></div>
                   </div>
-                  <p className="text-sm text-gray-500 leading-relaxed">{storeLocation.address}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{storeLocation.address}</p>
                 </div>
 
                 <div className="mb-6">
-                  <label className="text-sm font-semibold text-gray-700">Metode Pengiriman</label>
+                  <label className="text-sm font-semibold text-foreground">Metode Pengiriman</label>
                   <div className="grid grid-cols-2 gap-3 mt-3">
-                    <button onClick={() => setDeliveryMethod('pickup')} className={`py-3 rounded-xl border flex items-center justify-center gap-2 font-medium text-sm ${deliveryMethod === 'pickup' ? 'bg-[#00A779] text-white border-[#00A779]' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    <button onClick={() => setDeliveryMethod('pickup')} className={`py-3 rounded-xl border flex items-center justify-center gap-2 font-medium text-sm ${deliveryMethod === 'pickup' ? 'bg-[#00A779] text-white border-[#00A779]' : 'bg-card text-muted-foreground border-border'}`}>
                       <Store className="w-4 h-4" /> Pickup
                     </button>
-                    <button onClick={() => setDeliveryMethod('delivery')} className={`py-3 rounded-xl border flex items-center justify-center gap-2 font-medium text-sm ${deliveryMethod === 'delivery' ? 'bg-[#00A779] text-white border-[#00A779]' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    <button onClick={() => setDeliveryMethod('delivery')} className={`py-3 rounded-xl border flex items-center justify-center gap-2 font-medium text-sm ${deliveryMethod === 'delivery' ? 'bg-[#00A779] text-white border-[#00A779]' : 'bg-card text-muted-foreground border-border'}`}>
                       <Truck className="w-4 h-4" /> Delivery
                     </button>
                   </div>
@@ -678,24 +678,24 @@ export default function CartPage() {
 
                 {deliveryMethod === 'delivery' && (
                   <div className="mt-4">
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Alamat Pengiriman</label>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Alamat Pengiriman</label>
                     <textarea
                       rows="3"
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
                       placeholder="Masukkan alamat lengkap..."
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#00A779]"
+                      className="w-full border border-border rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#00A779] bg-card"
                     />
                     <div className="flex gap-2 mt-2">
-                      <button onClick={calculateOngkir} disabled={calculatingOngkir} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm flex items-center justify-center gap-1">
+                      <button onClick={calculateOngkir} disabled={calculatingOngkir} className="flex-1 bg-muted text-foreground py-2 rounded-lg text-sm flex items-center justify-center gap-1">
                         <MapPin className="w-3 h-3" /> {calculatingOngkir ? "Memuat..." : "Cek Ongkir"}
                       </button>
-                      <button onClick={getCurrentLocation} disabled={calculatingOngkir} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm">
+                      <button onClick={getCurrentLocation} disabled={calculatingOngkir} className="flex-1 bg-muted text-foreground py-2 rounded-lg text-sm">
                         📍 Lokasi Saya
                       </button>
                     </div>
                     {distance > 0 && (
-                      <div className="mt-2 p-2 bg-emerald-50 rounded-lg text-xs">
+                      <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg text-xs">
                         <p>📍 Jarak: {distance.toFixed(2)} km</p>
                         <p className="font-semibold text-emerald-600">💰 Ongkir: Rp {shippingCost.toLocaleString("id-ID")} (Rp 1.000/km)</p>
                       </div>
@@ -703,20 +703,20 @@ export default function CartPage() {
                   </div>
                 )}
 
-                <div className="bg-[#f8fafc] rounded-3xl p-5 mb-6">
-                  <div className="flex items-center gap-2 mb-4"><CreditCard className="w-5 h-5 text-emerald-500" /><h3 className="font-bold text-gray-900">Pembayaran</h3></div>
-                  <div className="bg-white rounded-2xl p-4 border border-emerald-100 flex justify-between items-center">
-                    <div><p className="font-semibold text-gray-900">Midtrans Payment</p><p className="text-xs text-gray-400">QRIS, VA, Transfer, E-Wallet</p></div>
+                <div className="bg-muted rounded-3xl p-5 mb-6">
+                  <div className="flex items-center gap-2 mb-4"><CreditCard className="w-5 h-5 text-emerald-500" /><h3 className="font-bold text-foreground">Pembayaran</h3></div>
+                  <div className="bg-card rounded-2xl p-4 border border-emerald-100 dark:border-emerald-800 flex justify-between items-center">
+                    <div><p className="font-semibold text-foreground">Midtrans Payment</p><p className="text-xs text-muted-foreground">QRIS, VA, Transfer, E-Wallet</p></div>
                     <ShieldCheck className="w-6 h-6 text-emerald-500" />
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex justify-between"><span className="text-gray-500">Total Barang</span><span className="font-bold text-gray-900">{cart.length}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Subtotal Sewa</span><span className="font-bold text-gray-900">Rp {getSelectedTotal.toLocaleString("id-ID")}</span></div>
-                  {getSelectedDepositTotal > 0 && (<div className="flex justify-between"><span className="text-gray-500">Total Deposit (Refundable)</span><span className="font-semibold text-gray-700">Rp {getSelectedDepositTotal.toLocaleString("id-ID")}</span></div>)}
-                  {deliveryMethod === 'delivery' && shippingCost > 0 && (<div className="flex justify-between"><span className="text-gray-500">Ongkir (Rp 1.000/km)</span><span className="font-semibold text-gray-700">Rp {shippingCost.toLocaleString("id-ID")}</span></div>)}
-                  <div className="border-t pt-4 flex justify-between items-center"><span className="text-lg font-black text-gray-900">Total</span><span className="text-3xl font-black text-emerald-500">Rp {grandTotal.toLocaleString("id-ID")}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Total Barang</span><span className="font-bold text-foreground">{cart.length}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Subtotal Sewa</span><span className="font-bold text-foreground">Rp {getSelectedTotal.toLocaleString("id-ID")}</span></div>
+                  {getSelectedDepositTotal > 0 && (<div className="flex justify-between"><span className="text-muted-foreground">Total Deposit (Refundable)</span><span className="font-semibold text-foreground">Rp {getSelectedDepositTotal.toLocaleString("id-ID")}</span></div>)}
+                  {deliveryMethod === 'delivery' && shippingCost > 0 && (<div className="flex justify-between"><span className="text-muted-foreground">Ongkir (Rp 1.000/km)</span><span className="font-semibold text-foreground">Rp {shippingCost.toLocaleString("id-ID")}</span></div>)}
+                  <div className="border-t pt-4 flex justify-between items-center"><span className="text-lg font-black text-foreground">Total</span><span className="text-3xl font-black text-emerald-500">Rp {grandTotal.toLocaleString("id-ID")}</span></div>
                 </div>
 
                 <button onClick={handleCheckout} disabled={processing || !isAnySelected} className="w-full mt-8 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-300 text-white py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2">
@@ -733,24 +733,24 @@ export default function CartPage() {
       {/* MODAL NOTIFICATION */}
       {notificationModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-3xl max-w-md w-full mx-4 overflow-hidden shadow-2xl">
-            <div className={`p-6 ${notificationModal.type === 'success' ? 'bg-green-50' : notificationModal.type === 'error' ? 'bg-red-50' : 'bg-blue-50'}`}>
+          <div className="bg-card rounded-3xl max-w-md w-full mx-4 overflow-hidden shadow-2xl border">
+            <div className={`p-6 ${notificationModal.type === 'success' ? 'bg-green-50 dark:bg-green-950/20' : notificationModal.type === 'error' ? 'bg-red-50 dark:bg-red-950/20' : 'bg-blue-50 dark:bg-blue-950/20'}`}>
               <div className="flex items-start gap-4">
                 <div className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center ${
-                  notificationModal.type === 'success' ? 'bg-green-100' : 
-                  notificationModal.type === 'error' ? 'bg-red-100' : 'bg-blue-100'
+                  notificationModal.type === 'success' ? 'bg-green-100 dark:bg-green-900/30' : 
+                  notificationModal.type === 'error' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100 dark:bg-blue-900/30'
                 }`}>
                   {notificationModal.type === 'success' && <CheckCircle className="w-6 h-6 text-green-600" />}
                   {notificationModal.type === 'error' && <XCircle className="w-6 h-6 text-red-600" />}
                   {notificationModal.type === 'info' && <Info className="w-6 h-6 text-blue-600" />}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg text-gray-900">{notificationModal.title}</h3>
-                  <p className="text-gray-600 text-sm mt-1 whitespace-pre-line">{notificationModal.message}</p>
+                  <h3 className="font-bold text-lg text-foreground">{notificationModal.title}</h3>
+                  <p className="text-muted-foreground text-sm mt-1 whitespace-pre-line">{notificationModal.message}</p>
                 </div>
                 <button 
                   onClick={() => setNotificationModal(prev => ({ ...prev, isOpen: false }))}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-5 h-5" />
                 </button>

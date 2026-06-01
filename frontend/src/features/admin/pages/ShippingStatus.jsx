@@ -308,28 +308,28 @@ export default function ShippingStatus() {
     if (trx.metode_pengiriman === "pickup") {
       if (trx.status_sewa === "dibayar") {
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 flex items-center gap-1.5 w-fit">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 flex items-center gap-1.5 w-fit">
             <Package className="size-3.5" /> Menunggu Diambil
           </span>
         );
       }
       if (trx.status_sewa === "sedang_disewa" && trx.status_kembali === "proses") {
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 flex items-center gap-1.5 w-fit animate-pulse">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 flex items-center gap-1.5 w-fit animate-pulse">
             <Package className="size-3.5" /> Proses Pengembalian
           </span>
         );
       }
       if (trx.status_sewa === "sedang_disewa") {
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 flex items-center gap-1.5 w-fit">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1.5 w-fit">
             <CheckCircle2 className="size-3.5" /> Sedang Disewa
           </span>
         );
       }
       if (trx.status_sewa === "selesai") {
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 flex items-center gap-1.5 w-fit">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex items-center gap-1.5 w-fit">
             <CheckCircle2 className="size-3.5" /> Selesai
           </span>
         );
@@ -345,25 +345,25 @@ export default function ShippingStatus() {
     switch (status) {
       case "pending":
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 flex items-center gap-1.5 w-fit">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 flex items-center gap-1.5 w-fit">
             <AlertCircle className="size-3.5" /> Siap Dikirim
           </span>
         );
       case "dikirim":
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 flex items-center gap-1.5 w-fit animate-pulse">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1.5 w-fit animate-pulse">
             <Truck className="size-3.5" /> Sedang Dikirim
           </span>
         );
       case "sampai":
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 flex items-center gap-1.5 w-fit">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5 w-fit">
             <MapPin className="size-3.5" /> Tiba di Tujuan
           </span>
         );
       case "diterima":
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 flex items-center gap-1.5 w-fit">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex items-center gap-1.5 w-fit">
             <CheckCircle2 className="size-3.5" /> Diterima Customer
           </span>
         );
@@ -391,7 +391,7 @@ export default function ShippingStatus() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="border shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 bg-amber-100 text-amber-700 rounded-2xl">
+            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-2xl">
               <Package className="size-5" />
             </div>
             <div>
@@ -405,7 +405,7 @@ export default function ShippingStatus() {
 
         <Card className="border shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 bg-blue-100 text-blue-700 rounded-2xl">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-2xl">
               <Truck className="size-5" />
             </div>
             <div>
@@ -419,7 +419,7 @@ export default function ShippingStatus() {
 
         <Card className="border shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 bg-purple-100 text-purple-700 rounded-2xl">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-2xl">
               <HandMetal className="size-5" />
             </div>
             <div>
@@ -433,7 +433,7 @@ export default function ShippingStatus() {
 
         <Card className="border shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 bg-orange-100 text-orange-700 rounded-2xl">
+            <div className="p-3 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-2xl">
               <Package className="size-5" />
             </div>
             <div>
@@ -447,7 +447,7 @@ export default function ShippingStatus() {
 
         <Card className="border shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 bg-green-100 text-green-700 rounded-2xl">
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-2xl">
               <CheckCircle2 className="size-5" />
             </div>
             <div>
@@ -532,7 +532,7 @@ export default function ShippingStatus() {
           </div>
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-8 text-center text-sm font-medium flex flex-col items-center justify-center gap-2">
+        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-2xl p-8 text-center text-sm font-medium flex flex-col items-center justify-center gap-2">
           <AlertCircle className="size-8" />
           {error}
           <Button variant="outline" size="sm" onClick={getData} className="mt-2">Coba Lagi</Button>
@@ -549,7 +549,7 @@ export default function ShippingStatus() {
               <Card key={item.id_transaksi} className="border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
                 <div className="border-b bg-muted/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+                    <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
                       <Package className="size-5" />
                     </div>
                     <div>
@@ -648,8 +648,8 @@ export default function ShippingStatus() {
                           </Button>
                         )}
                         {item.pengiriman?.status_pengiriman === "sampai" && (
-                          <div className="text-center p-3 rounded-lg bg-indigo-50 border border-indigo-100">
-                            <p className="text-xs text-indigo-700 font-semibold flex items-center justify-center gap-1.5">
+                          <div className="text-center p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-800">
+                            <p className="text-xs text-indigo-700 dark:text-indigo-400 font-semibold flex items-center justify-center gap-1.5">
                               <MapPin className="size-3.5" /> Sudah Tiba di Lokasi
                             </p>
                           </div>
@@ -661,13 +661,13 @@ export default function ShippingStatus() {
                                 <CheckCircle2 className="size-4" /> Konfirmasi Barang Diterima
                               </Button>
                             ) : item.status_sewa === "selesai" ? (
-                              <div className="text-center p-3 rounded-lg bg-green-50 border border-green-100">
+                              <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-800">
                                 <p className="text-xs text-green-700 font-semibold flex items-center justify-center gap-1.5">
                                   <CheckCircle2 className="size-3.5" /> Transaksi Selesai
                                 </p>
                               </div>
                             ) : (
-                              <div className="text-center p-3 rounded-lg bg-green-50 border border-green-100">
+                              <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-800">
                                 <p className="text-xs text-green-700 font-semibold flex items-center justify-center gap-1.5">
                                   <CheckCircle2 className="size-3.5" /> Selesai Diterima
                                 </p>
@@ -684,8 +684,8 @@ export default function ShippingStatus() {
                           </Button>
                         )}
                         {item.status_sewa === "sedang_disewa" && item.status_kembali === "belum" && (
-                          <div className="text-center p-4 rounded-xl border bg-blue-50">
-                            <p className="text-xs text-blue-700 font-semibold">Sedang Disewa</p>
+                          <div className="text-center p-4 rounded-xl border bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+                            <p className="text-xs text-blue-700 dark:text-blue-400 font-semibold">Sedang Disewa</p>
                           </div>
                         )}
                         {item.status_sewa === "sedang_disewa" && item.status_kembali === "proses" && (
@@ -694,8 +694,8 @@ export default function ShippingStatus() {
                           </Button>
                         )}
                         {item.status_sewa === "selesai" && (
-                          <div className="text-center p-4 rounded-xl border bg-green-50">
-                            <p className="text-xs text-green-700 font-semibold">Transaksi Selesai</p>
+                          <div className="text-center p-4 rounded-xl border bg-green-50 dark:bg-green-950/20 dark:border-green-800">
+                            <p className="text-xs text-green-700 dark:text-green-400 font-semibold">Transaksi Selesai</p>
                           </div>
                         )}
                       </>
@@ -731,7 +731,7 @@ export default function ShippingStatus() {
             </div>
 
             <form onSubmit={handleShipSubmit} className="p-6 space-y-4">
-              <div className="bg-emerald-50 p-4 rounded-xl text-xs space-y-1.5 text-emerald-800">
+              <div className="bg-emerald-50 dark:bg-emerald-950/20 p-4 rounded-xl text-xs space-y-1.5 text-emerald-800 dark:text-emerald-400">
                 <p><strong>Alat Sewaan:</strong> {selectedTrx.nama_barang} ({selectedTrx.jumlah} unit)</p>
                 <p><strong>Penyewa:</strong> {selectedTrx.penyewa?.nama}</p>
                 <p><strong>Alamat Kirim:</strong> {selectedTrx.alamat_pengiriman}</p>
@@ -752,7 +752,7 @@ export default function ShippingStatus() {
                 <label className="block text-xs font-semibold mb-1.5">Nomor Resi Pengiriman</label>
                 <div className="flex gap-2">
                   <input type="text" value={shipForm.no_resi} onChange={(e) => setShipForm(prev => ({ ...prev, no_resi: e.target.value }))} className="flex-1 px-3.5 py-2.5 border rounded-xl text-sm" />
-                  <button type="button" onClick={() => setShipForm(prev => ({ ...prev, no_resi: generateNoResi() }))} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm flex items-center gap-1.5">
+                  <button type="button" onClick={() => setShipForm(prev => ({ ...prev, no_resi: generateNoResi() }))} className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-sm flex items-center gap-1.5">
                     <RefreshCw className="size-4" /> Generate
                   </button>
                 </div>
@@ -797,7 +797,7 @@ export default function ShippingStatus() {
                 <label className="block text-xs font-semibold mb-1.5">Lokasi Pos Terkini</label>
                 <div className="flex gap-2">
                   <input type="text" value={updateForm.lokasi_terakhir} onChange={(e) => setUpdateForm(prev => ({ ...prev, lokasi_terakhir: e.target.value }))} className="flex-1 px-3.5 py-2.5 border rounded-xl text-sm" />
-                  <button type="button" onClick={getCurrentLocationForAdmin} disabled={isGettingLocation} className="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl text-sm flex items-center gap-1.5">
+                  <button type="button" onClick={getCurrentLocationForAdmin} disabled={isGettingLocation} className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-800/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-sm flex items-center gap-1.5">
                     <LocateFixed className="size-4" /> {isGettingLocation ? "Memuat..." : "Lokasi Saya"}
                   </button>
                 </div>
@@ -806,10 +806,10 @@ export default function ShippingStatus() {
               <div>
                 <label className="block text-xs font-semibold mb-1.5">Status Pengiriman</label>
                 <div className="grid grid-cols-2 gap-3">
-                  <button type="button" onClick={() => setUpdateForm(prev => ({ ...prev, status_pengiriman: "dikirim" }))} className={`py-3 rounded-xl border text-sm ${updateForm.status_pengiriman === "dikirim" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-border"}`}>
+                  <button type="button" onClick={() => setUpdateForm(prev => ({ ...prev, status_pengiriman: "dikirim" }))} className={`py-3 rounded-xl border text-sm ${updateForm.status_pengiriman === "dikirim" ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400" : "border-border"}`}>
                     <Truck className="size-4" /> Dalam Perjalanan
                   </button>
-                  <button type="button" onClick={() => setUpdateForm(prev => ({ ...prev, status_pengiriman: "sampai" }))} className={`py-3 rounded-xl border text-sm ${updateForm.status_pengiriman === "sampai" ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-border"}`}>
+                  <button type="button" onClick={() => setUpdateForm(prev => ({ ...prev, status_pengiriman: "sampai" }))} className={`py-3 rounded-xl border text-sm ${updateForm.status_pengiriman === "sampai" ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400" : "border-border"}`}>
                     <MapPin className="size-4" /> Sudah Sampai
                   </button>
                 </div>
@@ -839,7 +839,7 @@ export default function ShippingStatus() {
             </div>
 
             <form onSubmit={handleReturnSubmit} className="p-6 space-y-4">
-              <div className="bg-orange-50 p-4 rounded-xl text-xs space-y-1.5 text-orange-800">
+              <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-xl text-xs space-y-1.5 text-orange-800 dark:text-orange-400">
                 <p><strong>Alat Sewaan:</strong> {selectedTrx.nama_barang} ({selectedTrx.jumlah} unit)</p>
                 <p><strong>Penyewa:</strong> {selectedTrx.penyewa?.nama}</p>
                 <p><strong>Metode Pengiriman:</strong> {selectedTrx.metode_pengiriman === 'pickup' ? 'Ambil di Tempat' : 'Delivery'}</p>
@@ -867,8 +867,8 @@ export default function ShippingStatus() {
               </div>
 
               {Number(selectedTrx.nominal_deposit) > 0 && (
-                <div className="bg-emerald-50 p-3 rounded-xl text-xs">
-                  <p className="font-bold text-emerald-800">Informasi Deposit:</p>
+                <div className="bg-emerald-50 dark:bg-emerald-950/20 p-3 rounded-xl text-xs">
+                  <p className="font-bold text-emerald-800 dark:text-emerald-400">Informasi Deposit:</p>
                   <p>Deposit Awal: <strong>Rp {Number(selectedTrx.nominal_deposit).toLocaleString()}</strong></p>
                   <p>Denda Kerusakan: <strong>Rp {Number(returnForm.denda_kerusakan).toLocaleString()}</strong></p>
                 </div>

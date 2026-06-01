@@ -35,19 +35,19 @@ const getRoleLabel = (role) => {
 
 const getRoleBadge = (role) => {
   const map = {
-    customer: 'bg-blue-50 text-blue-700 border-blue-200',
-    perental: 'bg-orange-50 text-orange-700 border-orange-200',
-    admin: 'bg-purple-50 text-purple-700 border-purple-200',
+    customer: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800',
+    perental: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-800',
+    admin: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-800',
   };
-  return map[role] || 'bg-gray-50 text-gray-700 border-gray-200';
+  return map[role] || 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700';
 };
 
 const STATUS_MAP = {
-  menunggu_pembayaran: { label: 'Menunggu', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  dibayar: { label: 'Dibayar', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-  sedang_disewa: { label: 'Disewa', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  selesai: { label: 'Selesai', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
-  dibatalkan: { label: 'Dibatalkan', cls: 'bg-red-50 text-red-700 border-red-200' },
+  menunggu_pembayaran: { label: 'Menunggu', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/20 dark:text-yellow-400 dark:border-yellow-800' },
+  dibayar: { label: 'Dibayar', cls: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800' },
+  sedang_disewa: { label: 'Disewa', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800' },
+  selesai: { label: 'Selesai', cls: 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700' },
+  dibatalkan: { label: 'Dibatalkan', cls: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-800' },
 };
 
 export default function UserDetail() {
@@ -172,7 +172,7 @@ export default function UserDetail() {
                   <Badge variant="outline" className={`font-normal ${getRoleBadge(user.peran_pengguna)}`}>
                     <Shield size={10} className="mr-1" /> {getRoleLabel(user.peran_pengguna)}
                   </Badge>
-                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-normal">
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800 font-normal">
                     Akun Aktif
                   </Badge>
                 </div>
@@ -203,19 +203,19 @@ export default function UserDetail() {
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-lg">Verifikasi Identitas</h3>
               {user.is_verified ? (
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-normal">
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800 font-normal">
                   <ShieldCheck size={12} className="mr-1" /> KTP Terverifikasi
                 </Badge>
               ) : user.verification_status === 'pending' ? (
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 font-normal">
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800 font-normal">
                   <Clock size={12} className="mr-1" /> Menunggu Verifikasi
                 </Badge>
               ) : user.verification_status === 'rejected' ? (
-                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 font-normal">
+                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-800 font-normal">
                   <XCircle size={12} className="mr-1" /> Ditolak
                 </Badge>
               ) : (
-                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 font-normal">
+                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-normal">
                   Belum Mengajukan
                 </Badge>
               )}

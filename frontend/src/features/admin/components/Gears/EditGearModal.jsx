@@ -75,31 +75,31 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-gray-800">✏️ Edit Data Alat</h2>
-          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-700"><X size={20} /></button>
+      <div className="bg-card rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl border">
+        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-card z-10">
+          <h2 className="text-xl font-bold text-foreground">✏️ Edit Data Alat</h2>
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Nama Alat</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Nama Alat</label>
             <input type="text" name="nama_barang" value={formData.nama_barang} onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded focus:outline-none text-sm ${errors.nama_barang ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-emerald-500"}`} />
+              className={`w-full px-3 py-2 border rounded focus:outline-none text-sm ${errors.nama_barang ? "border-red-400 bg-red-50 dark:bg-red-950/20" : "border-border focus:border-emerald-500"}`} />
             {errors.nama_barang && <p className="text-red-500 text-[10px] mt-1">{errors.nama_barang}</p>}
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Deskripsi</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Deskripsi</label>
             <textarea name="deskripsi" value={formData.deskripsi} onChange={handleChange} rows={3}
-              className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm resize-none" />
+              className="w-full px-3 py-2 border rounded border-border focus:outline-none focus:border-emerald-500 text-sm resize-none" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Kategori</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Kategori</label>
               <select name="id_kategori" value={formData.id_kategori} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded focus:outline-none text-sm bg-white ${errors.id_kategori ? "border-red-400" : "border-gray-300 focus:border-emerald-500"}`}>
+                className={`w-full px-3 py-2 border rounded focus:outline-none text-sm bg-card ${errors.id_kategori ? "border-red-400" : "border-border focus:border-emerald-500"}`}>
                 <option value="">Pilih Kategori</option>
                 {categories.map((cat) => (
                   <option key={cat.id_kategori} value={cat.id_kategori}>{cat.nama_kategori}</option>
@@ -110,7 +110,7 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Status Alat</label>
               <select name="status_barang" value={formData.status_barang} onChange={handleChange}
-                className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm bg-white">
+                className="w-full px-3 py-2 border rounded border-border focus:outline-none focus:border-emerald-500 text-sm bg-card">
                 <option value="tersedia">Tersedia</option>
                 <option value="habis">Habis</option>
               </select>
@@ -121,13 +121,13 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Jumlah Stok</label>
               <input type="number" name="jumlah_stok" value={formData.jumlah_stok} onChange={handleChange} min={0}
-                className={`w-full px-3 py-2 border rounded focus:outline-none text-sm ${errors.jumlah_stok ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-emerald-500"}`} />
+                className={`w-full px-3 py-2 border rounded focus:outline-none text-sm ${errors.jumlah_stok ? "border-red-400 bg-red-50 dark:bg-red-950/20" : "border-border focus:border-emerald-500"}`} />
               {errors.jumlah_stok && <p className="text-red-500 text-[10px] mt-1">{errors.jumlah_stok}</p>}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Harga per Hari (Rp)</label>
               <input type="number" name="harga_sewa" value={formData.harga_sewa} onChange={handleChange} min={0}
-                className={`w-full px-3 py-2 border rounded focus:outline-none text-sm ${errors.harga_sewa ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-emerald-500"}`} />
+                className={`w-full px-3 py-2 border rounded focus:outline-none text-sm ${errors.harga_sewa ? "border-red-400 bg-red-50 dark:bg-red-950/20" : "border-border focus:border-emerald-500"}`} />
               {errors.harga_sewa && <p className="text-red-500 text-[10px] mt-1">{errors.harga_sewa}</p>}
             </div>
           </div>
@@ -136,13 +136,13 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Min. Durasi Sewa (Hari)</label>
               <input type="number" name="min_durasi_sewa" value={formData.min_durasi_sewa} onChange={handleChange} min={1}
-                className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm" />
-              <p className="text-[10px] text-gray-400 mt-1">Customer harus sewa minimal {formData.min_durasi_sewa || 1} hari</p>
+                className="w-full px-3 py-2 border rounded border-border focus:outline-none focus:border-emerald-500 text-sm" />
+              <p className="text-[10px] text-muted-foreground mt-1">Customer harus sewa minimal {formData.min_durasi_sewa || 1} hari</p>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Status Approval</label>
               <select name="status_approval" value={formData.status_approval} onChange={handleChange}
-                className="w-full px-3 py-2 border rounded border-gray-300 focus:outline-none focus:border-emerald-500 text-sm bg-white">
+                className="w-full px-3 py-2 border rounded border-border focus:outline-none focus:border-emerald-500 text-sm bg-card">
                 <option value="pending">Pending</option>
                 <option value="disetujui">Disetujui</option>
                 <option value="ditolak">Ditolak</option>
@@ -153,7 +153,7 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Upload Foto</label>
             <div
-              className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition"
+              className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 transition"
               onClick={() => fileRef.current?.click()}
               onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) { setPreviewUrl(URL.createObjectURL(f)); setFormData((prev) => ({ ...prev, foto_barang: f })); } }}
               onDragOver={(e) => e.preventDefault()}
@@ -162,11 +162,11 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
                 <img src={previewUrl} alt="Preview" className="h-32 object-contain rounded mb-2" />
               ) : (
                 <>
-                  <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center mb-3">
+                  <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg flex items-center justify-center mb-3">
                     <ImageIcon size={22} className="text-emerald-600" />
                   </div>
                   <p className="text-sm text-emerald-600 font-medium">Klik untuk upload atau drag &amp; drop</p>
-                  <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
                 </>
               )}
             </div>
@@ -195,9 +195,9 @@ export default function EditGearModal({ isOpen, onClose, gear, categories = [], 
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 bg-slate-50 -mx-6 px-6 pb-2">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border bg-muted/50 -mx-6 px-6 pb-2">
             <button type="button" onClick={onClose}
-              className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition">
+              className="px-5 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded hover:bg-muted transition">
               Batal
             </button>
             <button type="submit"

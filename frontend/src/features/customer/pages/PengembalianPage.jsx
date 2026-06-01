@@ -39,15 +39,15 @@ const REFUND_STATUS_LABELS = {
 };
 
 const REFUND_STATUS_COLORS = {
-  belum_refund: "bg-gray-100 text-gray-600 border-gray-200",
-  proses_refund: "bg-blue-100 text-blue-700 border-blue-200",
-  sudah_refund: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  belum_refund: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
+  proses_refund: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
+  sudah_refund: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
 };
 
 const STATUS_MAP = {
-  pending: { label: "Menunggu Review", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: Clock },
-  disetujui: { label: "Disetujui", color: "bg-emerald-100 text-emerald-800 border-emerald-200", icon: CheckCircle2 },
-  ditolak: { label: "Ditolak", color: "bg-red-100 text-red-800 border-red-200", icon: XCircle },
+  pending: { label: "Menunggu Review", color: "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800", icon: Clock },
+  disetujui: { label: "Disetujui", color: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800", icon: CheckCircle2 },
+  ditolak: { label: "Ditolak", color: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800", icon: XCircle },
 };
 
 const formatRupiah = (val) =>
@@ -252,11 +252,11 @@ export default function PengembalianPage() {
                   </div>
                 ) : requests.length === 0 ? (
                   <div className="text-center py-16">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
-                      <Package className="w-8 h-8 text-gray-300" />
+                    <div className="w-16 h-16 bg-muted rounded-full mx-auto flex items-center justify-center mb-4">
+                      <Package className="w-8 h-8 text-muted-foreground/30" />
                     </div>
-                    <h3 className="font-semibold text-gray-700">Belum ada pengajuan</h3>
-                    <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+                    <h3 className="font-semibold text-foreground">Belum ada pengajuan</h3>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
                       Jika barang yang Anda terima tidak sesuai kondisi, Anda dapat mengajukan pengembalian.
                     </p>
                   </div>
@@ -282,8 +282,8 @@ export default function PengembalianPage() {
                                 {/* Metode pengembalian badge */}
                                 <Badge className={`text-[10px] font-bold border ${
                                   req.metode_pengembalian === 'delivery'
-                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                    : 'bg-gray-50 text-gray-600 border-gray-200'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800'
+                                    : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
                                 }`}>
                                   {req.metode_pengembalian === 'delivery' ? (
                                     <><Truck className="w-3 h-3 mr-1" /> Delivery</>
@@ -302,16 +302,16 @@ export default function PengembalianPage() {
                                 </span>
                               </div>
 
-                              <h4 className="font-bold text-sm text-gray-900">
+                              <h4 className="font-bold text-sm text-foreground">
                                 {req.transaksi?.nama_barang || "Barang"}
                               </h4>
-                              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                                 <strong>Alasan:</strong> {req.alasan}
                               </p>
 
                               {/* Alamat pengembalian */}
                               {req.metode_pengembalian === 'delivery' && req.alamat_pengembalian && (
-                                <div className="mt-2 flex items-start gap-1.5 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                                <div className="mt-2 flex items-start gap-1.5 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-3 py-2 rounded-lg border border-blue-100 dark:border-blue-800">
                                   <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                                   <span>{req.alamat_pengembalian}</span>
                                 </div>
@@ -319,7 +319,7 @@ export default function PengembalianPage() {
 
                               {/* Info Rekening */}
                               {req.nama_bank && req.no_rekening && (
-                                <div className="mt-2 flex items-start gap-2 text-xs bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-100">
+                                <div className="mt-2 flex items-start gap-2 text-xs bg-emerald-50 dark:bg-emerald-950/20 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-800">
                                   <CreditCard className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-500" />
                                   <div className="text-emerald-700">
                                     <span className="font-bold">{req.nama_bank}</span>
@@ -334,8 +334,8 @@ export default function PengembalianPage() {
                               {req.catatan_admin && (
                                 <div className={`mt-3 px-3 py-2 rounded-lg text-xs ${
                                   req.status === "disetujui"
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                    : "bg-red-50 text-red-700 border border-red-100"
+                                    ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800"
+                                    : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800"
                                 }`}>
                                   <strong>Catatan Admin:</strong> {req.catatan_admin}
                                 </div>
@@ -343,7 +343,7 @@ export default function PengembalianPage() {
 
                               {/* Dynamic Refund Breakdown */}
                               {req.status === 'disetujui' && req.jumlah_refund > 0 && (
-                                <div className="mt-3 bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4">
+                                <div className="mt-3 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
                                   <div className="flex items-center gap-1.5 mb-3">
                                     <Receipt className="w-4 h-4 text-emerald-600" />
                                     <span className="text-xs font-bold text-emerald-700">Rincian Refund Dinamis</span>
@@ -407,7 +407,7 @@ export default function PengembalianPage() {
 
                                     {/* Total */}
                                     <div className="border-t border-emerald-200 pt-2 mt-2 flex items-center justify-between">
-                                      <span className="font-bold text-gray-900 flex items-center gap-1.5">
+                                      <span className="font-bold text-foreground flex items-center gap-1.5">
                                         <Banknote className="w-3.5 h-3.5 text-emerald-600" />
                                         Total Refund
                                       </span>
@@ -420,20 +420,20 @@ export default function PengembalianPage() {
                                   {/* Refund status & method */}
                                   <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-emerald-200 text-xs">
                                     <div>
-                                      <span className="text-gray-400">Status:</span>
+                                      <span className="text-muted-foreground">Status:</span>
                                       <Badge className={`text-[9px] font-bold border mt-0.5 block w-fit ${REFUND_STATUS_COLORS[req.status_refund] || REFUND_STATUS_COLORS.belum_refund}`}>
                                         {REFUND_STATUS_LABELS[req.status_refund] || 'Belum Direfund'}
                                       </Badge>
                                     </div>
                                     {req.metode_refund && (
                                       <div>
-                                        <span className="text-gray-400">Metode:</span>
+                                        <span className="text-muted-foreground">Metode:</span>
                                         <p className="font-medium capitalize">{req.metode_refund.replace('_', ' ')}</p>
                                       </div>
                                     )}
                                     {req.tanggal_refund && (
                                       <div>
-                                        <span className="text-gray-400">Tanggal:</span>
+                                        <span className="text-muted-foreground">Tanggal:</span>
                                         <p className="font-medium">{new Date(req.tanggal_refund).toLocaleDateString('id-ID')}</p>
                                       </div>
                                     )}
@@ -470,7 +470,7 @@ export default function PengembalianPage() {
                                   />
                                 ))}
                                 {fotoBukti.length > 3 && (
-                                  <div className="w-14 h-14 rounded-lg bg-gray-100 border flex items-center justify-center text-xs font-bold text-gray-400">
+                                  <div className="w-14 h-14 rounded-lg bg-muted border flex items-center justify-center text-xs font-bold text-muted-foreground">
                                     +{fotoBukti.length - 3}
                                   </div>
                                 )}
@@ -502,7 +502,7 @@ export default function PengembalianPage() {
                   setShowModal(false);
                   resetForm();
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -510,7 +510,7 @@ export default function PengembalianPage() {
 
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
               {/* Info box */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700">
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-xs text-amber-700 dark:text-amber-400">
                 <p className="font-bold mb-1 flex items-center gap-1">
                   <AlertTriangle className="w-3.5 h-3.5" /> Syarat Pengajuan:
                 </p>
@@ -523,7 +523,7 @@ export default function PengembalianPage() {
 
               {/* Pilih Transaksi */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                <label className="text-sm font-semibold text-foreground mb-2 block">
                   Pilih Transaksi *
                 </label>
                 <select
@@ -547,7 +547,7 @@ export default function PengembalianPage() {
 
               {/* Metode Pengembalian */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                <label className="text-sm font-semibold text-foreground mb-2 block">
                   Metode Pengembalian Barang *
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -558,7 +558,7 @@ export default function PengembalianPage() {
                     className={`relative flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
                       metodePengembalian === "pickup"
                         ? "border-amber-500 bg-amber-50 shadow-md"
-                        : "border-gray-200 bg-white hover:border-gray-300"
+                        : "border-border bg-card hover:border-muted-foreground"
                     }`}
                   >
                     {metodePengembalian === "pickup" && (
@@ -580,7 +580,7 @@ export default function PengembalianPage() {
                     className={`relative flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
                       metodePengembalian === "delivery"
                         ? "border-blue-500 bg-blue-50 shadow-md"
-                        : "border-gray-200 bg-white hover:border-gray-300"
+                        : "border-border bg-card hover:border-muted-foreground"
                     }`}
                   >
                     {metodePengembalian === "delivery" && (
@@ -613,7 +613,7 @@ export default function PengembalianPage() {
               {/* Alamat Pengembalian (if delivery) */}
               {metodePengembalian === "delivery" && (
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-semibold text-foreground mb-2 block">
                     Alamat Pengambilan Barang *
                   </label>
                   <textarea
@@ -628,10 +628,10 @@ export default function PengembalianPage() {
 
               {/* Informasi Rekening */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                <label className="text-sm font-semibold text-foreground mb-2 block">
                   Informasi Rekening untuk Refund *
                 </label>
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
+                <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 space-y-3">
                   <div className="flex items-start gap-2 text-xs text-emerald-700 mb-1">
                     <CreditCard className="w-4 h-4 mt-0.5 shrink-0 text-emerald-500" />
                     <p>Masukkan informasi rekening Anda agar admin dapat mentransfer dana refund.</p>
@@ -639,13 +639,13 @@ export default function PengembalianPage() {
 
                   {/* Nama Bank */}
                   <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5 block">
+                    <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5 block">
                       <Building2 className="w-3 h-3" /> Nama Bank
                     </label>
                     <select
                       value={namaBank}
                       onChange={(e) => setNamaBank(e.target.value)}
-                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-card"
                     >
                       <option value="">-- Pilih Bank --</option>
                       <option value="BCA">BCA</option>
@@ -669,7 +669,7 @@ export default function PengembalianPage() {
 
                   {/* No Rekening */}
                   <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5 block">
+                    <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5 block">
                       <CreditCard className="w-3 h-3" /> Nomor Rekening / E-Wallet
                     </label>
                     <input
@@ -677,13 +677,13 @@ export default function PengembalianPage() {
                       value={noRekening}
                       onChange={(e) => setNoRekening(e.target.value)}
                       placeholder="Contoh: 1234567890"
-                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-card"
                     />
                   </div>
 
                   {/* Atas Nama */}
                   <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5 block">
+                    <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5 block">
                       <UserIcon className="w-3 h-3" /> Atas Nama
                     </label>
                     <input
@@ -691,7 +691,7 @@ export default function PengembalianPage() {
                       value={atasNamaRekening}
                       onChange={(e) => setAtasNamaRekening(e.target.value)}
                       placeholder="Nama pemilik rekening sesuai buku tabungan"
-                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                      className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-card"
                     />
                   </div>
                 </div>
@@ -699,7 +699,7 @@ export default function PengembalianPage() {
 
               {/* Alasan */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                <label className="text-sm font-semibold text-foreground mb-2 block">
                   Alasan Pengembalian *
                 </label>
                 <textarea
@@ -714,7 +714,7 @@ export default function PengembalianPage() {
 
               {/* Upload Foto */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                <label className="text-sm font-semibold text-foreground mb-2 block">
                   Foto Bukti * (maks. 5 foto)
                 </label>
 
@@ -737,7 +737,7 @@ export default function PengembalianPage() {
                   ))}
 
                   {photos.length < 5 && (
-                    <label className="w-full aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-amber-400 hover:bg-amber-50/30 transition">
+                    <label className="w-full aspect-square border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-amber-400 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 transition">
                       <Camera className="w-5 h-5 text-gray-400" />
                       <span className="text-[9px] text-gray-400 mt-1">Tambah</span>
                       <input

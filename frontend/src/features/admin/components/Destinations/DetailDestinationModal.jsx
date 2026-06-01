@@ -18,7 +18,7 @@ export default function DetailDestinationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+      <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <div className="flex items-center gap-2">

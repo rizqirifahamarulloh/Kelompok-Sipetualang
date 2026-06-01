@@ -41,7 +41,7 @@ export default function PaymentDetail({ activeId, setActiveId }) {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setActiveId(null)} 
-            className="p-2 rounded-xl hover:bg-gray-100 transition text-foreground border border-border bg-card shadow-sm bg-transparent border-none cursor-pointer"
+            className="p-2 rounded-xl hover:bg-muted transition text-foreground border border-border bg-card shadow-sm bg-transparent border-none cursor-pointer"
           >
             <ArrowLeft size={20} />
           </button>

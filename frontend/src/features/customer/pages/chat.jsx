@@ -334,17 +334,17 @@ export default function ChatPage() {
       <div className="landing-scrollbar">
         <Navbar forceScrolled={true} />
 
-        <div className="min-h-screen flex items-center justify-center pt-32 px-4 bg-gray-50">
-          <div className="bg-white rounded-3xl shadow-xl p-10 text-center max-w-md w-full border">
+        <div className="min-h-screen flex items-center justify-center pt-32 px-4 bg-muted">
+          <div className="bg-card rounded-3xl shadow-xl p-10 text-center max-w-md w-full border">
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <MessageCircle className="w-12 h-12 text-green-600" />
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-3">
+            <h2 className="text-2xl font-bold text-foreground mb-3">
               Login Diperlukan
             </h2>
 
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted-foreground mb-6">
               Silakan login untuk mengakses fitur chat
             </p>
 
@@ -368,10 +368,10 @@ export default function ChatPage() {
       <div className="landing-scrollbar">
         <Navbar forceScrolled={true} />
 
-        <div className="min-h-screen flex items-center justify-center pt-32 bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center pt-32 bg-muted">
           <div className="text-center">
             <Loader2 className="w-12 h-12 animate-spin text-green-500 mx-auto mb-4" />
-            <p className="text-gray-600">Memuat chat...</p>
+            <p className="text-muted-foreground">Memuat chat...</p>
           </div>
         </div>
 
@@ -381,14 +381,14 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="landing-scrollbar bg-gray-100 min-h-screen">
+    <div className="landing-scrollbar bg-muted min-h-screen">
       <Navbar forceScrolled={true} />
 
       <main className="container mx-auto px-3 sm:px-4 pt-28 pb-10">
-        <div className="bg-white rounded-[28px] overflow-hidden shadow-2xl border border-gray-100 h-[calc(100vh-140px)]">
+        <div className="bg-card rounded-[28px] overflow-hidden shadow-2xl border border-border h-[calc(100vh-140px)]">
           <div className="flex h-full">
             {/* SIDEBAR */}
-            <div className="w-full md:w-[360px] border-r bg-white flex flex-col">
+            <div className="w-full md:w-[360px] border-r border-border bg-card flex flex-col">
               {/* HEADER */}
               <div className="p-5 border-b bg-gradient-to-r from-green-500 to-emerald-600 text-white">
                 <div className="flex items-center justify-between">
@@ -416,15 +416,15 @@ export default function ChatPage() {
                     placeholder="Cari percakapan..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-white text-gray-700 rounded-2xl pl-11 pr-4 py-3 outline-none"
+                    className="w-full bg-card text-foreground rounded-2xl pl-11 pr-4 py-3 outline-none"
                   />
                 </div>
               </div>
 
               {/* NEW CHAT */}
               {showNewChat && (
-                <div className="border-b bg-gray-50 p-4">
-                  <h3 className="font-semibold text-sm mb-3 text-gray-700">
+                <div className="border-b bg-muted p-4">
+                  <h3 className="font-semibold text-sm mb-3 text-foreground">
                     Mulai Chat Baru
                   </h3>
 
@@ -440,14 +440,14 @@ export default function ChatPage() {
                           onClick={() =>
                             startNewChat(customer.id_pengguna)
                           }
-                          className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-white transition border"
+                          className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted transition border"
                         >
                           <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center">
                             <User className="w-5 h-5 text-green-600" />
                           </div>
 
                           <div className="text-left">
-                            <p className="font-semibold text-sm text-gray-800">
+                            <p className="font-semibold text-sm text-foreground">
                               {customer.nama}
                             </p>
 
@@ -492,8 +492,8 @@ export default function ChatPage() {
                         }
                         className={`w-full p-4 border-b text-left transition ${
                           active
-                            ? 'bg-green-50'
-                            : 'hover:bg-gray-50'
+                            ? 'bg-green-50 dark:bg-green-950/20'
+                            : 'hover:bg-muted'
                         }`}
                       >
                         <div className="flex gap-3">
@@ -503,7 +503,7 @@ export default function ChatPage() {
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
-                              <h4 className="font-semibold truncate text-gray-800">
+                              <h4 className="font-semibold truncate text-foreground">
                                 {otherUser?.nama}
                               </h4>
 
@@ -534,17 +534,17 @@ export default function ChatPage() {
             </div>
 
             {/* CHAT AREA */}
-            <div className="hidden md:flex flex-1 flex-col bg-gray-50">
+            <div className="hidden md:flex flex-1 flex-col bg-muted">
               {currentChat ? (
                 <>
                   {/* HEADER */}
-                  <div className="bg-white border-b px-6 py-4 flex items-center gap-4 shadow-sm">
+                  <div className="bg-card border-b px-6 py-4 flex items-center gap-4 shadow-sm">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                       <User className="w-6 h-6 text-white" />
                     </div>
 
                     <div>
-                      <h3 className="font-bold text-gray-800">
+                      <h3 className="font-bold text-foreground">
                         {getOtherUser(currentChat)?.nama}
                       </h3>
 
@@ -556,7 +556,7 @@ export default function ChatPage() {
                   </div>
 
                   {/* MESSAGES */}
-                  <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4 bg-gradient-to-b from-gray-50 to-gray-100">
+                  <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-muted">
                     {messages.length === 0 ? (
                       <div className="h-full flex items-center justify-center text-center">
                         <div>
@@ -589,7 +589,7 @@ export default function ChatPage() {
                           <div key={msg.id_message}>
                             {showDate && (
                               <div className="flex justify-center mb-5">
-                                <span className="bg-white text-gray-500 text-xs px-4 py-2 rounded-full shadow-sm border">
+                                <span className="bg-card text-muted-foreground text-xs px-4 py-2 rounded-full shadow-sm border">
                                   {formatDate(msg.created_at)}
                                 </span>
                               </div>
@@ -606,7 +606,7 @@ export default function ChatPage() {
                                 className={`max-w-[75%] px-5 py-3 rounded-3xl shadow-sm ${
                                   isMe
                                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-br-md'
-                                    : 'bg-white text-gray-700 rounded-bl-md border'
+                                    : 'bg-card text-foreground rounded-bl-md border'
                                 }`}
                               >
                                 <p className="text-sm leading-relaxed break-words">
@@ -635,7 +635,7 @@ export default function ChatPage() {
                   {/* INPUT */}
                   <form
                     onSubmit={sendMessage}
-                    className="bg-white border-t p-4"
+                    className="bg-card border-t p-4"
                   >
                     <div className="flex items-center gap-3">
                       <input
@@ -646,7 +646,7 @@ export default function ChatPage() {
                           setNewMessage(e.target.value)
                         }
                         placeholder="Ketik pesan..."
-                        className="flex-1 bg-gray-100 border-0 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-green-500"
+                        className="flex-1 bg-muted border-0 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-green-500"
                       />
 
                       <button
@@ -671,7 +671,7 @@ export default function ChatPage() {
                     <MessageCircle className="w-14 h-14 text-green-600" />
                   </div>
 
-                  <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                  <h2 className="text-2xl font-bold text-foreground mb-3">
                     Pilih Percakapan
                   </h2>
 

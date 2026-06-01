@@ -134,7 +134,7 @@ export default function Categories() {
               </h2>
             </div>
 
-            <div className="p-3 bg-emerald-50 rounded-xl">
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl">
               <Tag
                 size={22}
                 className="text-emerald-600"
@@ -158,7 +158,7 @@ export default function Categories() {
               </h2>
             </div>
 
-            <div className="p-3 bg-blue-50 rounded-xl">
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
               <Layers
                 size={22}
                 className="text-blue-600"
@@ -248,7 +248,7 @@ export default function Categories() {
 
                     <TableCell>
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center">
                           <Tag
                             size={14}
                             className="text-emerald-600"

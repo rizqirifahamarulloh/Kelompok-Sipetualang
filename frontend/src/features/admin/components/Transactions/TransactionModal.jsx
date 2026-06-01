@@ -42,17 +42,17 @@ export default function TransactionModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border">
         
         {/* Header Modal */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-slate-50/50">
-          <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <div className="p-1.5 bg-emerald-50 rounded-lg text-emerald-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/50">
+          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <div className="p-1.5 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg text-emerald-800 dark:text-emerald-400">
               <Plus size={14} />
             </div>
             Tambah Transaksi Baru
           </h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+          <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition">
             <X size={16} />
           </button>
         </div>
@@ -62,15 +62,15 @@ export default function TransactionModal({ isOpen, onClose }) {
           
           {/* Data Pelanggan */}
           <div className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data Pelanggan</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Data Pelanggan</p>
             
             <div>
-              <label className="block text-gray-600 mb-1 font-medium">Nama Lengkap *</label>
+              <label className="block text-muted-foreground mb-1 font-medium">Nama Lengkap *</label>
               <div className="relative">
                 <User size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-emerald-500 font-medium transition"
+                  className="w-full pl-9 pr-3 py-2 border border-border rounded-xl bg-muted/50 focus:outline-none focus:border-emerald-500 font-medium transition"
                   placeholder="Contoh: Ahmad Subari"
                   value={formData.nama}
                   onChange={(e) => handleInputChange("nama", e.target.value)}
@@ -80,7 +80,7 @@ export default function TransactionModal({ isOpen, onClose }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-gray-600 mb-1 font-medium">No. Telepon *</label>
+                <label className="block text-muted-foreground mb-1 font-medium">No. Telepon *</label>
                 <div className="relative">
                   <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -94,7 +94,7 @@ export default function TransactionModal({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-gray-600 mb-1 font-medium">Email (Opsional)</label>
+                <label className="block text-muted-foreground mb-1 font-medium">Email (Opsional)</label>
                 <div className="relative">
                   <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -109,18 +109,18 @@ export default function TransactionModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          <hr className="border-gray-100" />
+          <hr className="border-border" />
 
           {/* Detail Transaksi */}
           <div className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Detail Sewa</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Detail Sewa</p>
             
             <div>
-              <label className="block text-gray-600 mb-1 font-medium">Destinasi Jalur Gunung</label>
+              <label className="block text-muted-foreground mb-1 font-medium">Destinasi Jalur Gunung</label>
               <div className="relative">
                 <MapPin size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <select
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 text-slate-700 font-medium focus:outline-none focus:border-emerald-500 transition"
+                  className="w-full pl-9 pr-3 py-2 border border-border rounded-xl bg-muted/50 text-foreground font-medium focus:outline-none focus:border-emerald-500 transition"
                   value={formData.destinasi}
                   onChange={(e) => handleInputChange("destinasi", e.target.value)}
                 >
@@ -134,7 +134,7 @@ export default function TransactionModal({ isOpen, onClose }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-gray-600 mb-1 font-medium">Mulai Sewa *</label>
+                <label className="block text-muted-foreground mb-1 font-medium">Mulai Sewa *</label>
                 <div className="relative">
                   <Calendar size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -147,7 +147,7 @@ export default function TransactionModal({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-gray-600 mb-1 font-medium">Batas Kembali *</label>
+                <label className="block text-muted-foreground mb-1 font-medium">Batas Kembali *</label>
                 <div className="relative">
                   <Calendar size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -161,12 +161,12 @@ export default function TransactionModal({ isOpen, onClose }) {
             </div>
 
             <div>
-              <label className="block text-gray-600 mb-1 font-medium">Total Harga Akhir (Rp) *</label>
+              <label className="block text-muted-foreground mb-1 font-medium">Total Harga Akhir (Rp) *</label>
               <div className="relative">
                 <DollarSign size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-800" />
                 <input
                   type="number"
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-emerald-500 font-bold text-slate-900 transition"
+                  className="w-full pl-9 pr-3 py-2 border border-border rounded-xl bg-muted/50 focus:outline-none focus:border-emerald-500 font-bold text-foreground transition"
                   placeholder="Misal: 350000"
                   value={formData.total_biaya}
                   onChange={(e) => handleInputChange("total_biaya", e.target.value)}
@@ -178,10 +178,10 @@ export default function TransactionModal({ isOpen, onClose }) {
         </div>
 
         {/* Footer Modal */}
-        <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-slate-50/50">
+        <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-muted/50">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 border border-gray-200 bg-white hover:bg-gray-50 font-semibold text-slate-600 rounded-xl transition"
+            className="px-4 py-1.5 border border-border bg-card hover:bg-muted font-semibold text-muted-foreground rounded-xl transition"
           >
             Batal
           </button>

@@ -94,35 +94,35 @@ function RevenueStatsCards({ stats }) {
       {/* Refund Stats Row */}
       {stats?.total_refund > 0 && (
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card className="border-red-200">
+          <Card className="border-red-200 dark:border-red-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-red-600">Total Refund</CardTitle>
+              <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Total Refund</CardTitle>
               <RotateCcw className="size-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">- {formatCurrency(stats?.total_refund ?? 0)}</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">- {formatCurrency(stats?.total_refund ?? 0)}</div>
               <p className="text-xs text-muted-foreground mt-1">Dikembalikan ke customer</p>
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-200">
+          <Card className="border-emerald-200 dark:border-emerald-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-emerald-600">Pendapatan Bersih</CardTitle>
+              <CardTitle className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Pendapatan Bersih</CardTitle>
               <TrendingUp className="size-4 text-emerald-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-600">{formatCurrency(stats?.net_revenue ?? 0)}</div>
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.net_revenue ?? 0)}</div>
               <p className="text-xs text-muted-foreground mt-1">Setelah dikurangi refund</p>
             </CardContent>
           </Card>
 
-          <Card className="border-amber-200">
+          <Card className="border-amber-200 dark:border-amber-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-amber-600">Dampak Refund</CardTitle>
+              <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Dampak Refund</CardTitle>
               <TrendingDown className="size-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {stats?.total_revenue > 0
                   ? `${((stats.total_refund / stats.total_revenue) * 100).toFixed(1)}%`
                   : '0%'}
@@ -206,7 +206,7 @@ function RevenueChart({ data }) {
             {refund > 0 && (
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-xs text-red-600 font-semibold">Refund ({refundPercent}%): - {formatCurrency(refund)}</span>
+                <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Refund ({refundPercent}%): - {formatCurrency(refund)}</span>
               </div>
             )}
           </div>
@@ -272,8 +272,8 @@ function TransactionList({ transactions }) {
                     {trx.nominal_deposit > 0 ? formatCurrency(trx.nominal_deposit) : '-'}
                   </TableCell>
                   <TableCell className="font-semibold">{formatCurrency(trx.total_biaya)}</TableCell>
-                  <TableCell className="text-blue-600 font-semibold">{formatCurrency(feeAdmin)}</TableCell>
-                  <TableCell className="text-purple-600 font-semibold">{formatCurrency(pendapatanPemilik)}</TableCell>
+                  <TableCell className="text-blue-600 dark:text-blue-400 font-semibold">{formatCurrency(feeAdmin)}</TableCell>
+                  <TableCell className="text-purple-600 dark:text-purple-400 font-semibold">{formatCurrency(pendapatanPemilik)}</TableCell>
                   <TableCell>
                     <Badge className={trx.status_pembayaran === 'sukses' ? 'bg-green-500' : 'bg-yellow-500'}>
                       {trx.status_pembayaran}
@@ -325,7 +325,7 @@ function OwnerEarningsList({ earnings }) {
                 <TableCell className="font-medium">{owner.nama}</TableCell>
                 <TableCell>{owner.email}</TableCell>
                 <TableCell>{owner.total_transaksi}</TableCell>
-                <TableCell className="text-green-600 font-semibold">
+                <TableCell className="text-green-600 dark:text-green-400 font-semibold">
                   {formatCurrency(owner.total_pendapatan)}
                 </TableCell>
               </TableRow>
