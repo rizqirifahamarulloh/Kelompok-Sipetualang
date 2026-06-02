@@ -13,11 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 class RentalController extends Controller
 {
-    // ==================== PUBLIC METHODS (tanpa auth) ====================
 
-    // Get all available barang from DATABASE (untuk public)
-    // Supports optional date-range availability filtering:
-    //   ?tanggal_mulai=YYYY-MM-DD&tanggal_selesai=YYYY-MM-DD
+
+    // Get semua barang tersedia (publik)
     public function getAvailableBarang(Request $request)
     {
         $query = Barang::with(['pemilik', 'kategori', 'destinasi'])
@@ -54,8 +52,7 @@ class RentalController extends Controller
 
             $barangAll = $query->orderBy('id_barang', 'desc')->get();
 
-            // Get all overlapping active bookings grouped by id_barang
-            // Active statuses: dibayar (paid, waiting pickup/delivery), sedang_disewa (currently rented)
+            // Active statuses: dibayar (paid), sedang_disewa (rented)
             $overlapping = DB::table('detail_transaksi')
                 ->join('transaksi', 'detail_transaksi.id_transaksi', '=', 'transaksi.id_transaksi')
                 ->whereIn('transaksi.status_sewa', ['dibayar', 'sedang_disewa'])
@@ -65,7 +62,7 @@ class RentalController extends Controller
                 ->groupBy('detail_transaksi.id_barang')
                 ->pluck('total_booked', 'id_barang');
 
-            // Also check direct transaksi (backward compat for single-item transactions without detail)
+            // Backward compat: transaksi langsung (tanpa detail)
             $overlappingDirect = DB::table('transaksi')
                 ->whereIn('status_sewa', ['dibayar', 'sedang_disewa'])
                 ->where('tanggal_mulai', '<=', $tanggalSelesai)
@@ -80,22 +77,7 @@ class RentalController extends Controller
 
             // Calculate available stock and filter
             $result = $barangAll->map(function ($barang) use ($overlapping, $overlappingDirect) {
-                // Current stock already accounts for items currently rented out (stock was decremented on payment)
-                // So jumlah_stok IS the available stock.
-                // But we also need to check: items that are booked for the future (paid but not yet picked up)
-                // which overlap with our dates. Those are ALREADY decremented from stock too.
-                //
-                // The real question is: are there items CURRENTLY rented that will be RETURNED before our date?
-                // If so, those units will become available again.
-                //
-                // Simple approach: current stock (jumlah_stok) is accurate for items booked now.
-                // We just need to ensure there's stock > 0.
-                $booked = ($overlapping[$barang->id_barang] ?? 0) + ($overlappingDirect[$barang->id_barang] ?? 0);
-
-                // Total capacity = current stock + items currently out
-                // Actually jumlah_stok is already decremented, so if stock > 0, it means there's available inventory.
-                // However, for items returning before our start date, stock will increment back.
-                // For simplicity & correctness: just show items with stock > 0
+                // jumlah_stok sudah di-decrement saat checkout
                 $barang->stok_tersedia = $barang->jumlah_stok;
 
                 return $barang;
@@ -106,7 +88,7 @@ class RentalController extends Controller
             return response()->json($result);
         }
 
-        // No date filter: return all items with stock > 0
+        // Tanpa filter tanggal: return semua item stok > 0
         $barang = $query->where('jumlah_stok', '>', 0)
             ->orderBy('id_barang', 'desc')
             ->get();
@@ -128,8 +110,7 @@ class RentalController extends Controller
             ->get()
             ->keyBy('id_barang');
 
-        // Query semua transaksi aktif (dibayar / sedang_disewa) — dari SEMUA user
-        // Via detail_transaksi (multi-item transactions)
+        // Transaksi aktif dari SEMUA user via detail_transaksi
         $activeBookingsDetail = DB::table('detail_transaksi')
             ->join('transaksi', 'detail_transaksi.id_transaksi', '=', 'transaksi.id_transaksi')
             ->whereIn('transaksi.status_sewa', ['dibayar', 'sedang_disewa'])
@@ -141,7 +122,7 @@ class RentalController extends Controller
             )
             ->get();
 
-        // Via direct transaksi (single-item backward compat)
+        // Backward compat: transaksi langsung
         $activeBookingsDirect = DB::table('transaksi')
             ->whereIn('status_sewa', ['dibayar', 'sedang_disewa'])
             ->whereNotNull('id_barang')
@@ -156,8 +137,7 @@ class RentalController extends Controller
             )
             ->get();
 
-        // Gabungkan dan group per barang
-        $bookingMap = []; // id_barang => { total_booked, bookings[], latest_return_date }
+        $bookingMap = [];
 
         foreach ($activeBookingsDetail->merge($activeBookingsDirect) as $booking) {
             $id = $booking->id_barang;
@@ -179,28 +159,25 @@ class RentalController extends Controller
                 'jumlah' => $jumlah,
             ];
 
-            // Track tanggal pengembalian terakhir
+
             if (!$bookingMap[$id]['latest_return_date'] ||
                 $booking->tanggal_selesai > $bookingMap[$id]['latest_return_date']) {
                 $bookingMap[$id]['latest_return_date'] = $booking->tanggal_selesai;
             }
         }
 
-        // Build result: untuk setiap barang, hitung sisa stok
+        // Build result
         $result = [];
         foreach ($bookingMap as $idBarang => $info) {
             $barang = $allBarang[$idBarang] ?? null;
             $stokTotal = $barang ? $barang->jumlah_stok : 0;
 
-            // sisa_stok = stok fisik saat ini (sudah di-decrement saat checkout)
-            // Tapi kita perlu total capacity asli: stok saat ini + yg sedang dipinjam
-            // Karena stok sudah di-decrement saat checkout, stok saat ini = stok tersedia
             $result[$idBarang] = [
                 'id_barang' => $idBarang,
                 'jumlah_stok' => $stokTotal,
                 'total_booked' => $info['total_booked'],
-                'sisa_stok' => $stokTotal, // stok sudah di-decrement, jadi ini = available
-                'stok_awal' => $stokTotal + $info['total_booked'], // kapasitas asli
+                'sisa_stok' => $stokTotal,
+                'stok_awal' => $stokTotal + $info['total_booked'],
                 'latest_return_date' => $info['latest_return_date'],
                 'bookings' => $info['bookings'],
             ];
@@ -212,7 +189,7 @@ class RentalController extends Controller
         ]);
     }
 
-    // Get detail barang by ID (untuk public)
+    // Detail barang (publik)
     public function getBarangById($id)
     {
         $barang = Barang::with(['pemilik', 'kategori', 'destinasi'])
@@ -226,7 +203,7 @@ class RentalController extends Controller
         return response()->json($barang);
     }
 
-    // Get active destinations list (untuk public)
+    // List destinasi (publik)
     public function getDestinations()
     {
         $destinasi = \App\Models\JenisDestinasi::orderBy('nama_destinasi')->get();
@@ -236,9 +213,9 @@ class RentalController extends Controller
         ]);
     }
 
-    // ==================== CUSTOMER METHODS (dengan auth) ====================
 
-    // Get barang milik sendiri
+
+    // Barang milik user
     public function myBarang()
     {
         $barang = Barang::where('id_pemilik', Auth::id())
@@ -252,7 +229,7 @@ class RentalController extends Controller
         ]);
     }
 
-    // Tambah barang untuk disewakan
+    // Tambah barang
     public function addBarang(Request $request)
     {
         $request->validate([
@@ -492,9 +469,9 @@ class RentalController extends Controller
         }
     }
 
-    // ==================== CART METHODS ====================
 
-    // Get cart
+
+    // Get keranjang
     public function getCart()
     {
         $cart = Cart::where('id_penyewa', Auth::id())
@@ -511,7 +488,7 @@ class RentalController extends Controller
         ]);
     }
 
-    // Add to cart
+    // Tambah ke keranjang
     public function addToCart(Request $request)
     {
         $request->validate([
@@ -523,7 +500,8 @@ class RentalController extends Controller
 
         $barang = Barang::findOrFail($request->id_barang);
 
-        // Cek approval dan stok
+
+
         if ($barang->status_approval !== 'disetujui') {
             return response()->json([
                 'success' => false,
@@ -538,7 +516,7 @@ class RentalController extends Controller
             ], 400);
         }
 
-        // Cek apakah sudah di cart
+
         $existingCart = Cart::where('id_penyewa', Auth::id())
             ->where('id_barang', $request->id_barang)
             ->where('status', 'pending')
@@ -551,7 +529,7 @@ class RentalController extends Controller
             ], 400);
         }
 
-        // Hitung total
+
         $start = \Carbon\Carbon::parse($request->tanggal_mulai);
         $end = \Carbon\Carbon::parse($request->tanggal_selesai);
         $totalHari = $start->diffInDays($end) + 1;
@@ -575,7 +553,7 @@ class RentalController extends Controller
         ], 201);
     }
 
-    // Update cart
+    // Update keranjang
     public function updateCart(Request $request, $id)
     {
         $cart = Cart::where('id_cart', $id)
@@ -606,7 +584,7 @@ class RentalController extends Controller
             $cart->tanggal_selesai = $request->tanggal_selesai;
         }
 
-        // Recalculate
+
         $start = \Carbon\Carbon::parse($cart->tanggal_mulai);
         $end = \Carbon\Carbon::parse($cart->tanggal_selesai);
         $totalHari = $start->diffInDays($end) + 1;
@@ -622,7 +600,7 @@ class RentalController extends Controller
         ]);
     }
 
-    // Remove from cart
+    // Hapus dari keranjang
     public function removeFromCart($id)
     {
         $cart = Cart::where('id_cart', $id)
@@ -712,7 +690,7 @@ class RentalController extends Controller
         }
     }
 
-    // My transactions
+    // Transaksi saya
     public function myTransactions()
     {
         $transaksi = Transaksi::where('id_penyewa', Auth::id())

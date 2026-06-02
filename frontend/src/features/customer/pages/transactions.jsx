@@ -34,6 +34,7 @@ import axios from 'axios';
 import { API_URL } from '@/services/api';
 import { getStorageUrl } from '@/utils/storageUrl';
 import { toast } from 'sonner';
+import { usePhotoUpload } from '@/hooks/usePhotoUpload';
 
 const formatRupiah = (val) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val || 0);
@@ -64,22 +65,19 @@ export default function TransactionsPage() {
   const [returnForm, setReturnForm] = useState({ metode_kembali: 'pickup', no_resi_kembali: '' });
   const [submittingReturn, setSubmittingReturn] = useState(false);
 
-  // Ulasan state
   const [reviewModal, setReviewModal] = useState(null);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
-  const [reviewPhotos, setReviewPhotos] = useState([]);
-  const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState([]);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewedItems, setReviewedItems] = useState({});
+  const reviewPhoto = usePhotoUpload(5);
 
   // Edit Ulasan state
   const [editModal, setEditModal] = useState(null);
   const [editRating, setEditRating] = useState(0);
   const [editComment, setEditComment] = useState('');
-  const [editPhotos, setEditPhotos] = useState([]);
-  const [editPhotoPreviews, setEditPhotoPreviews] = useState([]);
   const [submittingEdit, setSubmittingEdit] = useState(false);
+  const editPhoto = usePhotoUpload(5);
 
   const token = localStorage.getItem('token');
 
@@ -186,23 +184,7 @@ export default function TransactionsPage() {
     });
     setReviewRating(0);
     setReviewComment('');
-    setReviewPhotos([]);
-    setReviewPhotoPreviews([]);
-  };
-
-  const handleReviewPhotoChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    const remaining = 5 - reviewPhotos.length;
-    if (remaining <= 0) { toast.error('Maksimal 5 foto'); return; }
-    const newFiles = files.slice(0, remaining);
-    setReviewPhotos(prev => [...prev, ...newFiles]);
-    setReviewPhotoPreviews(prev => [...prev, ...newFiles.map(f => URL.createObjectURL(f))]);
-    e.target.value = '';
-  };
-
-  const removeReviewPhoto = (index) => {
-    setReviewPhotos(prev => prev.filter((_, i) => i !== index));
-    setReviewPhotoPreviews(prev => { URL.revokeObjectURL(prev[index]); return prev.filter((_, i) => i !== index); });
+    reviewPhoto.reset();
   };
 
   const submitReview = async () => {
@@ -213,8 +195,8 @@ export default function TransactionsPage() {
       formData.append('id_transaksi', reviewModal.id_transaksi);
       formData.append('id_barang', reviewModal.id_barang);
       formData.append('rating', reviewRating);
-      if (reviewComment.trim()) formData.append('komentar', reviewComment);
-      reviewPhotos.forEach((file) => formData.append('foto_ulasan[]', file));
+      formData.append('komentar', reviewComment);
+      reviewPhoto.photos.forEach((file) => formData.append('foto_ulasan[]', file));
       await axios.post(`${API_URL}/customer/ulasan`, formData, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
@@ -259,23 +241,7 @@ export default function TransactionsPage() {
     });
     setEditRating(ulasanData.rating);
     setEditComment(ulasanData.komentar || '');
-    setEditPhotos([]);
-    setEditPhotoPreviews(ulasanData.foto_ulasan?.map(f => getStorageUrl(f)) || []);
-  };
-
-  const handleEditPhotoChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    const remaining = 5 - editPhotos.length;
-    if (remaining <= 0) { toast.error('Maksimal 5 foto'); return; }
-    const newFiles = files.slice(0, remaining);
-    setEditPhotos(prev => [...prev, ...newFiles]);
-    setEditPhotoPreviews(prev => [...prev, ...newFiles.map(f => URL.createObjectURL(f))]);
-    e.target.value = '';
-  };
-
-  const removeEditPhoto = (index) => {
-    setEditPhotos(prev => prev.filter((_, i) => i !== index));
-    setEditPhotoPreviews(prev => { URL.revokeObjectURL(prev[index]); return prev.filter((_, i) => i !== index); });
+    editPhoto.reset(ulasanData.foto_ulasan?.map(f => getStorageUrl(f)) || []);
   };
 
   const submitEditReview = async () => {
@@ -286,7 +252,7 @@ export default function TransactionsPage() {
       formData.append('_method', 'PUT');
       formData.append('rating', editRating);
       if (editComment.trim()) formData.append('komentar', editComment);
-      editPhotos.forEach((file) => formData.append('foto_ulasan[]', file));
+      editPhoto.photos.forEach((file) => formData.append('foto_ulasan[]', file));
       await axios.post(`${API_URL}/customer/ulasan/${editModal.id_ulasan}`, formData, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
@@ -712,18 +678,18 @@ export default function TransactionsPage() {
                 className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-amber-500 bg-card resize-none" />
               {/* Photos */}
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Foto ({reviewPhotos.length}/5)</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-2">Foto ({reviewPhoto.photos.length}/5)</p>
                 <div className="flex flex-wrap gap-2">
-                  {reviewPhotoPreviews.map((src, idx) => (
+                  {reviewPhoto.previews.map((src, idx) => (
                     <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border">
                       <img src={src} alt="" className="w-full h-full object-cover" />
-                      <button onClick={() => removeReviewPhoto(idx)} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                      <button onClick={() => reviewPhoto.remove(idx)} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
                     </div>
                   ))}
-                  {reviewPhotos.length < 5 && (
+                  {reviewPhoto.photos.length < 5 && (
                     <label className="w-16 h-16 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-muted/50 transition">
                       <Camera className="w-5 h-5 text-muted-foreground" />
-                      <input type="file" accept="image/*" multiple onChange={handleReviewPhotoChange} className="hidden" />
+                      <input type="file" accept="image/*" multiple onChange={reviewPhoto.handleChange} className="hidden" />
                     </label>
                   )}
                 </div>
@@ -775,18 +741,18 @@ export default function TransactionsPage() {
 
               {/* Photos */}
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Foto ({editPhotoPreviews.length}/5)</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-2">Foto ({editPhoto.previews.length}/5)</p>
                 <div className="flex flex-wrap gap-2">
-                  {editPhotoPreviews.map((src, idx) => (
+                  {editPhoto.previews.map((src, idx) => (
                     <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border">
                       <img src={src} alt="" className="w-full h-full object-cover" />
-                      <button onClick={() => removeEditPhoto(idx)} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                      <button onClick={() => editPhoto.remove(idx)} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
                     </div>
                   ))}
-                  {editPhotos.length < 5 && (
+                  {editPhoto.photos.length < 5 && (
                     <label className="w-16 h-16 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-muted/50 transition">
                       <Camera className="w-5 h-5 text-muted-foreground" />
-                      <input type="file" accept="image/*" multiple onChange={handleEditPhotoChange} className="hidden" />
+                      <input type="file" accept="image/*" multiple onChange={editPhoto.handleChange} className="hidden" />
                     </label>
                   )}
                 </div>

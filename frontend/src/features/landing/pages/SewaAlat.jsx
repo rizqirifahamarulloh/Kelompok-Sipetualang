@@ -39,7 +39,7 @@ export default function SewaAlat() {
   // CART STATE
   const [cartItems, setCartItems] = useState([]);
 
-  const token = localStorage.getItem('token');
+
 
   // Filter destinasi berdasarkan pencarian (dinamis dari database)
   const filteredDestinations = useMemo(() => {
@@ -164,12 +164,9 @@ export default function SewaAlat() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tanggalMulai, tanggalSelesai, selectedDestinasi]);
 
-  // ==========================================
-  // SMART RECOMMENDATION SYSTEM
-  // Klasifikasi destinasi → tipe aktivitas → essential gear
-  // ==========================================
 
-  // Classify destination type based on name/keywords
+
+
   const getDestinationType = (destinasi) => {
     const name = (destinasi.nama_destinasi || destinasi.name || '').toLowerCase();
     const keywords = (destinasi.keywords || []).map(k => k.toLowerCase());
@@ -191,7 +188,7 @@ export default function SewaAlat() {
     if (all.includes('ranu') || all.includes('kumbolo') || all.includes('danau') ||
         all.includes('toba') || all.includes('maninjau') || all.includes('singkarak') ||
         all.includes('telaga') || all.includes('situ') || all.includes('samosir')) {
-      return 'danau_camp'; // camping di tepi danau/ranu
+      return 'danau_camp';
     }
     if (all.includes('pantai') || all.includes('beach') || all.includes('pulau') ||
         all.includes('kepulauan') || all.includes('nusa') || all.includes('komodo') ||
@@ -204,80 +201,21 @@ export default function SewaAlat() {
     }
     if (all.includes('kawah') || all.includes('dieng') || all.includes('plateau') ||
         all.includes('sikidang')) {
-      return 'kawah'; // kawah/dataran tinggi dingin
+      return 'kawah';
     }
     if (all.includes('ranca upas') || all.includes('orchid') || all.includes('cikole') ||
         all.includes('dusun bambu') || all.includes('puncak') || all.includes('safari') ||
         all.includes('kebun raya') || all.includes('taman bunga') || all.includes('floating')) {
-      return 'wisata_alam'; // wisata alam ringan
+      return 'wisata_alam';
     }
     if (all.includes('candi') || all.includes('borobudur') || all.includes('prambanan')) {
       return 'wisata_budaya';
     }
-    // Default: jika tidak terklasifikasi, asumsikan outdoor camping
     return 'outdoor';
   };
 
-  // Essential gear keywords per destination type
-  // Each keyword is checked against nama_barang (case-insensitive partial match)
-  const ESSENTIAL_GEAR_BY_TYPE = {
-    gunung: [
-      // Perlengkapan WAJIB pendakian gunung
-      'tenda', 'sleeping bag', 'carrier', 'kompor', 'nesting',
-      'matras', 'headlamp', 'senter', 'trekking pole', 'tracking pole',
-      'jaket', 'rain coat', 'jas hujan', 'raincoat',
-      'gaiter', 'sarung tangan', 'glove', 'buff',
-      'flysheet', 'trash bag', 'dry bag',
-      'logistik', 'p3k', 'first aid',
-    ],
-    danau_camp: [
-      // Camping di tepi danau/ranu — mirip gunung tapi + alat masak
-      'tenda', 'sleeping bag', 'matras', 'kompor', 'nesting',
-      'headlamp', 'senter', 'jaket', 'carrier',
-      'flysheet', 'kursi lipat', 'meja lipat',
-      'cooler', 'termos', 'tumbler',
-      'hammock', 'trash bag', 'p3k',
-    ],
-    pantai: [
-      // Camping/kegiatan pantai
-      'tenda', 'matras', 'hammock', 'kursi lipat', 'meja lipat',
-      'cooler', 'termos', 'kompor', 'nesting',
-      'dry bag', 'tas waterproof', 'lampu', 'lentera',
-      'snorkeling', 'pelampung', 'fin',
-      'payung', 'shelter', 'canopy',
-    ],
-    air_terjun: [
-      // Trekking ke air terjun
-      'dry bag', 'tas waterproof', 'sandal gunung', 'sepatu',
-      'trekking pole', 'tracking pole', 'jaket', 'rain coat', 'jas hujan',
-      'headlamp', 'senter', 'p3k', 'first aid',
-      'carrier', 'daypack',
-    ],
-    kawah: [
-      // Kawah/dataran tinggi dingin
-      'jaket', 'masker', 'buff', 'sarung tangan', 'glove',
-      'trekking pole', 'tracking pole', 'headlamp', 'senter',
-      'tenda', 'sleeping bag', 'matras', 'kompor',
-      'carrier', 'rain coat', 'jas hujan',
-    ],
-    wisata_alam: [
-      // Wisata alam ringan (camping ground, dll)
-      'tenda', 'matras', 'sleeping bag', 'hammock',
-      'kursi lipat', 'meja lipat', 'kompor', 'nesting',
-      'cooler', 'lampu', 'lentera', 'power bank',
-    ],
-    wisata_budaya: [
-      // Wisata budaya — minimal gear
-      'daypack', 'tas', 'topi', 'payung',
-    ],
-    outdoor: [
-      // Default outdoor
-      'tenda', 'sleeping bag', 'matras', 'kompor', 'nesting',
-      'headlamp', 'senter', 'carrier', 'jaket',
-    ],
-  };
 
-  // Compute recommended gear IDs based on selected destination (dinamis dari database!)
+
   const recommendedGearIds = useMemo(() => {
     if (!selectedDestinasi || barangList.length === 0) return new Set();
 
@@ -754,7 +692,6 @@ export default function SewaAlat() {
           isAuthenticated={isAuthenticated}
           recommendedGearIds={recommendedGearIds}
           selectedDestinasi={selectedDestinasi}
-          token={token}
         />
       </div>
 

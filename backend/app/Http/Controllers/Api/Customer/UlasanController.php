@@ -53,21 +53,14 @@ class UlasanController extends Controller
     {
         $user = Auth::user();
 
-        try {
-            $validated = $request->validate([
-                'id_transaksi' => 'required|integer|exists:transaksi,id_transaksi',
-                'id_barang' => 'required|integer|exists:barang,id_barang',
-                'rating' => 'required|integer|min:1|max:5',
-                'komentar' => 'nullable|string|max:1000',
-                'foto_ulasan' => 'nullable|array|max:5',
-                'foto_ulasan.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-            ], 422);
-        }
+        $request->validate([
+            'id_transaksi' => 'required|integer|exists:transaksi,id_transaksi',
+            'id_barang' => 'required|integer|exists:barang,id_barang',
+            'rating' => 'required|integer|min:1|max:5',
+            'komentar' => 'nullable|string|max:1000',
+            'foto_ulasan' => 'nullable|array|max:5',
+            'foto_ulasan.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
 
         // Ambil transaksi
         $transaksi = Transaksi::find($request->id_transaksi);
@@ -164,19 +157,12 @@ class UlasanController extends Controller
             ], 400);
         }
 
-        try {
-            $validated = $request->validate([
-                'rating' => 'required|integer|min:1|max:5',
-                'komentar' => 'nullable|string|max:1000',
-                'foto_ulasan' => 'nullable|array|max:5',
-                'foto_ulasan.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-            ], 422);
-        }
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'komentar' => 'nullable|string|max:1000',
+            'foto_ulasan' => 'nullable|array|max:5',
+            'foto_ulasan.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
 
         // Handle foto baru
         $fotoPaths = $ulasan->foto_ulasan ?? [];

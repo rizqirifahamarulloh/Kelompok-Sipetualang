@@ -60,10 +60,10 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    // 🏷️ Kategori (semua role terautentikasi)
+    // Kategori
     Route::get('/kategori', [KategoriController::class, 'index']);
 
-    // 🔔 Notifikasi (semua role)
+    // Notifikasi
     Route::get('/notifikasi', [NotifikasiController::class, 'index']);
     Route::patch('/notifikasi/{id}/read', [NotifikasiController::class, 'markRead']);
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy']);
@@ -92,7 +92,7 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::get('/transactions', [RentalController::class, 'myTransactions']);
         });
 
-        // 🔥 TRANSACTION ROUTES (Checkout dengan Midtrans)
+        // Transaksi
         Route::prefix('transaksi')->group(function () {
             Route::post('/checkout', [TransaksiController::class, 'checkout']);
             Route::get('/sebagai-penyewa', [TransaksiController::class, 'getTransaksiSebagaiPenyewa']);
@@ -100,7 +100,7 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::put('/{id}/status', [TransaksiController::class, 'updateStatus']);
         });
 
-        // ========== 💰 WITHDRAWAL ROUTES FOR PERENTAL ==========
+        // Withdrawal
         Route::prefix('withdrawal')->group(function () {
             Route::get('/balance', [WithdrawalController::class, 'getBalance']);
             Route::post('/request', [WithdrawalController::class, 'requestWithdrawal']);
@@ -117,7 +117,7 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::post('/message', [ChatController::class, 'sendMessage']);
         });
 
-        // 🚚 Customer Shipping Routes
+        // Pengiriman
         Route::prefix('pengiriman')->group(function () {
             Route::get('/list', [\App\Http\Controllers\Api\PengirimanController::class, 'getTrackingList']);
             Route::get('/{id_transaksi}/tracking', [\App\Http\Controllers\Api\PengirimanController::class, 'getTracking']);
@@ -125,14 +125,14 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::post('/{id}/kembalikan', [\App\Http\Controllers\Api\PengirimanController::class, 'customerKembalikanBarang']);
         });
 
-        // 📦 Pengajuan Pengembalian Routes
+        // Pengembalian
         Route::prefix('pengembalian')->group(function () {
             Route::post('/', [PengajuanPengembalianController::class, 'store']);
             Route::get('/', [PengajuanPengembalianController::class, 'myRequests']);
             Route::get('/sebagai-pemilik', [PengajuanPengembalianController::class, 'getByPemilik']);
         });
 
-        // ⭐ ULASAN ROUTES
+        // Ulasan
         Route::prefix('ulasan')->group(function () {
             Route::post('/', [UlasanController::class, 'store']);
             Route::put('/{id}', [UlasanController::class, 'update']);
@@ -165,20 +165,20 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/transactions', [AdminController::class, 'getAllTransactions']);
         Route::get('/owner-earnings', [AdminController::class, 'getOwnerEarnings']);
 
-        // ========== 💰 WITHDRAWAL ROUTES FOR ADMIN ==========
+        // Withdrawal
         Route::get('/withdrawals/all', [WithdrawalAdminController::class, 'getAllWithdrawals']);
         Route::get('/withdrawals/stats', [WithdrawalAdminController::class, 'getStats']);
         Route::post('/withdrawals/instant', [WithdrawalAdminController::class, 'adminWithdrawal']);
 
-        // 🔥 Kategori & Destinasi
+        // Kategori & Destinasi
         Route::apiResource('/kategori', KategoriController::class);
         Route::apiResource('/destinasi', DestinasiController::class);
 
-        // 🔥 Manajemen Alat (Gears)
+        // Manajemen Barang
         Route::get('/barang/stats', [AdminBarangController::class, 'stats']);
         Route::apiResource('/barang', AdminBarangController::class);
 
-        // 🚚 Shipping & Delivery Routes
+        // Pengiriman
         Route::get('/pengiriman', [\App\Http\Controllers\Api\PengirimanController::class, 'getAllPengiriman']);
         Route::post('/pengiriman/{id}/kirim', [\App\Http\Controllers\Api\PengirimanController::class, 'kirimBarang']);
         Route::put('/pengiriman/{id}/lokasi', [\App\Http\Controllers\Api\PengirimanController::class, 'updateLokasi']);
@@ -186,13 +186,13 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::post('/pengiriman/{id}/konfirmasi-kembali', [\App\Http\Controllers\Api\PengirimanController::class, 'adminKonfirmasiKembali']);
         Route::post('/pengiriman/{id}/pickup-diambil', [\App\Http\Controllers\Api\PengirimanController::class, 'pickupBarangDiambil']);
 
-        // 📦 Admin Pengajuan Pengembalian
+        // Pengembalian
         Route::get('/pengembalian', [PengajuanPengembalianController::class, 'index']);
         Route::post('/pengembalian/{id}/approve', [PengajuanPengembalianController::class, 'approve']);
         Route::post('/pengembalian/{id}/reject', [PengajuanPengembalianController::class, 'reject']);
         Route::post('/pengembalian/{id}/confirm-refund', [PengajuanPengembalianController::class, 'confirmRefund']);
 
-        // 💰 Admin Deposit Refund
+        // Deposit Refund
         Route::get('/deposit-refund', [\App\Http\Controllers\Api\Admin\DepositRefundController::class, 'index']);
         Route::post('/deposit-refund/{id}/process', [\App\Http\Controllers\Api\Admin\DepositRefundController::class, 'process']);
     });
