@@ -39,6 +39,8 @@ export default function SewaAlat() {
   // CART STATE
   const [cartItems, setCartItems] = useState([]);
 
+  const token = localStorage.getItem('token');
+
   // Filter destinasi berdasarkan pencarian (dinamis dari database)
   const filteredDestinations = useMemo(() => {
     if (!destinasiSearch) return [];
@@ -752,6 +754,7 @@ export default function SewaAlat() {
           isAuthenticated={isAuthenticated}
           recommendedGearIds={recommendedGearIds}
           selectedDestinasi={selectedDestinasi}
+          token={token}
         />
       </div>
 

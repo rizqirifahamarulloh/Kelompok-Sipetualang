@@ -114,6 +114,104 @@ class RentalController extends Controller
         return response()->json($barang);
     }
 
+    /**
+     * GET /api/rental/barang-booking
+     * PUBLIC — Mendapatkan status booking aktif untuk semua barang
+     * Mengembalikan info: total_booked, sisa_stok, detail bookings (tanggal)
+     */
+    public function getBarangBookingStatus()
+    {
+        // Ambil semua barang aktif
+        $allBarang = Barang::where('status_barang', 'tersedia')
+            ->where('status_approval', 'disetujui')
+            ->select('id_barang', 'jumlah_stok')
+            ->get()
+            ->keyBy('id_barang');
+
+        // Query semua transaksi aktif (dibayar / sedang_disewa) — dari SEMUA user
+        // Via detail_transaksi (multi-item transactions)
+        $activeBookingsDetail = DB::table('detail_transaksi')
+            ->join('transaksi', 'detail_transaksi.id_transaksi', '=', 'transaksi.id_transaksi')
+            ->whereIn('transaksi.status_sewa', ['dibayar', 'sedang_disewa'])
+            ->select(
+                'detail_transaksi.id_barang',
+                'detail_transaksi.jumlah_pinjam',
+                'transaksi.tanggal_mulai',
+                'transaksi.tanggal_selesai'
+            )
+            ->get();
+
+        // Via direct transaksi (single-item backward compat)
+        $activeBookingsDirect = DB::table('transaksi')
+            ->whereIn('status_sewa', ['dibayar', 'sedang_disewa'])
+            ->whereNotNull('id_barang')
+            ->whereNotIn('id_transaksi', function ($q) {
+                $q->select('id_transaksi')->from('detail_transaksi');
+            })
+            ->select(
+                'id_barang',
+                'jumlah as jumlah_pinjam',
+                'tanggal_mulai',
+                'tanggal_selesai'
+            )
+            ->get();
+
+        // Gabungkan dan group per barang
+        $bookingMap = []; // id_barang => { total_booked, bookings[], latest_return_date }
+
+        foreach ($activeBookingsDetail->merge($activeBookingsDirect) as $booking) {
+            $id = $booking->id_barang;
+            if (!$id) continue;
+
+            if (!isset($bookingMap[$id])) {
+                $bookingMap[$id] = [
+                    'total_booked' => 0,
+                    'bookings' => [],
+                    'latest_return_date' => null,
+                ];
+            }
+
+            $jumlah = $booking->jumlah_pinjam ?? 1;
+            $bookingMap[$id]['total_booked'] += $jumlah;
+            $bookingMap[$id]['bookings'][] = [
+                'tanggal_mulai' => $booking->tanggal_mulai,
+                'tanggal_selesai' => $booking->tanggal_selesai,
+                'jumlah' => $jumlah,
+            ];
+
+            // Track tanggal pengembalian terakhir
+            if (!$bookingMap[$id]['latest_return_date'] ||
+                $booking->tanggal_selesai > $bookingMap[$id]['latest_return_date']) {
+                $bookingMap[$id]['latest_return_date'] = $booking->tanggal_selesai;
+            }
+        }
+
+        // Build result: untuk setiap barang, hitung sisa stok
+        $result = [];
+        foreach ($bookingMap as $idBarang => $info) {
+            $barang = $allBarang[$idBarang] ?? null;
+            $stokTotal = $barang ? $barang->jumlah_stok : 0;
+
+            // sisa_stok = stok fisik saat ini (sudah di-decrement saat checkout)
+            // Tapi kita perlu total capacity asli: stok saat ini + yg sedang dipinjam
+            // Karena stok sudah di-decrement saat checkout, stok saat ini = stok tersedia
+            $result[$idBarang] = [
+                'id_barang' => $idBarang,
+                'jumlah_stok' => $stokTotal,
+                'total_booked' => $info['total_booked'],
+                'sisa_stok' => $stokTotal, // stok sudah di-decrement, jadi ini = available
+                'stok_awal' => $stokTotal + $info['total_booked'], // kapasitas asli
+                'latest_return_date' => $info['latest_return_date'],
+                'bookings' => $info['bookings'],
+            ];
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $result,
+        ]);
+    }
+
     // Get detail barang by ID (untuk public)
     public function getBarangById($id)
     {

@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Store, Search, Minus, Plus, X, ShoppingCart, Check, LogIn, UserPlus, ShieldAlert, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Store, Search, Minus, Plus, X, ShoppingCart, Check, LogIn, UserPlus, ShieldAlert, Star, CalendarClock, Package } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '@/services/api';
 
 export default function KatalogProduk({
   filteredBarang,
@@ -17,14 +19,76 @@ export default function KatalogProduk({
   isAuthenticated = false,
   recommendedGearIds = new Set(),
   selectedDestinasi = null,
+  token = null,
 }) {
   const navigate = useNavigate();
   const [addedFeedback, setAddedFeedback] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [bookingData, setBookingData] = useState({}); // { id_barang: { total_booked, sisa_stok, stok_awal, latest_return_date, bookings } }
+
+  // Fetch booking status dari API (PUBLIC — semua user)
+  const fetchBookingStatus = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/rental/barang-booking`);
+      if (response.data?.status === 'success') {
+        setBookingData(response.data.data || {});
+      }
+    } catch (err) {
+      console.error('Gagal fetch booking status:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookingStatus();
+    // Refresh setiap 30 detik
+    const interval = setInterval(fetchBookingStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Check if item is already in cart
   const isInCart = (idBarang) => {
     return cartItems.some(item => item.id_barang === idBarang);
+  };
+
+  // Get stock status for badge — menggunakan data booking dari API
+  const getStockStatus = (barang) => {
+    const booking = bookingData[barang.id_barang];
+
+    if (!booking) {
+      // Tidak ada booking aktif
+      if (barang.jumlah_stok === 0) {
+        return { type: 'out_of_stock', label: 'Stok Habis' };
+      }
+      return { type: 'available', label: null };
+    }
+
+    // Ada booking aktif
+    const sisaStok = booking.sisa_stok;
+    const stokAwal = booking.stok_awal;
+    const latestDate = booking.latest_return_date;
+
+    // Semua stok habis disewa (sisa = 0)
+    if (sisaStok <= 0) {
+      return { type: 'rented', label: 'Sedang Disewa', latestDate, stokAwal, sisaStok: 0 };
+    }
+
+    // Sisa stok tipis (≤ 2) — tampilkan info sewa
+    if (sisaStok <= 2) {
+      return { type: 'low_stock', label: `Sisa ${sisaStok} unit`, latestDate, stokAwal, sisaStok };
+    }
+
+    // Stok masih banyak
+    return { type: 'available', label: null, sisaStok, stokAwal };
+  };
+
+  // Determine card status
+  const getCardStatus = (barang) => {
+    const stockStatus = getStockStatus(barang);
+    const isDisabled = stockStatus.type === 'rented' || stockStatus.type === 'out_of_stock';
+    const isRented = stockStatus.type === 'rented';
+    const isStockEmpty = stockStatus.type === 'out_of_stock';
+    const isLowStock = stockStatus.type === 'low_stock';
+    return { stockStatus, isDisabled, isRented, isStockEmpty, isLowStock };
   };
 
   // Gate: require auth before action
@@ -36,16 +100,25 @@ export default function KatalogProduk({
     callback();
   };
 
-  // Handle product card click
-  const handleProductClick = (barang) => {
-    // Product detail page is viewable without login
-    navigate(`/barang/${barang.id_barang}`);
+  // Format tanggal untuk display
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'numeric', year: 'numeric' });
   };
 
-  // Handle add to cart with visual feedback
+  // Handle add to cart with visual feedback + stock check
   const handleAddToCart = (barang) => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
+      return;
+    }
+    const { stockStatus } = getCardStatus(barang);
+    if (stockStatus.type === 'rented') {
+      alert(`Barang "${barang.nama_barang}" sedang disewa semua. Silakan cek kembali nanti.`);
+      return;
+    }
+    if (stockStatus.type === 'out_of_stock') {
+      alert(`Barang "${barang.nama_barang}" sedang habis stok. Silakan cek kembali nanti.`);
       return;
     }
     if (onAddToCart) {
@@ -227,134 +300,204 @@ export default function KatalogProduk({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10">
-              {filteredBarang.map((barang) => (
-                <div
-                  key={barang.id_barang}
-                  className="flex flex-col text-center relative group cursor-pointer"
-                  onClick={() => requireAuth(() => navigate(`/barang/${barang.id_barang}`))}
-                >
+              {filteredBarang.map((barang) => {
+                const { stockStatus, isDisabled, isRented, isStockEmpty, isLowStock } = getCardStatus(barang);
 
-                  {/* IMAGE + CART BUTTON WRAPPER */}
-                  <div className="relative">
-                    {/* CONTAINER GAMBAR */}
-                    <div className="relative aspect-square w-full rounded-[24px] bg-[#E9ECEF]/60 overflow-hidden flex items-center justify-center">
-                      <img
-                        src={getImageUrl(barang)}
-                        alt={barang.nama_barang}
-                        className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-500"
-                      />
+                return (
+                  <div
+                    key={barang.id_barang}
+                    className="flex flex-col text-center relative group cursor-pointer"
+                    onClick={() => requireAuth(() => navigate(`/barang/${barang.id_barang}`))}
+                  >
 
-                      {/* Badge Rekomendasi - hanya muncul jika destinasi dipilih DAN barang ini essential */}
-                      {selectedDestinasi && recommendedGearIds.has(barang.id_barang) && (
-                        <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide shadow-lg animate-[pulse_2s_infinite]">
-                          ⭐ Recommended
-                        </span>
-                      )}
-
-                      {/* Badge sudah di keranjang */}
-                      {isInCart(barang.id_barang) && (
-                        <span className="absolute top-4 right-4 bg-emerald-500 text-[9px] font-bold text-white px-2 py-1 rounded-full tracking-wide flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Di Keranjang
-                        </span>
-                      )}
-                    </div>
-
-                    {/* TOMBOL KERANJANG — di luar overflow-hidden, overlap bottom edge */}
-                    <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-10">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(barang);
-                        }}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,167,121,0.25)] transition-all active:scale-95 border-[3px] border-white cursor-pointer ${addedFeedback === barang.id_barang
-                            ? 'bg-emerald-600 scale-110'
-                            : isInCart(barang.id_barang)
-                              ? 'bg-emerald-700 hover:bg-emerald-800'
-                              : 'bg-[#00A779] hover:bg-[#008f68]'
-                          }`}
+                    {/* IMAGE + CART BUTTON WRAPPER */}
+                    <div className="relative">
+                      {/* CONTAINER GAMBAR */}
+                      <div className={`relative aspect-square w-full rounded-[24px] overflow-hidden flex items-center justify-center transition-all duration-300
+                        ${isRented ? 'border-4 border-red-400' : isStockEmpty ? 'border-4 border-gray-300' : 'border border-gray-100 bg-[#E9ECEF]/60'}`}
                       >
-                        {addedFeedback === barang.id_barang ? (
-                          <Check className="w-5 h-5 text-white" />
-                        ) : (
-                          <ShoppingCart className="w-5 h-5 text-white" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                        <img
+                          src={getImageUrl(barang)}
+                          alt={barang.nama_barang}
+                          className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-500`}
+                        />
 
-                  {/* DETAIL TEKS BAWAH (Harga & Nama Toko Tetap Ada!) */}
-                  <div className="mt-8 flex flex-col items-center gap-1">
-                    <h3 className="font-bold text-gray-900 text-sm tracking-tight">
-                      {barang.nama_barang}
-                    </h3>
-
-                    {/* Star Rating - Dynamic from DB */}
-                    {(() => {
-                      const rating = barang.avg_rating || 0;
-                      const reviewCount = barang.total_ulasan || 0;
-                      return (
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <div className="flex items-center gap-px">
-                            {[1, 2, 3, 4, 5].map((s) => {
-                              const fill = Math.min(1, Math.max(0, rating - (s - 1)));
-                              return (
-                                <div key={s} className="relative w-3.5 h-3.5">
-                                  <Star className="w-3.5 h-3.5" fill="#e5e7eb" strokeWidth={0} />
-                                  <div className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
-                                    <Star className="w-3.5 h-3.5" fill="#fbbf24" strokeWidth={0} />
-                                  </div>
-                                </div>
-                              );
-                            })}
+                        {/* ===== OVERLAY SEDANG DISEWA (stok habis disewa) ===== */}
+                        {isRented && (
+                          <div className="absolute inset-0 bg-red-500/40 backdrop-blur-[1px] flex flex-col items-center justify-center z-20 gap-2">
+                            {/* Icon keranjang */}
+                            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+                              <ShoppingCart className="w-7 h-7 text-white drop-shadow-md" />
+                            </div>
+                            {/* Badge SEDANG DISEWA */}
+                            <span className="bg-red-600 text-white text-[11px] font-black px-4 py-1.5 rounded-full tracking-wider shadow-lg uppercase">
+                              Sedang Disewa
+                            </span>
+                            {/* Tanggal pengembalian */}
+                            {stockStatus.latestDate && (
+                              <span className="text-white text-[10px] font-semibold drop-shadow-md">
+                                Hingga {formatDate(stockStatus.latestDate)}
+                              </span>
+                            )}
                           </div>
-                          <span className="text-[11px] font-bold text-gray-700">{rating > 0 ? (typeof rating === 'number' ? rating.toFixed(1) : rating) : '0.0'}</span>
-                          <span className="text-[10px] text-gray-400">({reviewCount})</span>
-                        </div>
-                      );
-                    })()}
+                        )}
 
-                    <p className="text-xs font-semibold text-gray-500/90 mb-0.5">
-                      Rp {Number(barang.harga_sewa).toLocaleString()} <span className="font-normal text-gray-400">/ Hari</span>
-                    </p>
+                        {/* ===== OVERLAY STOK HABIS (tanpa booking) ===== */}
+                        {isStockEmpty && (
+                          <div className="absolute inset-0 bg-gray-500/40 backdrop-blur-[1px] flex flex-col items-center justify-center z-20 gap-2">
+                            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+                              <Package className="w-7 h-7 text-white drop-shadow-md" />
+                            </div>
+                            <span className="bg-gray-600 text-white text-[11px] font-black px-4 py-1.5 rounded-full tracking-wider shadow-lg uppercase">
+                              Stok Habis
+                            </span>
+                          </div>
+                        )}
 
-                    {/* Badge stok tersedia (muncul saat filter tanggal aktif) */}
-                    {barang.stok_tersedia !== undefined && (
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                        barang.stok_tersedia <= 2
-                          ? 'text-red-700 bg-red-50 border border-red-200'
-                          : 'text-emerald-700 bg-emerald-50 border border-emerald-200'
-                      }`}>
-                        📦 Stok tersedia: {barang.stok_tersedia} unit
-                      </span>
-                    )}
+                        {/* ===== OVERLAY SISA STOK SEDIKIT (≤ 2, ada booking) ===== */}
+                        {isLowStock && stockStatus.latestDate && (
+                          <div className="absolute inset-0 bg-amber-500/25 flex flex-col items-center justify-center z-20 gap-2">
+                            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+                              <ShoppingCart className="w-7 h-7 text-amber-700 drop-shadow-md" />
+                            </div>
+                            <span className="bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-wider shadow-lg uppercase">
+                              Sisa {stockStatus.sisaStok} Unit
+                            </span>
+                            <span className="text-amber-800 text-[10px] font-semibold bg-white/60 px-2 py-0.5 rounded-full">
+                              Disewa hingga {formatDate(stockStatus.latestDate)}
+                            </span>
+                          </div>
+                        )}
 
-                    {/* Badge minimum durasi sewa */}
-                    {(barang.min_durasi_sewa || 1) > 1 && (
-                      <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                        📅 Min. {barang.min_durasi_sewa} hari
-                      </span>
-                    )}
+                        {/* Badge Rekomendasi - hanya muncul jika destinasi dipilih DAN barang ini essential DAN stok available */}
+                        {!isRented && !isStockEmpty && !isLowStock && selectedDestinasi && recommendedGearIds.has(barang.id_barang) && (
+                          <span className="absolute top-4 left-4 bg-[#00A779] text-[9px] font-medium text-white px-3 py-1 rounded-full tracking-wide shadow-lg animate-[pulse_2s_infinite] z-10">
+                            ⭐ Recommended
+                          </span>
+                        )}
 
-                    {/* Badge min tanggal sewa */}
-                    {barang.min_tanggal_sewa && new Date(barang.min_tanggal_sewa) > new Date() && (
-                      <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
-                        🗓️ Tersedia mulai {new Date(barang.min_tanggal_sewa).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                      </span>
-                    )}
+                        {/* Badge sudah di keranjang — hanya jika stok available */}
+                        {!isRented && !isStockEmpty && isInCart(barang.id_barang) && (
+                          <span className="absolute top-4 right-4 bg-emerald-500 text-[9px] font-bold text-white px-2 py-1 rounded-full tracking-wide flex items-center gap-1 z-10">
+                            <Check className="w-3 h-3" /> Di Keranjang
+                          </span>
+                        )}
+                      </div>
 
-                    {/* NAMA TOKO AMAN & TETAP DITAMPILKAN */}
-                    <Link
-                      to={`/toko/${barang.id_pemilik}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-[10px] text-gray-400 font-medium flex items-center gap-1 no-underline hover:text-emerald-500 transition-colors"
-                    >
-                      <Store className="w-2.5 h-2.5" />
-                      <span>{barang.pemilik?.nama || 'SiPetualang'}</span>
-                    </Link>
+                      {/* TOMBOL KERANJANG — disable jika stok habis/disewa */}
+                      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-30">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(barang);
+                          }}
+                          disabled={isDisabled}
+                          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,167,121,0.25)] transition-all active:scale-95 border-[3px] border-white cursor-pointer ${isDisabled
+                              ? 'bg-gray-400 cursor-not-allowed opacity-70'
+                              : addedFeedback === barang.id_barang
+                                ? 'bg-emerald-600 scale-110'
+                                : isInCart(barang.id_barang)
+                                  ? 'bg-emerald-700 hover:bg-emerald-800'
+                                  : 'bg-[#00A779] hover:bg-[#008f68]'
+                            }`}
+                        >
+                          {addedFeedback === barang.id_barang ? (
+                            <Check className="w-5 h-5 text-white" />
+                          ) : (
+                            <ShoppingCart className="w-5 h-5 text-white" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* DETAIL TEKS BAWAH */}
+                    <div className="mt-8 flex flex-col items-center gap-1">
+                      <h3 className="font-bold text-gray-900 text-sm tracking-tight">
+                        {barang.nama_barang}
+                      </h3>
+
+                      {/* Star Rating - Dynamic from DB */}
+                      {(() => {
+                        const rating = barang.avg_rating || 0;
+                        const reviewCount = barang.total_ulasan || 0;
+                        return (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="flex items-center gap-px">
+                              {[1, 2, 3, 4, 5].map((s) => {
+                                const fill = Math.min(1, Math.max(0, rating - (s - 1)));
+                                return (
+                                  <div key={s} className="relative w-3.5 h-3.5">
+                                    <Star className="w-3.5 h-3.5" fill="#e5e7eb" strokeWidth={0} />
+                                    <div className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+                                      <Star className="w-3.5 h-3.5" fill="#fbbf24" strokeWidth={0} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <span className="text-[11px] font-bold text-gray-700">{rating > 0 ? (typeof rating === 'number' ? rating.toFixed(1) : rating) : '0.0'}</span>
+                            <span className="text-[10px] text-gray-400">({reviewCount})</span>
+                          </div>
+                        );
+                      })()}
+
+                      <p className="text-xs font-semibold text-gray-500/90 mb-0.5">
+                        Rp {Number(barang.harga_sewa).toLocaleString()} <span className="font-normal text-gray-400">/ Hari</span>
+                      </p>
+
+                      {/* Badge stok tersedia (muncul saat filter tanggal aktif) */}
+                      {barang.stok_tersedia !== undefined && (
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                          barang.stok_tersedia <= 2
+                            ? 'text-red-700 bg-red-50 border border-red-200'
+                            : 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+                        }`}>
+                          📦 Stok tersedia: {barang.stok_tersedia} unit
+                        </span>
+                      )}
+
+                      {/* Badge sedang disewa — dengan tanggal pengembalian */}
+                      {isRented && stockStatus.latestDate && (
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          🔥 Disewa hingga {formatDate(stockStatus.latestDate)}
+                        </span>
+                      )}
+
+                      {/* Badge sisa stok sedikit — dengan tanggal */}
+                      {isLowStock && stockStatus.latestDate && (
+                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          ⚠️ Sisa {stockStatus.sisaStok} unit · Disewa hingga {formatDate(stockStatus.latestDate)}
+                        </span>
+                      )}
+
+                      {/* Badge minimum durasi sewa */}
+                      {(barang.min_durasi_sewa || 1) > 1 && !isRented && !isStockEmpty && (
+                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                          📅 Min. {barang.min_durasi_sewa} hari
+                        </span>
+                      )}
+
+                      {/* Badge min tanggal sewa */}
+                      {barang.min_tanggal_sewa && new Date(barang.min_tanggal_sewa) > new Date() && (
+                        <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                          🗓️ Tersedia mulai {new Date(barang.min_tanggal_sewa).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                        </span>
+                      )}
+
+                      {/* NAMA TOKO */}
+                      <Link
+                        to={`/toko/${barang.id_pemilik}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[10px] text-gray-400 font-medium flex items-center gap-1 no-underline hover:text-emerald-500 transition-colors"
+                      >
+                        <Store className="w-2.5 h-2.5" />
+                        <span>{barang.pemilik?.nama || 'SiPetualang'}</span>
+                      </Link>
+                    </div>
+
                   </div>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
