@@ -47,9 +47,9 @@ const formatDateTime = (dateStr) =>
 
 // ── Status configs ──
 const STATUS_CONFIG = {
-  dibayar:        { label: 'Dibayar',        icon: CreditCard, cls: 'bg-blue-100 text-blue-700 border-blue-200',        dot: 'bg-blue-500' },
-  sedang_disewa:  { label: 'Sedang Disewa',  icon: Package,    cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
-  selesai:        { label: 'Selesai',        icon: CheckCircle,cls: 'bg-gray-100 text-gray-600 border-gray-200',         dot: 'bg-gray-400' },
+  dibayar: { label: 'Dibayar', icon: CreditCard, cls: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
+  sedang_disewa: { label: 'Sedang Disewa', icon: Package, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
+  selesai: { label: 'Selesai', icon: CheckCircle, cls: 'bg-gray-100 text-gray-600 border-gray-200', dot: 'bg-gray-400' },
 };
 
 export default function TransactionsPage() {
@@ -551,9 +551,8 @@ export default function TransactionsPage() {
                       { key: 'selesai', label: 'Selesai', count: stats.selesai },
                     ].map((tab) => (
                       <button key={tab.key} onClick={() => setRentalFilter(tab.key)}
-                        className={`px-3 py-1.5 text-[11px] font-bold rounded-full transition-all border flex items-center gap-1 ${
-                          rentalFilter === tab.key ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-background text-muted-foreground hover:bg-muted border-border'
-                        }`}>
+                        className={`px-3 py-1.5 text-[11px] font-bold rounded-full transition-all border flex items-center gap-1 ${rentalFilter === tab.key ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-background text-muted-foreground hover:bg-muted border-border'
+                          }`}>
                         {tab.label}
                         <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${rentalFilter === tab.key ? 'bg-white/20' : 'bg-muted'}`}>{tab.count}</span>
                       </button>
@@ -597,7 +596,7 @@ export default function TransactionsPage() {
       {/* Return Modal */}
       {isReturnModalOpen && selectedReturnTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b bg-card">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <RotateCcw className="size-5 text-amber-600" /> Kembalikan Barang

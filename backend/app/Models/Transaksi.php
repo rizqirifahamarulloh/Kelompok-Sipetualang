@@ -41,11 +41,13 @@ class Transaksi extends Model
         'deposit_refund_note',
         'deposit_refund_proof',
         'deposit_refunded_at',
+        'pemilik_released',
     ];
 
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
+        'pemilik_released' => 'boolean',
     ];
 
     public function penyewa()

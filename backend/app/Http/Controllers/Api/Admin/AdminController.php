@@ -8,6 +8,7 @@ use App\Models\Transaksi;
 use App\Models\Barang;
 use App\Models\Pengiriman;
 use App\Models\PengajuanPengembalian;
+use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -68,6 +69,9 @@ class AdminController extends Controller
             // 9. Verifikasi KTP — KTP yang menunggu verifikasi
             $pendingKtp = \App\Models\Verifikasi::where('status_verifikasi', 'pending')->count();
 
+            // 10. Withdrawal — penarikan yang menunggu approval
+            $pendingWithdrawals = \App\Models\Withdrawal::where('status', 'pending')->count();
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -80,6 +84,7 @@ class AdminController extends Controller
                     'pengembalian' => $pendingReturns,
                     'deposit' => $pendingDeposit,
                     'verifikasi' => $pendingKtp,
+                    'withdrawals' => $pendingWithdrawals,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -118,6 +123,42 @@ class AdminController extends Controller
             $totalRefundCount = PengajuanPengembalian::whereIn('status', ['disetujui', 'pending'])
                 ->count();
 
+            // Withdrawal stats — separated by role
+            // Perental withdrawals (customer/perental role)
+            $perentalWithdrawn = Withdrawal::where('status', 'completed')
+                ->whereHas('user', function ($q) {
+                    $q->whereIn('peran_pengguna', ['customer', 'perental']);
+                })->sum('amount');
+            
+            $perentalPendingCount = Withdrawal::where('status', 'pending')
+                ->whereHas('user', function ($q) {
+                    $q->whereIn('peran_pengguna', ['customer', 'perental']);
+                })->count();
+            
+            $perentalPendingAmount = Withdrawal::where('status', 'pending')
+                ->whereHas('user', function ($q) {
+                    $q->whereIn('peran_pengguna', ['customer', 'perental']);
+                })->sum('amount');
+
+            // Admin withdrawals (admin role)
+            $adminWithdrawn = Withdrawal::where('status', 'completed')
+                ->whereHas('user', function ($q) {
+                    $q->where('peran_pengguna', 'admin');
+                })->sum('amount');
+
+            // Fee admin total (20% + ongkir dari semua transaksi sukses)
+            $totalFeeAdmin = Transaksi::where('status_pembayaran', 'sukses')->sum('fee_admin');
+            $totalPendapatanPemilik = Transaksi::where('status_pembayaran', 'sukses')->sum('pendapatan_pemilik');
+            $totalOngkir = Transaksi::where('status_pembayaran', 'sukses')->sum('biaya_pengiriman');
+
+            // Escrow stats — berapa uang perental yang masih ditahan admin
+            $totalEscrowHeld = Transaksi::where('status_pembayaran', 'sukses')
+                ->where('pemilik_released', false)
+                ->sum('pendapatan_pemilik');
+            $totalReleased = Transaksi::where('status_pembayaran', 'sukses')
+                ->where('pemilik_released', true)
+                ->sum('pendapatan_pemilik');
+
             $stats = [
                 'total_users' => $totalUsers,
                 'total_gears' => $totalGears,
@@ -126,6 +167,20 @@ class AdminController extends Controller
                 'total_refund' => (float) $totalRefund,
                 'total_refund_count' => $totalRefundCount,
                 'net_revenue' => (float) ($totalRevenue - $totalRefund),
+                // Fee breakdown
+                'total_fee_admin' => (float) $totalFeeAdmin,
+                'total_pendapatan_pemilik' => (float) $totalPendapatanPemilik,
+                'total_ongkir' => (float) $totalOngkir,
+                // Escrow
+                'total_escrow_held' => (float) $totalEscrowHeld,
+                'total_released' => (float) $totalReleased,
+                // Perental withdrawals
+                'perental_withdrawn' => (float) $perentalWithdrawn,
+                'perental_pending_count' => $perentalPendingCount,
+                'perental_pending_amount' => (float) $perentalPendingAmount,
+                // Admin withdrawals
+                'admin_withdrawn' => (float) $adminWithdrawn,
+                'admin_fee_balance' => (float) ($totalFeeAdmin - $adminWithdrawn),
             ];
 
             // Mapping status dari DB ke frontend
@@ -187,31 +242,45 @@ class AdminController extends Controller
                 ->orderBy('bulan')
                 ->get();
 
-            // Merge refund into monthly revenue
-            $monthlyData = $monthlyRevenue->map(function ($item) use ($monthlyRefund) {
-                $refund = $monthlyRefund->firstWhere('bulan', $item->bulan);
-                return [
-                    'bulan' => $item->bulan,
-                    'total' => (float) $item->total,
-                    'fee_admin' => (float) $item->fee_admin,
-                    'pendapatan_pemilik' => (float) $item->pendapatan_pemilik,
-                    'refund' => $refund ? (float) $refund->total_refund : 0,
-                    'refund_count' => $refund ? (int) $refund->jumlah : 0,
-                ];
-            });
+            // Monthly withdrawal data — separated by role
+            $monthlyPerentalWithdrawal = Withdrawal::where('status', 'completed')
+                ->whereHas('user', fn($q) => $q->whereIn('peran_pengguna', ['customer', 'perental']))
+                ->selectRaw("DATE_FORMAT(processed_at, '%Y-%m') as bulan, SUM(amount) as total_withdrawn")
+                ->groupBy('bulan')
+                ->orderBy('bulan')
+                ->get();
 
-            // Add months that only have refunds but no revenue
-            $monthlyRefund->each(function ($refund) use (&$monthlyData) {
-                if (!$monthlyData->contains('bulan', $refund->bulan)) {
-                    $monthlyData->push([
-                        'bulan' => $refund->bulan,
-                        'total' => 0,
-                        'fee_admin' => 0,
-                        'pendapatan_pemilik' => 0,
-                        'refund' => (float) $refund->total_refund,
-                        'refund_count' => (int) $refund->jumlah,
-                    ]);
-                }
+            $monthlyAdminWithdrawal = Withdrawal::where('status', 'completed')
+                ->whereHas('user', fn($q) => $q->where('peran_pengguna', 'admin'))
+                ->selectRaw("DATE_FORMAT(processed_at, '%Y-%m') as bulan, SUM(amount) as total_withdrawn")
+                ->groupBy('bulan')
+                ->orderBy('bulan')
+                ->get();
+
+            // Merge refund and withdrawals into monthly revenue
+            $allBulans = collect();
+            $monthlyRevenue->each(fn($i) => $allBulans->push($i->bulan));
+            $monthlyRefund->each(fn($i) => $allBulans->push($i->bulan));
+            $monthlyPerentalWithdrawal->each(fn($i) => $allBulans->push($i->bulan));
+            $monthlyAdminWithdrawal->each(fn($i) => $allBulans->push($i->bulan));
+            $allBulans = $allBulans->unique()->sort()->values();
+
+            $monthlyData = $allBulans->map(function ($bulan) use ($monthlyRevenue, $monthlyRefund, $monthlyPerentalWithdrawal, $monthlyAdminWithdrawal) {
+                $rev = $monthlyRevenue->firstWhere('bulan', $bulan);
+                $ref = $monthlyRefund->firstWhere('bulan', $bulan);
+                $pw = $monthlyPerentalWithdrawal->firstWhere('bulan', $bulan);
+                $aw = $monthlyAdminWithdrawal->firstWhere('bulan', $bulan);
+
+                return [
+                    'bulan' => $bulan,
+                    'total' => $rev ? (float) $rev->total : 0,
+                    'fee_admin' => $rev ? (float) $rev->fee_admin : 0,
+                    'pendapatan_pemilik' => $rev ? (float) $rev->pendapatan_pemilik : 0,
+                    'refund' => $ref ? (float) $ref->total_refund : 0,
+                    'refund_count' => $ref ? (int) $ref->jumlah : 0,
+                    'perental_withdrawn' => $pw ? (float) $pw->total_withdrawn : 0,
+                    'admin_withdrawn' => $aw ? (float) $aw->total_withdrawn : 0,
+                ];
             });
 
             // Recent refunds
@@ -231,6 +300,23 @@ class AdminController extends Controller
                     ];
                 });
 
+            // Recent pending withdrawals
+            $recentWithdrawals = Withdrawal::with('user')
+                ->where('status', 'pending')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function ($w) {
+                    return [
+                        'id' => $w->id,
+                        'user' => $w->user ? $w->user->nama : '-',
+                        'amount' => (float) $w->amount,
+                        'bank_name' => $w->bank_name,
+                        'status' => $w->status,
+                        'created_at' => $w->created_at,
+                    ];
+                });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Dashboard admin',
@@ -240,6 +326,7 @@ class AdminController extends Controller
                     'low_stock_alerts' => $lowStockGears,
                     'monthly_revenue' => $monthlyData->sortBy('bulan')->values(),
                     'recent_refunds' => $recentRefunds,
+                    'recent_withdrawals' => $recentWithdrawals,
                 ]
             ]);
         } catch (\Exception $e) {

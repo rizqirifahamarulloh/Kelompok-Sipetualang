@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
+import { Link } from 'react-router-dom'
 import TablePagination, { paginateArray } from '@/components/TablePagination'
 import { dashboardService } from '@/features/admin/services/dashboardService'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -15,7 +17,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { Users, Package, ShoppingCart, Banknote, AlertTriangle, TrendingUp, RotateCcw, TrendingDown } from 'lucide-react'
+import { 
+  Users, Package, ShoppingCart, Banknote, AlertTriangle, TrendingUp, RotateCcw, TrendingDown,
+  Wallet, Clock, ArrowRight, ArrowDownToLine,
+} from 'lucide-react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -50,6 +55,17 @@ function formatCompact(amount) {
   return amount.toString()
 }
 
+function formatDate(date) {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('id-ID', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des']
 
 /* ====== Custom Tooltip ====== */
@@ -63,7 +79,7 @@ function CustomTooltip({ active, payload, label }) {
         <div key={idx} className="flex items-center gap-2 mb-1">
           <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
           <span className="text-gray-500 dark:text-gray-400 flex-1">{entry.name}:</span>
-          <span className={`font-semibold font-mono ${entry.name === 'Refund' ? 'text-red-500' : 'text-gray-900 dark:text-gray-100'}`}>
+          <span className={`font-semibold font-mono ${entry.name === 'Refund' ? 'text-red-500' : entry.name === 'Pencairan Perental' ? 'text-orange-500' : entry.name === 'Pencairan Admin' ? 'text-cyan-500' : 'text-gray-900 dark:text-gray-100'}`}>
             {entry.name === 'Refund' ? `- ${formatCurrency(entry.value)}` : formatCurrency(entry.value)}
           </span>
         </div>
@@ -89,7 +105,8 @@ function MonthlyRevenueChart({ monthlyData }) {
         'Fee Admin': 0,
         'Pendapatan Pemilik': 0,
         'Refund': 0,
-        'Pendapatan Bersih': 0,
+        'Pencairan Perental': 0,
+        'Pencairan Admin': 0,
       })
     }
 
@@ -101,7 +118,8 @@ function MonthlyRevenueChart({ monthlyData }) {
           found['Fee Admin'] = Number(item.fee_admin) || 0
           found['Pendapatan Pemilik'] = Number(item.pendapatan_pemilik) || 0
           found['Refund'] = Number(item.refund) || 0
-          found['Pendapatan Bersih'] = (Number(item.total) || 0) - (Number(item.refund) || 0)
+          found['Pencairan Perental'] = Number(item.perental_withdrawn) || 0
+          found['Pencairan Admin'] = Number(item.admin_withdrawn) || 0
         }
       })
     }
@@ -111,9 +129,8 @@ function MonthlyRevenueChart({ monthlyData }) {
 
   const totalPeriode = chartData.reduce((sum, m) => sum + m['Total Pendapatan'], 0)
   const totalRefund = chartData.reduce((sum, m) => sum + m['Refund'], 0)
-
-  // Find months with refunds for dot indicators
-  const refundDots = chartData.filter(m => m['Refund'] > 0)
+  const totalPerentalWd = chartData.reduce((sum, m) => sum + m['Pencairan Perental'], 0)
+  const totalAdminWd = chartData.reduce((sum, m) => sum + m['Pencairan Admin'], 0)
 
   return (
     <Card>
@@ -133,8 +150,20 @@ function MonthlyRevenueChart({ monthlyData }) {
             </div>
             {totalRefund > 0 && (
               <div className="text-right">
-                <p className="text-xs text-muted-foreground">Total Refund</p>
+                <p className="text-xs text-muted-foreground">Refund</p>
                 <p className="text-lg font-bold text-red-500">- {formatCurrency(totalRefund)}</p>
+              </div>
+            )}
+            {totalPerentalWd > 0 && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Cair Perental</p>
+                <p className="text-lg font-bold text-orange-500">{formatCurrency(totalPerentalWd)}</p>
+              </div>
+            )}
+            {totalAdminWd > 0 && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Cair Admin</p>
+                <p className="text-lg font-bold text-cyan-500">{formatCurrency(totalAdminWd)}</p>
               </div>
             )}
           </div>
@@ -160,6 +189,14 @@ function MonthlyRevenueChart({ monthlyData }) {
                 <linearGradient id="gradRefund" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gradWithdrawn" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gradAdminWd" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#374151' : '#f0f0f0'} />
@@ -238,6 +275,56 @@ function MonthlyRevenueChart({ monthlyData }) {
                 }}
                 activeDot={{ r: 6, fill: '#ef4444', stroke: '#fff', strokeWidth: 2 }}
               />
+              <Area
+                type="monotone"
+                dataKey="Pencairan Perental"
+                stroke="#f97316"
+                strokeWidth={2}
+                fill="url(#gradWithdrawn)"
+                dot={(props) => {
+                  const { cx, cy, payload } = props
+                  if (payload['Pencairan Perental'] > 0) {
+                    return (
+                      <circle
+                        key={`pw-dot-${cx}-${cy}`}
+                        cx={cx}
+                        cy={cy}
+                        r={4}
+                        fill="#f97316"
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
+                    )
+                  }
+                  return null
+                }}
+                activeDot={{ r: 5, fill: '#f97316', stroke: '#fff', strokeWidth: 2 }}
+              />
+              <Area
+                type="monotone"
+                dataKey="Pencairan Admin"
+                stroke="#06b6d4"
+                strokeWidth={2}
+                fill="url(#gradAdminWd)"
+                dot={(props) => {
+                  const { cx, cy, payload } = props
+                  if (payload['Pencairan Admin'] > 0) {
+                    return (
+                      <circle
+                        key={`aw-dot-${cx}-${cy}`}
+                        cx={cx}
+                        cy={cy}
+                        r={4}
+                        fill="#06b6d4"
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
+                    )
+                  }
+                  return null
+                }}
+                activeDot={{ r: 5, fill: '#06b6d4', stroke: '#fff', strokeWidth: 2 }}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -246,7 +333,7 @@ function MonthlyRevenueChart({ monthlyData }) {
   )
 }
 
-/* ====== Stats Cards (with Refund) ====== */
+/* ====== Stats Cards (with Withdrawal + Ongkir + Escrow) ====== */
 function StatsCards({ stats, t }) {
   const cards = [
     { title: t('admin.totalUsers'), value: stats?.total_users ?? 0, icon: Users, desc: t('admin.registeredUsers') },
@@ -272,9 +359,9 @@ function StatsCards({ stats, t }) {
         ))}
       </div>
 
-      {/* Refund & Net Revenue Row */}
-      {(stats?.total_refund > 0 || stats?.total_refund_count > 0) && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Financial Details Row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {(stats?.total_refund > 0 || stats?.total_refund_count > 0) && (
           <Card className="border-red-200 dark:border-red-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Total Refund</CardTitle>
@@ -289,37 +376,141 @@ function StatsCards({ stats, t }) {
               </p>
             </CardContent>
           </Card>
+        )}
 
+        <Card className="border-blue-200 dark:border-blue-900/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-blue-600 dark:text-blue-400">Saldo Fee Admin (20% + Ongkir)</CardTitle>
+            <Banknote className="size-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {formatCurrency(stats?.admin_fee_balance ?? 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Fee: {formatCurrency(stats?.total_fee_admin ?? 0)} - Dicairkan: {formatCurrency(stats?.admin_withdrawn ?? 0)}
+            </p>
+          </CardContent>
+        </Card>
+
+        {(stats?.total_ongkir > 0) && (
+          <Card className="border-teal-200 dark:border-teal-900/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-teal-600 dark:text-teal-400">Total Ongkir</CardTitle>
+              <TrendingUp className="size-4 text-teal-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                {formatCurrency(stats?.total_ongkir ?? 0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Pengiriman internal SiPetualang</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {(stats?.total_escrow_held > 0) && (
+          <Card className="border-amber-200 dark:border-amber-900/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Escrow Ditahan</CardTitle>
+              <Clock className="size-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                {formatCurrency(stats?.total_escrow_held ?? 0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Pendapatan perental yang belum di-release</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Withdrawal Row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-orange-200 dark:border-orange-900/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-400">Dicairkan ke Perental</CardTitle>
+            <ArrowDownToLine className="size-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {formatCurrency(stats?.perental_withdrawn ?? 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Dari saldo pendapatan pemilik (80%)</p>
+          </CardContent>
+        </Card>
+
+        {(stats?.total_released > 0) && (
           <Card className="border-emerald-200 dark:border-emerald-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Pendapatan Bersih</CardTitle>
+              <CardTitle className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Sudah Di-release</CardTitle>
               <TrendingUp className="size-4 text-emerald-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(stats?.net_revenue ?? 0)}
+                {formatCurrency(stats?.total_released ?? 0)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Total pendapatan - refund</p>
+              <p className="text-xs text-muted-foreground mt-1">Pendapatan perental yang sudah dicairkan dari escrow</p>
             </CardContent>
           </Card>
+        )}
 
+        {(stats?.perental_pending_count > 0) && (
           <Card className="border-amber-200 dark:border-amber-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Dampak Refund</CardTitle>
-              <TrendingDown className="size-4 text-amber-500" />
+              <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Pending Perental</CardTitle>
+              <Clock className="size-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                {stats?.total_revenue > 0
-                  ? `${((stats.total_refund / stats.total_revenue) * 100).toFixed(1)}%`
-                  : '0%'}
+                {formatCurrency(stats?.perental_pending_amount ?? 0)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Persentase pendapatan yang di-refund</p>
+              <p className="text-xs text-muted-foreground mt-1">{stats?.perental_pending_count} pengajuan menunggu</p>
             </CardContent>
           </Card>
-        </div>
-      )}
+        )}
+      </div>
     </div>
+  )
+}
+
+/* ====== Recent Pending Withdrawals ====== */
+function RecentWithdrawals({ withdrawals }) {
+  if (!withdrawals?.length) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Wallet className="size-5 text-amber-500" />
+          Penarikan Menunggu Approval
+        </CardTitle>
+        <CardDescription>Pengajuan penarikan saldo dari perental yang perlu diproses</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {withdrawals.map((w) => (
+            <div key={w.id} className="flex items-center justify-between rounded-lg border p-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate">{w.user}</p>
+                <p className="text-xs text-muted-foreground">{w.bank_name} • {formatDate(w.created_at)}</p>
+              </div>
+              <div className="text-right flex items-center gap-3">
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{formatCurrency(w.amount)}</span>
+                <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800">
+                  Pending
+                </Badge>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Link to="/admin/withdrawals">
+          <Button variant="outline" className="w-full mt-4 text-sm gap-2">
+            Lihat Semua Penarikan
+            <ArrowRight className="size-4" />
+          </Button>
+        </Link>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -527,6 +718,7 @@ export default function Dashboard() {
           <RecentTransactions transactions={data?.recent_transactions} t={t} />
         </div>
         <div className="space-y-6">
+          <RecentWithdrawals withdrawals={data?.recent_withdrawals} />
           <RecentRefunds refunds={data?.recent_refunds} />
           <LowStockAlerts alerts={data?.low_stock_alerts} t={t} />
         </div>

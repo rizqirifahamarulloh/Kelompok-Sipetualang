@@ -127,9 +127,9 @@ class TransaksiController extends Controller
                 }
             }
 
-            // Fee admin (20%) dari total sewa
-            $feeAdmin = round($totalSewa * 0.2);
-            $pendapatanPemilik = $totalSewa - $feeAdmin;
+            // Fee admin (20% dari total sewa) + ongkir (pengiriman internal SiPetualang)
+            $feeAdmin = round($totalSewa * 0.2) + $biayaPengiriman;
+            $pendapatanPemilik = $totalSewa - round($totalSewa * 0.2);
 
             // Add shipping cost as Midtrans item if applicable
             if ($biayaPengiriman > 0) {
@@ -356,17 +356,13 @@ public function handleNotification(Request $request)
             'status_sewa' => 'dibayar',
         ]);
 
-        // ========== TAMBAH SALDO PEMILIK (PERENTAL) ==========
-        $pemilik = \App\Models\Pengguna::find($transaksi->id_pemilik);
-        if ($pemilik) {
-            $pemilik->increment('balance', $transaksi->pendapatan_pemilik);
-            $pemilik->increment('total_earned', $transaksi->pendapatan_pemilik);
-        }
-
-        // ========== TAMBAH SALDO ADMIN ==========
+        // ========== ESCROW: ADMIN MENAMPUNG SELURUH UANG ==========
+        // Pendapatan pemilik DITAHAN admin sampai barang dikembalikan & dikonfirmasi
+        // Perental TIDAK menerima saldo di sini — akan di-release saat adminKonfirmasiKembali
         $admin = \App\Models\Pengguna::where('peran_pengguna', 'admin')->first();
         if ($admin) {
-            $admin->increment('balance', $transaksi->fee_admin);
+            // Admin menampung fee_admin + pendapatan_pemilik (total sewa)
+            $admin->increment('balance', $transaksi->fee_admin + $transaksi->pendapatan_pemilik);
             $admin->increment('total_earned', $transaksi->fee_admin);
         }
 

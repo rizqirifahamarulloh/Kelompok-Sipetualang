@@ -451,7 +451,7 @@ export default function RentedGears() {
       {/* Modal Konfirmasi Alat Dikembalikan */}
       {isReturnModalOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border max-h-[85vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-card z-10">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">

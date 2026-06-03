@@ -719,7 +719,7 @@ export default function ShippingStatus() {
       {/* Modal 1: Kirim Barang */}
       {isShipModalOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Truck className="size-5 text-emerald-600" />
@@ -775,7 +775,7 @@ export default function ShippingStatus() {
       {/* Modal 2: Update Lokasi */}
       {isUpdateModalOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Navigation className="size-5 text-emerald-600" />
@@ -827,7 +827,7 @@ export default function ShippingStatus() {
       {/* Modal 3: Konfirmasi Pengembalian */}
       {isReturnModalOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border">
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <CheckCircle2 className="size-5 text-orange-600" />

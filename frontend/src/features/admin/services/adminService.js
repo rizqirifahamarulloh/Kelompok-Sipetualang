@@ -152,4 +152,21 @@ export const adminService = {
     const response = await api.post('/admin/withdrawals/instant', data);
     return response.data;
   },
+
+  // Approve withdrawal (with transfer proof image)
+  async approveWithdrawal(id, data) {
+    const formData = new FormData();
+    if (data.transfer_proof) formData.append('transfer_proof', data.transfer_proof);
+    if (data.admin_note) formData.append('admin_note', data.admin_note);
+    const response = await api.post(`/admin/withdrawals/${id}/approve`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  // Reject withdrawal
+  async rejectWithdrawal(id, data) {
+    const response = await api.post(`/admin/withdrawals/${id}/reject`, data);
+    return response.data;
+  },
 }

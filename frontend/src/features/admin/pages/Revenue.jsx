@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import TablePagination, { paginateArray } from '@/components/TablePagination'
-import WithdrawalManagement from '../components/WithdrawalManagement'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs' // ⚠️ INI KURANG!
 import {
   Table,
   TableBody,
@@ -21,7 +19,8 @@ import {
   ShoppingCart,
   PieChart,
   RotateCcw,
-  TrendingDown,
+  Wallet,
+  ArrowDownToLine,
 } from 'lucide-react'
 import { adminService } from '../services/adminService'
 
@@ -42,7 +41,7 @@ function formatDate(date) {
   })
 }
 
-function RevenueStatsCards({ stats }) {
+function RevenueStatsCards({ stats, withdrawalStats }) {
   const cards = [
     { 
       title: 'Total Pendapatan', 
@@ -52,10 +51,10 @@ function RevenueStatsCards({ stats }) {
       color: 'text-green-600'
     },
     { 
-      title: 'Fee Admin (20%)', 
+      title: 'Fee Admin (20% + Ongkir)', 
       value: formatCurrency(stats?.total_fee_admin ?? 0), 
       icon: TrendingUp, 
-      desc: 'Pendapatan SiPetualang',
+      desc: 'Komisi + pengiriman internal',
       color: 'text-blue-600'
     },
     { 
@@ -91,9 +90,9 @@ function RevenueStatsCards({ stats }) {
         ))}
       </div>
 
-      {/* Refund Stats Row */}
-      {stats?.total_refund > 0 && (
-        <div className="grid gap-4 sm:grid-cols-3">
+      {/* Refund & Withdrawal Row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats?.total_refund > 0 && (
           <Card className="border-red-200 dark:border-red-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Total Refund</CardTitle>
@@ -104,7 +103,9 @@ function RevenueStatsCards({ stats }) {
               <p className="text-xs text-muted-foreground mt-1">Dikembalikan ke customer</p>
             </CardContent>
           </Card>
+        )}
 
+        {stats?.total_refund > 0 && (
           <Card className="border-emerald-200 dark:border-emerald-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Pendapatan Bersih</CardTitle>
@@ -115,32 +116,54 @@ function RevenueStatsCards({ stats }) {
               <p className="text-xs text-muted-foreground mt-1">Setelah dikurangi refund</p>
             </CardContent>
           </Card>
+        )}
 
+        <Card className="border-orange-200 dark:border-orange-900/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-400">Dicairkan ke Perental</CardTitle>
+            <ArrowDownToLine className="size-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(withdrawalStats?.perental_completed_total ?? 0)}</div>
+            <p className="text-xs text-muted-foreground mt-1">{withdrawalStats?.perental_completed_count ?? 0} penarikan selesai</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-cyan-200 dark:border-cyan-900/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-cyan-600 dark:text-cyan-400">Dicairkan Admin</CardTitle>
+            <Wallet className="size-4 text-cyan-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{formatCurrency(withdrawalStats?.admin_completed_total ?? 0)}</div>
+            <p className="text-xs text-muted-foreground mt-1">{withdrawalStats?.admin_completed_count ?? 0} penarikan admin</p>
+          </CardContent>
+        </Card>
+
+        {(withdrawalStats?.perental_pending_count ?? 0) > 0 && (
           <Card className="border-amber-200 dark:border-amber-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Dampak Refund</CardTitle>
-              <TrendingDown className="size-4 text-amber-500" />
+              <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Pending Perental</CardTitle>
+              <Wallet className="size-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                {stats?.total_revenue > 0
-                  ? `${((stats.total_refund / stats.total_revenue) * 100).toFixed(1)}%`
-                  : '0%'}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Persentase dari total pendapatan</p>
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{formatCurrency(withdrawalStats?.perental_pending_total ?? 0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">{withdrawalStats?.perental_pending_count ?? 0} pengajuan menunggu</p>
             </CardContent>
           </Card>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
 
-function RevenueChart({ data }) {
+function RevenueChart({ data, withdrawalStats }) {
   const total = data?.total_revenue || 0
   const feeAdmin = data?.total_fee_admin || 0
   const pendapatanPemilik = data?.total_pendapatan_pemilik || 0
   const refund = data?.total_refund || 0
+  const perentalWithdrawn = withdrawalStats?.perental_completed_total || 0
+  const adminWithdrawn = withdrawalStats?.admin_completed_total || 0
   
   const circumference = 283
   const adminPercent = total > 0 ? (feeAdmin / total * 100).toFixed(1) : 0
@@ -186,12 +209,10 @@ function RevenueChart({ data }) {
                   />
                 )}
               </svg>
-              {refund > 0 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-[10px] text-muted-foreground">Bersih</span>
-                  <span className="text-sm font-bold text-foreground">{formatCurrency(total - refund)}</span>
-                </div>
-              )}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-[10px] text-muted-foreground">Bersih</span>
+                <span className="text-sm font-bold text-foreground">{formatCurrency(total - refund)}</span>
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap justify-center gap-4">
@@ -210,6 +231,33 @@ function RevenueChart({ data }) {
               </div>
             )}
           </div>
+          
+          {/* Separated withdrawal summary below pie chart */}
+          {(perentalWithdrawn > 0 || adminWithdrawn > 0) && (
+            <div className="mt-4 pt-4 border-t space-y-2">
+              {perentalWithdrawn > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <ArrowDownToLine className="size-4 text-orange-500" />
+                    <span className="text-muted-foreground">Dicairkan ke Perental</span>
+                  </div>
+                  <span className="font-bold text-orange-600 dark:text-orange-400">{formatCurrency(perentalWithdrawn)}</span>
+                </div>
+              )}
+              {adminWithdrawn > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="size-4 text-cyan-500" />
+                    <span className="text-muted-foreground">Dicairkan Admin</span>
+                  </div>
+                  <span className="font-bold text-cyan-600 dark:text-cyan-400">{formatCurrency(adminWithdrawn)}</span>
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground ml-6">
+                {(withdrawalStats?.perental_completed_count || 0) + (withdrawalStats?.admin_completed_count || 0)} total penarikan selesai
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -368,14 +416,18 @@ function RevenueSkeleton() {
 
 export default function AdminRevenue() {
   const [data, setData] = useState(null)
+  const [withdrawalStats, setWithdrawalStats] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('revenue') // ⚠️ TAMBAHKAN INI
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await adminService.getRevenueStats()
+        const [res, wRes] = await Promise.all([
+          adminService.getRevenueStats(),
+          adminService.getWithdrawalStats(),
+        ])
         setData(res.data)
+        setWithdrawalStats(wRes.data || wRes)
       } catch (error) {
         toast.error('Gagal memuat data pendapatan')
         console.error(error)
@@ -391,33 +443,21 @@ export default function AdminRevenue() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Manajemen Keuangan</h1>
-        <p className="text-muted-foreground">Kelola pendapatan dan penarikan saldo</p>
+        <h1 className="text-2xl font-bold tracking-tight">Pembagian Hasil & Keuangan</h1>
+        <p className="text-muted-foreground">Ringkasan pendapatan, pembagian hasil, dan pencairan saldo</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="revenue">Pembagian Hasil</TabsTrigger>
-          <TabsTrigger value="withdrawals">Penarikan Saldo</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="revenue" className="space-y-6 mt-6">
-          <RevenueStatsCards stats={data?.stats} />
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-              <RevenueChart data={data?.stats} />
-            </div>
-            <div className="lg:col-span-2">
-              <OwnerEarningsList earnings={data?.owner_earnings} />
-            </div>
-          </div>
-          <TransactionList transactions={data?.transactions} />
-        </TabsContent>
-        
-        <TabsContent value="withdrawals" className="mt-6">
-          <WithdrawalManagement />
-        </TabsContent>
-      </Tabs>
+      <RevenueStatsCards stats={data?.stats} withdrawalStats={withdrawalStats} />
+      
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <RevenueChart data={data?.stats} withdrawalStats={withdrawalStats} />
+        </div>
+        <div className="lg:col-span-2">
+          <OwnerEarningsList earnings={data?.owner_earnings} />
+        </div>
+      </div>
+      <TransactionList transactions={data?.transactions} />
     </div>
   )
 }

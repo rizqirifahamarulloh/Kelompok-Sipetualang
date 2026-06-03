@@ -47,6 +47,7 @@ import {
   Layers,
   RotateCcw,
   Wallet,
+  Banknote,
 } from 'lucide-react'
 
 function useMenuGroups() {
@@ -77,6 +78,7 @@ function useMenuGroups() {
         { label: t('admin.payments'), icon: CreditCard, href: '/admin/payments', badgeKey: 'payments', badgeColor: 'red' },
         { label: 'Pengembalian Barang', icon: RotateCcw, href: '/admin/pengembalian', badgeKey: 'pengembalian', badgeColor: 'orange' },
         { label: 'Refund Deposit', icon: Wallet, href: '/admin/deposit-refund', badgeKey: 'deposit', badgeColor: 'orange' },
+        { label: 'Penarikan Saldo', icon: Banknote, href: '/admin/withdrawals', badgeKey: 'withdrawals', badgeColor: 'red' },
       ],
     },
     {

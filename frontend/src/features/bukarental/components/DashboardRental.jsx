@@ -40,6 +40,7 @@ import {
   Calendar,
   Tag,
   MapPin,
+  ArrowDownToLine,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -81,6 +82,7 @@ export default function DashboardRental() {
   const [transactions, setTransactions] = useState([])
   const [categories, setCategories] = useState([])
   const [refundRequests, setRefundRequests] = useState([])
+  const [withdrawals, setWithdrawals] = useState([])
   const [loadingGears, setLoadingGears] = useState(false)
   const [loadingTransactions, setLoadingTransactions] = useState(false)
   const [loadingRefunds, setLoadingRefunds] = useState(false)
@@ -225,6 +227,15 @@ export default function DashboardRental() {
       console.error('Gagal mengambil data refund:', err)
     } finally {
       setLoadingRefunds(false)
+    }
+  }
+
+  const fetchWithdrawals = async () => {
+    try {
+      const res = await api.get('/customer/withdrawal/history')
+      setWithdrawals(res.data.data || [])
+    } catch (err) {
+      console.error('Gagal mengambil data penarikan:', err)
     }
   }
 
@@ -392,6 +403,7 @@ export default function DashboardRental() {
       fetchCategories()
       fetchUnreadChats()
       fetchRefundRequests()
+      fetchWithdrawals()
       
       // Polling chat unread badge setiap 15 detik
       const chatInterval = setInterval(fetchUnreadChats, 15000)
@@ -403,14 +415,29 @@ export default function DashboardRental() {
   const stats = useMemo(() => {
     const totalGears = gears.length
     
-    // Total Pendapatan dari transaksi sukses
-    const successfulTrans = transactions.filter(t => t.status_pembayaran === 'sukses')
-    const totalRevenue = successfulTrans.reduce((sum, t) => sum + Number(t.pendapatan_pemilik || 0), 0)
+    // Total Pendapatan HANYA dari transaksi yang sudah di-release (escrow selesai)
+    const releasedTrans = transactions.filter(t => t.status_pembayaran === 'sukses' && t.pemilik_released === true)
+    const totalRevenue = releasedTrans.reduce((sum, t) => sum + Number(t.pendapatan_pemilik || 0), 0)
+    
+    // Pendapatan yang masih ditahan admin (belum selesai disewa / belum dikonfirmasi kembali)
+    const pendingRevenue = transactions
+      .filter(t => t.status_pembayaran === 'sukses' && !t.pemilik_released)
+      .reduce((sum, t) => sum + Number(t.pendapatan_pemilik || 0), 0)
     
     // Total Refund yang sudah dikonfirmasi
     const totalRefund = refundRequests
       .filter(r => r.status === 'disetujui' && (r.status_refund === 'sudah_refund' || r.status_refund === 'proses_refund'))
       .reduce((sum, r) => sum + Number(r.jumlah_refund || 0), 0)
+    
+    // Total Penarikan Saldo (completed)
+    const totalWithdrawn = withdrawals
+      .filter(w => w.status === 'completed')
+      .reduce((sum, w) => sum + Number(w.amount || 0), 0)
+    
+    // Total Pending Penarikan
+    const pendingWithdrawal = withdrawals
+      .filter(w => w.status === 'pending')
+      .reduce((sum, w) => sum + Number(w.amount || 0), 0)
     
     const netRevenue = totalRevenue - totalRefund
     
@@ -422,7 +449,10 @@ export default function DashboardRental() {
     return {
       totalGears,
       totalRevenue,
+      pendingRevenue,
       totalRefund,
+      totalWithdrawn,
+      pendingWithdrawal,
       netRevenue,
       activeRentals,
       criticalStock,
@@ -430,7 +460,7 @@ export default function DashboardRental() {
       activeRefunds,
       totalRefundCount: refundRequests.length
     }
-  }, [gears, transactions, refundRequests])
+  }, [gears, transactions, refundRequests, withdrawals])
 
   // Generate local notifications for critical stock and new rentals
   useEffect(() => {
@@ -721,7 +751,8 @@ export default function DashboardRental() {
         monthIndex: d.getMonth(),
         year: d.getFullYear(),
         value: 0,
-        refund: 0
+        refund: 0,
+        withdrawn: 0
       })
     }
 
@@ -753,8 +784,22 @@ export default function DashboardRental() {
       }
     })
 
+    // Isi data penarikan (completed) per bulan
+    withdrawals.forEach(w => {
+      if (w.status === 'completed') {
+        const wDate = new Date(w.processed_at || w.created_at)
+        const wMonth = wDate.getMonth()
+        const wYear = wDate.getFullYear()
+
+        const match = result.find(m => m.monthIndex === wMonth && m.year === wYear)
+        if (match) {
+          match.withdrawn += Number(w.amount || 0)
+        }
+      }
+    })
+
     return result
-  }, [transactions, refundRequests])
+  }, [transactions, refundRequests, withdrawals])
 
   const pieData = useMemo(() => {
     const statuses = {
@@ -788,7 +833,7 @@ export default function DashboardRental() {
   // Hitung titik koordinat SVG Area Chart
   const svgLinePoints = useMemo(() => {
     if (chartData.length === 0) return []
-    const maxVal = Math.max(...chartData.map(d => d.value), ...chartData.map(d => d.refund), 100000)
+    const maxVal = Math.max(...chartData.map(d => d.value), ...chartData.map(d => d.refund), ...chartData.map(d => d.withdrawn), 100000)
     const width = 500
     const height = 150
     const padding = 20
@@ -808,7 +853,7 @@ export default function DashboardRental() {
     const hasRefund = chartData.some(d => d.refund > 0)
     if (!hasRefund) return []
 
-    const maxVal = Math.max(...chartData.map(d => d.value), ...chartData.map(d => d.refund), 100000)
+    const maxVal = Math.max(...chartData.map(d => d.value), ...chartData.map(d => d.refund), ...chartData.map(d => d.withdrawn), 100000)
     const width = 500
     const height = 150
     const padding = 20
@@ -817,6 +862,26 @@ export default function DashboardRental() {
       const x = padding + (i * (width - padding * 2) / (chartData.length - 1))
       const y = height - padding - (d.refund * (height - padding * 2) / maxVal)
       return { x, y, hasRefund: d.refund > 0 }
+    })
+
+    return points
+  }, [chartData])
+
+  // Hitung titik koordinat SVG Withdrawal Line
+  const svgWithdrawalPoints = useMemo(() => {
+    if (chartData.length === 0) return []
+    const hasWithdrawn = chartData.some(d => d.withdrawn > 0)
+    if (!hasWithdrawn) return []
+
+    const maxVal = Math.max(...chartData.map(d => d.value), ...chartData.map(d => d.refund), ...chartData.map(d => d.withdrawn), 100000)
+    const width = 500
+    const height = 150
+    const padding = 20
+
+    const points = chartData.map((d, i) => {
+      const x = padding + (i * (width - padding * 2) / (chartData.length - 1))
+      const y = height - padding - (d.withdrawn * (height - padding * 2) / maxVal)
+      return { x, y, hasWithdrawn: d.withdrawn > 0 }
     })
 
     return points
@@ -1044,6 +1109,11 @@ export default function DashboardRental() {
                               <TrendingUp className="size-3" /> Bagian Owner (80%)
                             </span>
                           )}
+                          {stats.pendingRevenue > 0 && (
+                            <span className="text-[10px] text-amber-600 flex items-center gap-1 font-bold mt-1 bg-amber-50 dark:bg-amber-950/10 px-2 py-0.5 rounded-full w-fit">
+                              <Clock className="size-3" /> Ditahan: {formatRupiah(stats.pendingRevenue)}
+                            </span>
+                          )}
                         </div>
                         <div className="size-12 bg-gradient-to-br from-teal-100 to-teal-50 dark:from-teal-950/40 dark:to-teal-950/20 text-teal-600 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition duration-300">
                           <DollarSign className="size-5" />
@@ -1110,7 +1180,7 @@ export default function DashboardRental() {
                             <CardDescription>Visualisasi earning & refund perental selama 6 bulan terakhir.</CardDescription>
                           </div>
                           {/* Legend */}
-                          <div className="flex items-center gap-4 text-[11px] font-semibold">
+                          <div className="flex items-center gap-4 text-[11px] font-semibold flex-wrap">
                             <div className="flex items-center gap-1.5">
                               <div className="w-3 h-[3px] rounded-full bg-emerald-500" />
                               <span className="text-muted-foreground">Pendapatan</span>
@@ -1119,6 +1189,12 @@ export default function DashboardRental() {
                               <div className="flex items-center gap-1.5">
                                 <div className="w-3 h-[3px] rounded-full bg-red-500" style={{ borderTop: '2px dashed #ef4444' }} />
                                 <span className="text-red-500">Refund</span>
+                              </div>
+                            )}
+                            {svgWithdrawalPoints.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-[3px] rounded-full bg-orange-500" />
+                                <span className="text-orange-500">Pencairan</span>
                               </div>
                             )}
                           </div>
@@ -1140,6 +1216,10 @@ export default function DashboardRental() {
                                 <linearGradient id="gradient-refund" x1="0" y1="0" x2="0" y2="1">
                                   <stop offset="0%" stopColor="#ef4444" stopOpacity="0.2" />
                                   <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
+                                </linearGradient>
+                                <linearGradient id="gradient-withdrawn" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#f97316" stopOpacity="0.2" />
+                                  <stop offset="100%" stopColor="#f97316" stopOpacity="0.0" />
                                 </linearGradient>
                               </defs>
                               
@@ -1187,6 +1267,26 @@ export default function DashboardRental() {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeDasharray="6 4"
+                                />
+                              )}
+
+                              {/* Withdrawal area fill */}
+                              {svgWithdrawalPoints.length > 0 && (
+                                <path 
+                                  d={`${svgWithdrawalPoints.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, '')} L ${svgWithdrawalPoints[svgWithdrawalPoints.length - 1].x} 130 L ${svgWithdrawalPoints[0].x} 130 Z`} 
+                                  fill="url(#gradient-withdrawn)" 
+                                />
+                              )}
+
+                              {/* Withdrawal line */}
+                              {svgWithdrawalPoints.length > 0 && (
+                                <path 
+                                  d={svgWithdrawalPoints.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, '')} 
+                                  fill="none" 
+                                  stroke="#f97316" 
+                                  strokeWidth="2.5" 
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
                                 />
                               )}
 
@@ -1242,6 +1342,11 @@ export default function DashboardRental() {
                                 {chartData[hoveredMonth].refund > 0 && (
                                   <span className="text-red-400 mt-0.5 text-xs font-bold flex items-center gap-1">
                                     <RotateCcw className="size-3" /> -{formatRupiah(chartData[hoveredMonth].refund)}
+                                  </span>
+                                )}
+                                {chartData[hoveredMonth].withdrawn > 0 && (
+                                  <span className="text-orange-400 mt-0.5 text-xs font-bold flex items-center gap-1">
+                                    <ArrowDownToLine className="size-3" /> {formatRupiah(chartData[hoveredMonth].withdrawn)}
                                   </span>
                                 )}
                               </div>
@@ -1314,16 +1419,34 @@ export default function DashboardRental() {
                               ))}
                             </div>
 
-                            {/* Refund summary below pie */}
-                            {stats.totalRefund > 0 && (
-                              <div className="mt-4 w-full px-2 pt-3 border-t border-border">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="flex items-center gap-1.5 text-red-500 font-semibold">
-                                    <RotateCcw className="size-3" /> Refund
-                                  </span>
-                                  <span className="font-bold text-red-500">-{formatRupiah(stats.totalRefund)}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs mt-1">
+                            {/* Refund, Withdrawal & Escrow summary below pie */}
+                            {(stats.totalRefund > 0 || stats.totalWithdrawn > 0 || stats.pendingRevenue > 0) && (
+                              <div className="mt-4 w-full px-2 pt-3 border-t border-border space-y-1.5">
+                                {stats.pendingRevenue > 0 && (
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="flex items-center gap-1.5 text-amber-500 font-semibold">
+                                      <Clock className="size-3" /> Ditahan Admin
+                                    </span>
+                                    <span className="font-bold text-amber-500">{formatRupiah(stats.pendingRevenue)}</span>
+                                  </div>
+                                )}
+                                {stats.totalRefund > 0 && (
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="flex items-center gap-1.5 text-red-500 font-semibold">
+                                      <RotateCcw className="size-3" /> Refund
+                                    </span>
+                                    <span className="font-bold text-red-500">-{formatRupiah(stats.totalRefund)}</span>
+                                  </div>
+                                )}
+                                {stats.totalWithdrawn > 0 && (
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="flex items-center gap-1.5 text-orange-500 font-semibold">
+                                      <ArrowDownToLine className="size-3" /> Dicairkan
+                                    </span>
+                                    <span className="font-bold text-orange-500">{formatRupiah(stats.totalWithdrawn)}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between text-xs pt-1">
                                   <span className="text-muted-foreground font-medium">Earning Bersih</span>
                                   <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatRupiah(stats.netRevenue)}</span>
                                 </div>

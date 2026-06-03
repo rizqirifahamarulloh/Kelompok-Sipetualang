@@ -377,12 +377,12 @@ class PengirimanController extends Controller
         try {
             $tanggalKembali = now();
             $tanggalSelesaiSewa = \Carbon\Carbon::parse($transaksi->tanggal_selesai);
-            
+
             $hariKeterlambatan = 0;
             if ($tanggalKembali->startOfDay()->greaterThan($tanggalSelesaiSewa->startOfDay())) {
                 $hariKeterlambatan = $tanggalKembali->startOfDay()->diffInDays($tanggalSelesaiSewa->startOfDay());
             }
-            
+
             $dendaPerHari = 20000;
             $totalDenda = $hariKeterlambatan * $dendaPerHari;
             $dendaKerusakan = $request->denda_kerusakan ?? 0;
@@ -420,6 +420,25 @@ class PengirimanController extends Controller
                 'deposit_status' => $depositStatus,
             ]);
 
+            // ===== ESCROW RELEASE: CAIRKAN PENDAPATAN KE PERENTAL =====
+            // Uang pendapatan pemilik yang ditahan admin sejak pembayaran customer
+            // sekarang di-release ke perental karena transaksi sudah selesai
+            if (!$transaksi->pemilik_released) {
+                $pemilik = \App\Models\Pengguna::find($transaksi->id_pemilik);
+                if ($pemilik) {
+                    $pemilik->increment('balance', $transaksi->pendapatan_pemilik);
+                    $pemilik->increment('total_earned', $transaksi->pendapatan_pemilik);
+                }
+
+                // Kurangi saldo admin (uang perental sudah di-release dari escrow)
+                $adminUser = \App\Models\Pengguna::where('peran_pengguna', 'admin')->first();
+                if ($adminUser) {
+                    $adminUser->decrement('balance', $transaksi->pendapatan_pemilik);
+                }
+
+                $transaksi->update(['pemilik_released' => true]);
+            }
+
             // Kirim notifikasi penutupan transaksi kepada customer
             $dendaMessage = $totalDenda > 0 ? " Denda keterlambatan sebesar Rp " . number_format($totalDenda, 0, ',', '.') . "." : " Pengembalian tepat waktu tanpa denda keterlambatan.";
             $kerusakanMessage = $dendaKerusakan > 0 ? " Denda kerusakan fisik sebesar Rp " . number_format($dendaKerusakan, 0, ',', '.') . "." : "";
@@ -440,6 +459,22 @@ class PengirimanController extends Controller
                     'total_denda' => $totalDenda,
                     'denda_kerusakan' => $dendaKerusakan,
                     'sisa_deposit' => $sisaDeposit,
+                ]
+            ]);
+
+            // Notifikasi ke pemilik (perental) bahwa barang sudah kembali & pendapatan dicairkan
+            $earningsMessage = " Pendapatan Anda sebesar Rp " . number_format($transaksi->pendapatan_pemilik, 0, ',', '.') . " telah dicairkan ke saldo Anda.";
+            Notifikasi::create([
+                'id_pengguna' => $transaksi->id_pemilik,
+                'unique_key' => 'pengembalian_pemilik_' . $transaksi->id_transaksi . '_' . time(),
+                'type' => 'return',
+                'title' => 'Barang Kembali — Pendapatan Dicairkan 💰',
+                'message' => "Barang '{$transaksi->nama_barang}' telah dikembalikan oleh penyewa dan diverifikasi Admin. Kondisi: {$request->kondisi_barang}." . $earningsMessage,
+                'severity' => 'success',
+                'data' => [
+                    'id_transaksi' => $transaksi->id_transaksi,
+                    'status_sewa' => 'selesai',
+                    'pendapatan_released' => $transaksi->pendapatan_pemilik,
                 ]
             ]);
 

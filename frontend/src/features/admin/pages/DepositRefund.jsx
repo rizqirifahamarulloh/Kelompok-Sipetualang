@@ -411,7 +411,7 @@ export default function DepositRefund() {
       {/* Refund Modal */}
       {selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in" onClick={() => setSelectedTrx(null)}>
-          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b bg-card">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">

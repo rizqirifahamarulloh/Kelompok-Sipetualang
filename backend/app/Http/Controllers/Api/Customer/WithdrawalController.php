@@ -18,18 +18,24 @@ class WithdrawalController extends Controller
     {
         $user = Auth::user();
 
+        // Hitung total saldo yang sedang pending (belum diproses admin)
+        $pendingAmount = Withdrawal::where('user_id', $user->id_pengguna)
+            ->where('status', 'pending')
+            ->sum('amount');
+
         return response()->json([
             'success' => true,
             'data' => [
                 'balance' => $user->balance,
                 'total_earned' => $user->total_earned,
                 'total_withdrawn' => $user->total_withdrawn,
+                'pending_withdrawal' => $pendingAmount,
             ]
         ]);
     }
 
     /**
-     * Instant withdrawal - LANGSUNG CAIR, TANPA KONFIRMASI
+     * Request withdrawal — STATUS PENDING, MENUNGGU APPROVAL ADMIN
      */
     public function requestWithdrawal(Request $request)
     {
@@ -52,45 +58,38 @@ class WithdrawalController extends Controller
             ], 400);
         }
 
-        // Check if balance is sufficient
-        if ($user->balance < $amount) {
+        // Hitung saldo yang sedang pending
+        $pendingAmount = Withdrawal::where('user_id', $user->id_pengguna)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        // Check if balance minus pending is sufficient
+        $availableBalance = $user->balance - $pendingAmount;
+        if ($availableBalance < $amount) {
             return response()->json([
                 'success' => false,
-                'message' => 'Saldo tidak mencukupi'
+                'message' => 'Saldo tidak mencukupi. Saldo tersedia: Rp ' . number_format($availableBalance, 0, ',', '.') . ' (setelah dikurangi penarikan dalam proses)'
             ], 400);
         }
 
-        DB::beginTransaction();
-
         try {
-            // Kurangi saldo user
-            $user->decrement('balance', $amount);
-
-            // Update total withdrawn
-            $user->increment('total_withdrawn', $amount);
-
-            // Catat penarikan dengan status COMPLETED (LANGSUNG CAIR)
+            // Catat penarikan dengan status PENDING (menunggu admin)
             $withdrawal = Withdrawal::create([
                 'user_id' => $user->id_pengguna,
                 'amount' => $amount,
                 'bank_name' => $request->bank_name,
                 'bank_account_number' => $request->bank_account_number,
                 'bank_account_name' => $request->bank_account_name,
-                'status' => 'completed', // ✅ LANGSUNG COMPLETED!
-                'processed_at' => now(),
-                'admin_note' => 'Penarikan otomatis cair'
+                'status' => 'pending',
             ]);
-
-            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Penarikan berhasil! Dana akan segera ditransfer ke rekening Anda.',
+                'message' => 'Pengajuan penarikan berhasil! Menunggu persetujuan admin.',
                 'data' => $withdrawal
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal melakukan penarikan: ' . $e->getMessage()

@@ -169,6 +169,8 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/withdrawals/all', [WithdrawalAdminController::class, 'getAllWithdrawals']);
         Route::get('/withdrawals/stats', [WithdrawalAdminController::class, 'getStats']);
         Route::post('/withdrawals/instant', [WithdrawalAdminController::class, 'adminWithdrawal']);
+        Route::post('/withdrawals/{id}/approve', [WithdrawalAdminController::class, 'approveWithdrawal']);
+        Route::post('/withdrawals/{id}/reject', [WithdrawalAdminController::class, 'rejectWithdrawal']);
 
         // Kategori & Destinasi
         Route::apiResource('/kategori', KategoriController::class);

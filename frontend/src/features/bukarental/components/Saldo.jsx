@@ -34,6 +34,9 @@ import {
   ShoppingBag,
   RotateCcw,
   Home,
+  Clock,
+  Eye,
+  ImageIcon,
 } from 'lucide-react'
 import api from '@/services/api'
 import { getStorageUrl } from '@/utils/storageUrl'
@@ -73,6 +76,10 @@ export default function Saldo() {
   const [bankAccountNumber, setBankAccountNumber] = useState('')
   const [bankAccountName, setBankAccountName] = useState('')
 
+  // View proof dialog
+  const [viewProofOpen, setViewProofOpen] = useState(false)
+  const [proofImage, setProofImage] = useState('')
+
   const fetchData = async () => {
     try {
       setIsLoading(true)
@@ -106,8 +113,10 @@ export default function Saldo() {
       toast.error('Lengkapi data rekening')
       return
     }
-    
-    if (parseFloat(amount) > (balance?.balance || 0)) {
+
+    // Hitung saldo tersedia (saldo - pending)
+    const availableBalance = (balance?.balance || 0) - (balance?.pending_withdrawal || 0)
+    if (parseFloat(amount) > availableBalance) {
       toast.error('Saldo tidak mencukupi')
       return
     }
@@ -121,7 +130,7 @@ export default function Saldo() {
         bank_account_name: bankAccountName,
       })
       
-      toast.success('Penarikan berhasil! Dana akan segera diproses.')
+      toast.success('Pengajuan penarikan berhasil! Menunggu persetujuan admin.')
       setDialogOpen(false)
       setAmount('')
       setBankName('')
@@ -144,7 +153,7 @@ export default function Saldo() {
   if (isLoading) {
     return (
       <>
-        <Navbar />
+        <Navbar forceScrolled={true} />
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-emerald-50/20 pt-20">
           <div className="container max-w-7xl mx-auto px-4 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -162,9 +171,11 @@ export default function Saldo() {
     )
   }
 
+  const availableBalance = (balance?.balance || 0) - (balance?.pending_withdrawal || 0)
+
   return (
     <>
-      <Navbar />
+      <Navbar forceScrolled={true} />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-emerald-50/20 pt-20">
         <div className="container max-w-7xl mx-auto px-4 py-8">
           
@@ -259,16 +270,29 @@ export default function Saldo() {
               </div>
 
               {/* Card Saldo */}
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="col-span-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white">
                   <CardHeader>
-                    <CardTitle className="text-white/80">Total Saldo</CardTitle>
+                    <CardTitle className="text-white/80 text-sm">Total Saldo</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-3xl font-bold">{formatCurrency(balance?.balance || 0)}</div>
-                    <p className="text-green-100 text-sm mt-2">Tersedia untuk ditarik</p>
+                    <p className="text-green-100 text-sm mt-2">Saldo keseluruhan</p>
                   </CardContent>
                 </Card>
+
+                {(balance?.pending_withdrawal || 0) > 0 && (
+                  <Card className="col-span-1 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400">Dalam Proses</CardTitle>
+                      <Clock className="size-4 text-amber-500" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{formatCurrency(balance?.pending_withdrawal || 0)}</div>
+                      <p className="text-xs text-amber-600/70 dark:text-amber-500/70">Menunggu approval admin</p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -314,8 +338,13 @@ export default function Saldo() {
                       <div>
                         <Label>Saldo Tersedia</Label>
                         <div className="text-2xl font-bold text-green-600 mt-1">
-                          {formatCurrency(balance?.balance || 0)}
+                          {formatCurrency(availableBalance)}
                         </div>
+                        {(balance?.pending_withdrawal || 0) > 0 && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            {formatCurrency(balance.pending_withdrawal)} sedang dalam proses penarikan
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -327,7 +356,7 @@ export default function Saldo() {
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           min="50000"
-                          max={balance?.balance || 0}
+                          max={availableBalance}
                           required
                         />
                       </div>
@@ -399,6 +428,7 @@ export default function Saldo() {
                           <TableHead>Nama Rekening</TableHead>
                           <TableHead className="text-right">Jumlah</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead>Bukti / Catatan</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -406,13 +436,43 @@ export default function Saldo() {
                           <TableRow key={item.id}>
                             <TableCell className="text-xs">{formatDate(item.created_at)}</TableCell>
                             <TableCell>{item.bank_name}</TableCell>
-                            <TableCell>{item.bank_account_number}</TableCell>
+                            <TableCell className="font-mono text-xs">{item.bank_account_number}</TableCell>
                             <TableCell>{item.bank_account_name}</TableCell>
                             <TableCell className="text-right font-semibold">{formatCurrency(item.amount)}</TableCell>
                             <TableCell>
-                              <Badge className={item.status === 'completed' ? 'bg-green-500' : item.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}>
-                                {item.status === 'completed' ? 'Selesai' : item.status === 'pending' ? 'Diproses' : 'Ditolak'}
+                              <Badge className={
+                                item.status === 'completed' 
+                                  ? 'bg-green-500 hover:bg-green-600' 
+                                  : item.status === 'pending' 
+                                    ? 'bg-amber-500 hover:bg-amber-600' 
+                                    : 'bg-red-500 hover:bg-red-600'
+                              }>
+                                {item.status === 'completed' ? 'Selesai' : item.status === 'pending' ? 'Menunggu' : 'Ditolak'}
                               </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {item.status === 'completed' && item.transfer_proof ? (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="text-xs gap-1 h-7"
+                                  onClick={() => { setProofImage(getStorageUrl(item.transfer_proof)); setViewProofOpen(true); }}
+                                >
+                                  <Eye className="size-3" />
+                                  Bukti
+                                </Button>
+                              ) : item.status === 'rejected' && item.admin_note ? (
+                                <span className="text-xs text-red-600 dark:text-red-400" title={item.admin_note}>
+                                  {item.admin_note.length > 30 ? item.admin_note.substring(0, 30) + '...' : item.admin_note}
+                                </span>
+                              ) : item.status === 'pending' ? (
+                                <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                  <Clock className="size-3" />
+                                  Menunggu admin
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">-</span>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -425,6 +485,25 @@ export default function Saldo() {
           </div>
         </div>
       </div>
+
+      {/* View Proof Dialog */}
+      <Dialog open={viewProofOpen} onOpenChange={setViewProofOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="size-5" />
+              Bukti Transfer
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <img 
+              src={proofImage} 
+              alt="Bukti Transfer" 
+              className="max-h-[500px] rounded-lg object-contain border" 
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
