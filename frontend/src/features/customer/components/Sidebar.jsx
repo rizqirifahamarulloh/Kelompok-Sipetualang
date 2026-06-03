@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
 import { transactionService } from '../services/transactionService';
+import api from '@/services/api';
 import { 
   Shield, 
   User,
@@ -20,14 +21,35 @@ import {
   CreditCard
 } from 'lucide-react';
 
+// Determine the highest-priority shipping status from all active shipments
+function getShippingBadge(shipments) {
+  if (!shipments || shipments.length === 0) return null;
+
+  // Filter out completed ones (diterima)
+  const active = shipments.filter(s => {
+    const status = s.pengiriman?.status_pengiriman || 'pending';
+    return status !== 'diterima';
+  });
+
+  if (active.length === 0) return null;
+
+  // Priority: sampai (green) > dikirim (orange) > pending (yellow)
+  const hasGreen = active.some(s => s.pengiriman?.status_pengiriman === 'sampai');
+  const hasOrange = active.some(s => s.pengiriman?.status_pengiriman === 'dikirim');
+
+  if (hasGreen) return { count: active.length, color: 'bg-emerald-500', label: 'Tiba' };
+  if (hasOrange) return { count: active.length, color: 'bg-orange-500', label: 'Dikirim' };
+  return { count: active.length, color: 'bg-amber-400', label: 'Diproses' };
+}
+
 export default function Sidebar({ user, isKtpVerified, getPhotoUrl, getInitials }) {
   const location = useLocation();
   const [counts, setCounts] = useState({
-    rentals: 0,     // sedang_disewa + dibayar
-    transaksi: 0,   // menunggu_pembayaran
-    pengiriman: 0,  // status_kembali === 'proses'
-    pengembalian: 0 // selesai recently
+    rentals: 0,
+    transaksi: 0,
+    pengembalian: 0
   });
+  const [shippingBadge, setShippingBadge] = useState(null);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -37,21 +59,33 @@ export default function Sidebar({ user, isKtpVerified, getPhotoUrl, getInitials 
         setCounts({
           rentals: data.filter(t => t.status_sewa === 'sedang_disewa' || t.status_sewa === 'dibayar').length,
           transaksi: data.filter(t => t.status_sewa === 'menunggu_pembayaran').length,
-          pengiriman: data.filter(t => t.status_sewa === 'sedang_disewa' && t.status_kembali === 'proses').length,
           pengembalian: data.filter(t => t.status_sewa === 'selesai' && t.deposit_status === 'pending').length,
         });
       } catch {
         // silent fail
       }
     };
+
+    const fetchShipping = async () => {
+      try {
+        const response = await api.get('/customer/pengiriman/list');
+        const items = response?.data?.data ?? response?.data ?? [];
+        const shipments = Array.isArray(items) ? items : [];
+        setShippingBadge(getShippingBadge(shipments));
+      } catch {
+        // silent fail
+      }
+    };
+
     fetchCounts();
+    fetchShipping();
   }, []);
 
   const menuItems = [
     { name: 'Profil Saya', path: '/profile', icon: <User size={16} />, badge: 0 },
     { name: 'Penyewaan Saya', path: '/profile/rentals', icon: <Package size={16} />, badge: counts.rentals, badgeColor: 'bg-emerald-500' },
     { name: 'Transaksi', path: '/profile/transaksi', icon: <CreditCard size={16} />, badge: counts.transaksi, badgeColor: 'bg-amber-500' },
-    { name: 'Status Pengiriman', path: '/profile/pengiriman', icon: <Truck size={16} />, badge: counts.pengiriman, badgeColor: 'bg-blue-500' },
+    { name: 'Status Pengiriman', path: '/profile/pengiriman', icon: <Truck size={16} />, badge: shippingBadge?.count || 0, badgeColor: shippingBadge?.color || 'bg-blue-500', badgeLabel: shippingBadge?.label },
     { name: 'Pengembalian', path: '/profile/pengembalian', icon: <RotateCcw size={16} />, badge: counts.pengembalian, badgeColor: 'bg-violet-500' },
     { name: 'Verifikasi', path: '/customer/verification', icon: <Shield size={16} />, badge: 0 },
   ];
@@ -91,7 +125,10 @@ export default function Sidebar({ user, isKtpVerified, getPhotoUrl, getInitials 
               {item.icon}
               <span className="flex-1">{item.name}</span>
               {item.badge > 0 && (
-                <span className={`${item.badgeColor || 'bg-primary'} text-white text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 animate-pulse`}>
+                <span className={`${item.badgeColor || 'bg-primary'} text-white text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1.5 gap-1`}>
+                  {item.badgeLabel && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse shrink-0"></span>
+                  )}
                   {item.badge}
                 </span>
               )}
