@@ -79,6 +79,11 @@ class Barang extends Model
         return $this->hasMany(Ulasan::class, 'id_barang', 'id_barang');
     }
 
+    public function fotoBarang()
+    {
+        return $this->hasMany(FotoBarang::class, 'id_barang', 'id_barang');
+    }
+
     public function getAvgRatingAttribute()
     {
         $avg = $this->ulasan()->avg('rating');
