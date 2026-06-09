@@ -25,8 +25,6 @@ import {
   ArrowUp,
   CalendarDays,
   History,
-  Star,
-  Camera,
   X,
   MessageSquare,
   AlertCircle,
@@ -79,15 +77,6 @@ export default function TransaksiPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
   const [processingId, setProcessingId] = useState(null);
-
-  // Review state
-  const [reviewModal, setReviewModal] = useState(null);
-  const [reviewRating, setReviewRating] = useState(0);
-  const [reviewComment, setReviewComment] = useState('');
-  const [reviewPhotos, setReviewPhotos] = useState([]);
-  const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState([]);
-  const [submittingReview, setSubmittingReview] = useState(false);
-  const [reviewedTransactions, setReviewedTransactions] = useState(new Set());
   const [depositProofView, setDepositProofView] = useState(null);
 
   const token = localStorage.getItem('token');
@@ -107,22 +96,7 @@ export default function TransaksiPage() {
 
   useEffect(() => { fetchTransactions(); }, []);
 
-  useEffect(() => {
-    const checkReviews = async () => {
-      const selesai = transactions.filter(t => t.status_sewa === 'selesai');
-      const reviewed = new Set();
-      for (const t of selesai) {
-        try {
-          const res = await axios.get(`${API_URL}/customer/ulasan/check/${t.id_transaksi}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.data?.has_review) reviewed.add(t.id_transaksi);
-        } catch { /* skip */ }
-      }
-      setReviewedTransactions(reviewed);
-    };
-    if (transactions.length > 0) checkReviews();
-  }, [transactions]);
+
 
   // ── Filtered & sorted
   const filteredData = useMemo(() => {
@@ -184,52 +158,7 @@ export default function TransaksiPage() {
   const getPhotoUrl = () => getStorageUrl(user?.profile_photo);
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
 
-  // ── Review handlers
-  const openReviewModal = (trans) => {
-    setReviewModal(trans);
-    setReviewRating(0);
-    setReviewComment('');
-    setReviewPhotos([]);
-    setReviewPhotoPreviews([]);
-  };
 
-  const handleReviewPhotoChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    const remaining = 5 - reviewPhotos.length;
-    if (remaining <= 0) { toast.error('Maksimal 5 foto'); return; }
-    const newFiles = files.slice(0, remaining);
-    setReviewPhotos(prev => [...prev, ...newFiles]);
-    setReviewPhotoPreviews(prev => [...prev, ...newFiles.map(f => URL.createObjectURL(f))]);
-    e.target.value = '';
-  };
-
-  const removeReviewPhoto = (index) => {
-    setReviewPhotos(prev => prev.filter((_, i) => i !== index));
-    setReviewPhotoPreviews(prev => { URL.revokeObjectURL(prev[index]); return prev.filter((_, i) => i !== index); });
-  };
-
-  const submitReview = async () => {
-    if (reviewRating === 0) { toast.error('Pilih rating terlebih dahulu'); return; }
-    setSubmittingReview(true);
-    try {
-      const formData = new FormData();
-      formData.append('id_transaksi', reviewModal.id_transaksi);
-      formData.append('rating', reviewRating);
-      if (reviewComment.trim()) formData.append('komentar', reviewComment);
-      reviewPhotos.forEach((file) => formData.append('foto_ulasan[]', file));
-      await axios.post(`${API_URL}/customer/ulasan`, formData, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
-      });
-      toast.success('Ulasan berhasil dikirim!');
-      setReviewedTransactions(prev => new Set([...prev, reviewModal.id_transaksi]));
-      setReviewModal(null);
-    } catch (err) {
-      const data = err.response?.data;
-      toast.error(data?.errors ? Object.values(data.errors).flat()[0] : data?.message || 'Gagal mengirim ulasan');
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
 
   if (!user) return null;
 
@@ -316,19 +245,7 @@ export default function TransaksiPage() {
             </Button>
           )}
 
-          {trans.status_sewa === 'selesai' && (
-            <div className="pt-1">
-              {reviewedTransactions.has(trans.id_transaksi) ? (
-                <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold justify-center py-2 bg-emerald-50 dark:bg-emerald-950/10 rounded-xl border border-emerald-100">
-                  <CheckCircle className="w-3.5 h-3.5" /> Sudah Diulas
-                </div>
-              ) : (
-                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white h-10 text-xs gap-2 rounded-xl" onClick={() => openReviewModal(trans)}>
-                  <Star className="w-3.5 h-3.5" /> Beri Ulasan
-                </Button>
-              )}
-            </div>
-          )}
+
         </div>
       </div>
     );
@@ -422,58 +339,6 @@ export default function TransaksiPage() {
         </div>
       </div>
 
-      {/* Review Modal */}
-      {reviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setReviewModal(null)}>
-          <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-card z-10">
-              <h2 className="text-lg font-bold flex items-center gap-2"><Star className="w-5 h-5 text-amber-500" /> Beri Ulasan</h2>
-              <button onClick={() => setReviewModal(null)} className="text-muted-foreground hover:text-foreground rounded-lg p-1 hover:bg-muted transition"><X size={20} /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="bg-muted/50 p-4 rounded-xl text-xs space-y-1 border">
-                <p><strong>Barang:</strong> {reviewModal.nama_barang}</p>
-                <p><strong>Periode:</strong> {reviewModal.tanggal_mulai} — {reviewModal.tanggal_selesai}</p>
-              </div>
-              {/* Rating */}
-              <div className="text-center space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground">Berikan Rating</p>
-                <div className="flex justify-center gap-2">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <button key={s} onClick={() => setReviewRating(s)} className="transition-transform hover:scale-110">
-                      <Star className={`w-8 h-8 ${s <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/* Comment */}
-              <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="Tulis ulasan Anda..." rows="3"
-                className="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-amber-500 bg-card resize-none" />
-              {/* Photos */}
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Foto ({reviewPhotos.length}/5)</p>
-                <div className="flex flex-wrap gap-2">
-                  {reviewPhotoPreviews.map((src, idx) => (
-                    <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border">
-                      <img src={src} alt="" className="w-full h-full object-cover" />
-                      <button onClick={() => removeReviewPhoto(idx)} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
-                    </div>
-                  ))}
-                  {reviewPhotos.length < 5 && (
-                    <label className="w-16 h-16 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-muted/50 transition">
-                      <Camera className="w-5 h-5 text-muted-foreground" />
-                      <input type="file" accept="image/*" multiple onChange={handleReviewPhotoChange} className="hidden" />
-                    </label>
-                  )}
-                </div>
-              </div>
-              <Button onClick={submitReview} disabled={submittingReview || reviewRating === 0} className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-xl gap-2">
-                {submittingReview ? <><Loader2 className="w-4 h-4 animate-spin" /> Mengirim...</> : <><Star className="w-4 h-4" /> Kirim Ulasan</>}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
 
     {/* Deposit Proof Lightbox */}

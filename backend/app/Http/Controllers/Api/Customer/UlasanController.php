@@ -134,75 +134,91 @@ class UlasanController extends Controller
         }
     }
 
-    /**
-     * PUT /api/customer/ulasan/{id}
-     * Auth — Edit ulasan (maksimal 2x)
-     */
-    public function update(Request $request, $id)
-    {
-        $user = Auth::user();
+/**
+ * PUT /api/customer/ulasan/{id}
+ * Auth — Edit ulasan (maksimal 2x)
+ */
+public function update(Request $request, $id)
+{
+    $user = Auth::user();
 
-        $ulasan = Ulasan::where('id_ulasan', $id)
-            ->where('id_pengguna', $user->id_pengguna)
-            ->first();
+    $ulasan = Ulasan::where('id_ulasan', $id)
+        ->where('id_pengguna', $user->id_pengguna)
+        ->first();
 
-        if (!$ulasan) {
-            return response()->json(['message' => 'Ulasan tidak ditemukan'], 404);
-        }
+    if (!$ulasan) {
+        return response()->json(['message' => 'Ulasan tidak ditemukan'], 404);
+    }
 
-        // Cek maksimal edit (2x)
-        if ($ulasan->edited_count >= 2) {
-            return response()->json([
-                'message' => 'Anda sudah mencapai batas maksimal edit ulasan (2x)'
-            ], 400);
-        }
+    if ($ulasan->edited_count >= 2) {
+        return response()->json(['message' => 'Anda sudah mencapai batas maksimal edit ulasan (2x)'], 400);
+    }
 
-        $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'komentar' => 'nullable|string|max:1000',
-            'foto_ulasan' => 'nullable|array|max:5',
-            'foto_ulasan.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-        ]);
+    $request->validate([
+        'rating' => 'required|integer|min:1|max:5',
+        'komentar' => 'nullable|string|max:1000',
+        'foto_ulasan' => 'nullable|array|max:5',
+        'foto_ulasan.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        'delete_fotos' => 'nullable|string', // JSON array of photo paths to delete
+    ]);
 
-        // Handle foto baru
-        $fotoPaths = $ulasan->foto_ulasan ?? [];
-        if ($request->hasFile('foto_ulasan')) {
-            $fotoPaths = [];
-            foreach ($request->file('foto_ulasan') as $file) {
-                $fotoPaths[] = $file->store('ulasan', 'public');
+    // Handle delete existing photos
+    $currentPhotos = $ulasan->foto_ulasan ?? [];
+    if ($request->has('delete_fotos')) {
+        $toDelete = json_decode($request->delete_fotos, true);
+        if (is_array($toDelete)) {
+            foreach ($toDelete as $photoPath) {
+                // Delete from storage
+                if (\Storage::disk('public')->exists($photoPath)) {
+                    \Storage::disk('public')->delete($photoPath);
+                }
+                // Remove from array
+                $currentPhotos = array_values(array_filter($currentPhotos, fn($p) => $p !== $photoPath));
             }
         }
+    }
 
-        DB::beginTransaction();
-        try {
-            $ulasan->update([
-                'rating' => $request->rating,
-                'komentar' => $request->komentar,
-                'foto_ulasan' => !empty($fotoPaths) ? $fotoPaths : null,
-                'edited_count' => $ulasan->edited_count + 1,
-                'edited_at' => now(),
-            ]);
-
-            // Update rating barang
-            $this->updateBarangRating($ulasan->id_barang);
-
-            DB::commit();
-
-            $ulasan->load('pengguna:id_pengguna,nama,profile_photo');
-
-            return response()->json([
-                'message' => 'Ulasan berhasil diperbarui',
-                'ulasan' => $ulasan,
-                'sisa_edit' => 2 - $ulasan->edited_count
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Gagal memperbarui ulasan: ' . $e->getMessage()
-            ], 500);
+    // Handle new photos
+    $newPhotos = [];
+    if ($request->hasFile('foto_ulasan')) {
+        foreach ($request->file('foto_ulasan') as $file) {
+            $newPhotos[] = $file->store('ulasan', 'public');
         }
     }
+
+    // Merge existing (after delete) + new photos
+    $allPhotos = array_merge($currentPhotos, $newPhotos);
+    $allPhotos = array_slice($allPhotos, 0, 5); // Max 5 photos
+
+    DB::beginTransaction();
+    try {
+        $ulasan->update([
+            'rating' => $request->rating,
+            'komentar' => $request->komentar,
+            'foto_ulasan' => !empty($allPhotos) ? $allPhotos : null,
+            'edited_count' => $ulasan->edited_count + 1,
+            'edited_at' => now(),
+        ]);
+
+        $this->updateBarangRating($ulasan->id_barang);
+
+        DB::commit();
+
+        $ulasan->load('pengguna:id_pengguna,nama,profile_photo');
+
+        return response()->json([
+            'message' => 'Ulasan berhasil diperbarui',
+            'ulasan' => $ulasan,
+            'sisa_edit' => 2 - $ulasan->edited_count
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'message' => 'Gagal memperbarui ulasan: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     /**
      * GET /api/customer/ulasan/check/{id_transaksi}

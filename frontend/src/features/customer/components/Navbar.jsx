@@ -41,20 +41,32 @@ export default function Navbar({
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    let isSubscribed = true;
+    let intervalId = null;
+
     const fetchUnreadChats = async () => {
       try {
         const res = await api.get('/customer/chat/conversations');
-        const convs = res.data.data || [];
-        const totalUnread = convs.reduce((sum, item) => sum + (item.unread_count || 0), 0);
-        setUnreadChats(totalUnread);
+        if (isSubscribed) {
+          const convs = res.data.data || [];
+          const totalUnread = convs.reduce((sum, item) => sum + (item.unread_count || 0), 0);
+          setUnreadChats(totalUnread);
+        }
       } catch (err) {
-        console.error('Gagal mengambil data chat:', err);
+        if (isSubscribed) {
+          console.error('Gagal mengambil data chat:', err);
+        }
       }
     };
 
+    // Only poll every 30 seconds (reduced spam), not every 15 seconds
     fetchUnreadChats();
-    const interval = setInterval(fetchUnreadChats, 15000);
-    return () => clearInterval(interval);
+    intervalId = setInterval(fetchUnreadChats, 30000);
+    
+    return () => {
+      isSubscribed = false;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthenticated]);
 
   // === Rental Chat Popup Helpers ===

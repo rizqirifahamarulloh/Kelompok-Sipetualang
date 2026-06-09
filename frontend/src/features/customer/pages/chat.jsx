@@ -194,23 +194,79 @@ export default function ChatPage() {
     };
 
     loadData();
-  }, [token, fetchConversations, fetchCustomers, fetchMessages]);
+  }, [token]);
 
-  // POLLING
+  // POLLING - FIXED: Use inline fetch to avoid stale closure
   useEffect(() => {
-    if (!currentChat?.id_conversation) return;
+    if (!currentChat?.id_conversation || !token) return;
 
+    let isActive = true;
+
+    // Inline fetch functions to avoid closure issues
+    const fetchMsg = async () => {
+      if (!isActive) return;
+      try {
+        const response = await axios.get(
+          `${API_URL}/customer/chat/messages/${currentChat.id_conversation}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!isActive) return;
+        const data = response.data.data;
+        const newMessages = data.messages || [];
+        const lastMessage = newMessages[newMessages.length - 1];
+
+        if (lastMessage?.id_message === lastMessageIdRef.current) {
+          return;
+        }
+
+        lastMessageIdRef.current = lastMessage?.id_message;
+        setMessages(newMessages);
+        setCurrentChat(data.conversation);
+      } catch (error) {
+        if (isActive) console.error(error);
+      }
+    };
+
+    const fetchConvs = async () => {
+      if (!isActive) return;
+      try {
+        const response = await axios.get(
+          `${API_URL}/customer/chat/conversations`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!isActive) return;
+        const data = response.data.data || [];
+        setConversations(data);
+      } catch (error) {
+        if (isActive) console.error(error);
+      }
+    };
+
+    // Initial fetch
+    fetchMsg();
+    fetchConvs();
+
+    // Then poll every 5 seconds
     pollingInterval.current = setInterval(() => {
-      fetchMessages(currentChat.id_conversation, true);
-      fetchConversations();
+      fetchMsg();
+      fetchConvs();
     }, 5000);
 
     return () => {
+      isActive = false;
       if (pollingInterval.current) {
         clearInterval(pollingInterval.current);
       }
     };
-  }, [currentChat?.id_conversation, fetchMessages, fetchConversations]);
+  }, [currentChat?.id_conversation, token]);
 
   // START NEW CHAT
   const startNewChat = useCallback(
