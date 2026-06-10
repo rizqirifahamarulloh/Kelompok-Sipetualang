@@ -9,6 +9,7 @@ use App\Models\Transaksi;
 use App\Models\Pengembalian;
 use App\Models\Pengguna;
 use App\Services\MidtransService;
+use App\Services\VoucherService;  // ✅ Tambahkan ini
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,16 +17,14 @@ use Illuminate\Support\Facades\DB;
 class TransaksiController extends Controller
 {
     protected $midtrans;
+    protected $voucherService;  // ✅ Tambahkan ini
 
-    public function __construct(MidtransService $midtrans)
+    public function __construct(MidtransService $midtrans, VoucherService $voucherService)  // ✅ Tambahkan parameter
     {
         $this->midtrans = $midtrans;
+        $this->voucherService = $voucherService;  // ✅ Tambahkan ini
     }
 
-    /**
-     * Multi-item checkout — supports 1 or more items in a single transaction.
-     * Creates 1 Transaksi (master) + N DetailTransaksi (items) + 1 Midtrans snap token.
-     */
     public function checkout(Request $request)
     {
         $user = Auth::user();
@@ -45,6 +44,7 @@ class TransaksiController extends Controller
             'metode_pengiriman' => 'required|in:pickup,delivery',
             'alamat_pengiriman' => 'nullable|string',
             'biaya_pengiriman' => 'nullable|numeric',
+            'kode_voucher' => 'nullable|string',  // ✅ Tambahkan validasi voucher
         ]);
 
         DB::beginTransaction();
@@ -52,6 +52,7 @@ class TransaksiController extends Controller
         try {
             $items = $request->items;
             $biayaPengiriman = $request->biaya_pengiriman ?? 0;
+            $voucherCode = $request->kode_voucher;
 
             // Calculate totals for all items
             $totalSewa = 0;
@@ -107,31 +108,68 @@ class TransaksiController extends Controller
                     'id_pemilik' => $barang->id_pemilik,
                     'total_hari' => $totalHari,
                 ];
+            }
 
-                // Midtrans item
+            // ✅ PERBAIKAN: Proses voucher (diskon hanya untuk totalSewa, TANPA deposit)
+            $voucherDiscount = 0;
+            $appliedVoucherData = null;
+            $finalTotalSewa = $totalSewa;
+
+            if ($voucherCode) {
+                $result = $this->voucherService->applyVoucher($voucherCode, $totalSewa, Auth::id());
+
+                if ($result['valid']) {
+                    $voucherDiscount = $result['discount'];
+                    $appliedVoucherData = $result['voucher'];
+                    $finalTotalSewa = $result['final_price'];
+                } else {
+                    // Jika voucher tidak valid, tetap lanjutkan tapi beri warning
+                    // Atau bisa juga return error jika ingin memaksa voucher valid
+                }
+            }
+
+            // ✅ Hitung ulang total biaya: (SEWA setelah diskon) + DEPOSIT + ONGKIR
+            $totalBiaya = $finalTotalSewa + $totalDeposit + $biayaPengiriman;
+
+            // ✅ Buat Midtrans items berdasarkan harga setelah diskon
+            // Ini lebih kompleks karena diskon harus dialokasikan ke item sewa (bukan deposit)
+            // Cara sederhana: buat item diskon negatif di Midtrans
+
+            $midtransItems = [];
+
+            // Add rental items with original prices
+            foreach ($detailItems as $detail) {
                 $midtransItems[] = [
-                    'id' => (string) $barang->id_barang,
-                    'price' => (int) $barang->harga_sewa,
-                    'quantity' => $totalHari * $item['jumlah'],
-                    'name' => mb_substr($barang->nama_barang, 0, 40) . ' (' . $totalHari . 'hr x' . $item['jumlah'] . ')',
+                    'id' => (string) $detail['id_barang'],
+                    'price' => (int) $detail['harga_per_hari'],
+                    'quantity' => $detail['total_hari'] * $detail['jumlah_pinjam'],
+                    'name' => mb_substr($detail['nama_barang'], 0, 40) . ' (' . $detail['total_hari'] . 'hr x' . $detail['jumlah_pinjam'] . ')',
                 ];
+            }
 
-                // Midtrans deposit item per barang
-                if ($itemDeposit > 0) {
+            // Add deposit items (NOT discounted)
+            foreach ($detailItems as $detail) {
+                if ($detail['nominal_deposit'] > 0) {
                     $midtransItems[] = [
-                        'id' => 'DEP-' . $barang->id_barang,
-                        'price' => (int) $barang->nominal_deposit,  // ✅ Harga per unit deposit
-                        'quantity' => $item['jumlah'],              // ✅ Dikalikan jumlah unit
-                        'name' => 'Deposit: ' . mb_substr($barang->nama_barang, 0, 30),
+                        'id' => 'DEP-' . $detail['id_barang'],
+                        'price' => (int) ($detail['nominal_deposit'] / $detail['jumlah_pinjam']), // price per unit
+                        'quantity' => $detail['jumlah_pinjam'],
+                        'name' => 'Deposit: ' . mb_substr($detail['nama_barang'], 0, 30),
                     ];
                 }
             }
 
-            // Fee admin (20% dari total sewa) + ongkir (pengiriman internal SiPetualang)
-            $feeAdmin = round($totalSewa * 0.2) + $biayaPengiriman;
-            $pendapatanPemilik = $totalSewa - round($totalSewa * 0.2);
+            // ✅ Add discount as negative item (only if discount > 0)
+            if ($voucherDiscount > 0) {
+                $midtransItems[] = [
+                    'id' => 'DISCOUNT',
+                    'price' => - (int) $voucherDiscount,
+                    'quantity' => 1,
+                    'name' => 'Diskon Voucher: ' . ($voucherCode ?? ''),
+                ];
+            }
 
-            // Add shipping cost as Midtrans item if applicable
+            // Add shipping cost if applicable
             if ($biayaPengiriman > 0) {
                 $midtransItems[] = [
                     'id' => 'SHIPPING',
@@ -141,14 +179,15 @@ class TransaksiController extends Controller
                 ];
             }
 
-            // Calculate gross_amount DIRECTLY from Midtrans items to guarantee exact match
+            // Calculate gross_amount from Midtrans items
             $grossAmount = 0;
             foreach ($midtransItems as $mi) {
                 $grossAmount += $mi['price'] * $mi['quantity'];
             }
 
-            // Total biaya for DB record
-            $totalBiaya = $grossAmount;
+            // Fee admin (20% dari total SEWA ASLI sebelum diskon)
+            $feeAdmin = round($totalSewa * 0.2) + $biayaPengiriman;
+            $pendapatanPemilik = $totalSewa - round($totalSewa * 0.2);
 
             // Build order ID
             $orderId = 'TRX-' . time() . '-' . Auth::id();
@@ -179,6 +218,8 @@ class TransaksiController extends Controller
                 'status_pembayaran' => 'pending',
                 'status_sewa' => 'menunggu_pembayaran',
                 'midtrans_order_id' => $orderId,
+                'kode_voucher' => $voucherCode,  // ✅ Simpan kode voucher
+                'diskon_voucher' => $voucherDiscount,  // ✅ Simpan nominal diskon
             ]);
 
             // Create detail transaksi for each item
@@ -202,7 +243,7 @@ class TransaksiController extends Controller
                 'phone' => $user->no_telp ?? '',
             ];
 
-            // Create Midtrans transaction — grossAmount is guaranteed to match items sum
+            // Create Midtrans transaction
             $result = $this->midtrans->createTransaction(
                 $orderId,
                 $grossAmount,
@@ -214,10 +255,23 @@ class TransaksiController extends Controller
                     'pending' => 'http://localhost:5173/customer/transactions',
                 ]
             );
+
             if (isset($result['error'])) {
                 DB::rollBack();
                 return response()->json(['error' => $result['error']], 500);
             }
+
+            // ✅ Jika voucher valid, tandai sebagai used setelah transaksi sukses dibuat
+// ✅ PERBAIKAN: Kirimkan 5 parameter
+if ($voucherDiscount > 0 && $appliedVoucherData) {
+    $this->voucherService->markVoucherAsUsed(
+        $appliedVoucherData->id,
+        Auth::id(),
+        $transaksi->id_transaksi,
+        $voucherDiscount,
+        $finalTotalSewa  
+    );
+}
 
             $transaksi->update(['snap_token' => $result['snap_token']]);
 
@@ -228,6 +282,8 @@ class TransaksiController extends Controller
                 'transaction_id' => $transaksi->id_transaksi,
                 'order_id' => $orderId,
                 'total_items' => count($items),
+                'discount_applied' => $voucherDiscount,
+                'final_total' => $totalBiaya,
             ]);
 
         } catch (\Exception $e) {

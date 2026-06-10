@@ -37,6 +37,7 @@ import RentedGears from '@/features/admin/pages/RentedGears'
 import AdminPengembalian from '@/features/admin/pages/AdminPengembalian'
 import DepositRefund from '@/features/admin/pages/DepositRefund'
 import Withdrawals from '@/features/admin/pages/Withdrawals'
+import Vouchers from '@/features/admin/pages/Vouchers'
 
 // Customer Profile - perbaiki pathnya
 import Profile from '@/profile/pages/Profile'
@@ -121,6 +122,7 @@ function App() {
                     <Route path="/admin/pengembalian" element={<AdminPengembalian />} />
                     <Route path="/admin/deposit-refund" element={<DepositRefund />} />
                     <Route path="/admin/withdrawals" element={<Withdrawals />} />
+                    <Route path="/admin/vouchers" element={<Vouchers />} />
                   </Route>
                 </Route>
 

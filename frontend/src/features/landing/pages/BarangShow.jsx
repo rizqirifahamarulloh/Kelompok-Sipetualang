@@ -6,6 +6,8 @@ import { chatService } from '@/features/customer/services/chatService';
 import KtpVerificationModal from '@/components/KtpVerificationModal';
 import { API_URL, BASE_URL } from '@/services/api';
 import { cartService } from '@/features/customer/services/cartService';
+import api from '@/services/api';
+import { toast } from 'sonner';
 
 import Navbar from '@/features/landing/components/Navbar';
 import Footer from '@/features/landing/components/Footer';
@@ -22,6 +24,7 @@ import {
   Calendar,
   Info,
   Star,
+  Ticket,
 } from 'lucide-react';
 
 import '@/features/landing/landing.css';
@@ -53,7 +56,7 @@ export default function BarangShow() {
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState(null);
   const [recommendedBarang, setRecommendedBarang] = useState([]);
-  const [reviewFilter, setReviewFilter] = useState(0); // 0 = semua, 1-5 = filter bintang
+  const [reviewFilter, setReviewFilter] = useState(0);
   const [ulasanList, setUlasanList] = useState([]);
   const [ulasanStats, setUlasanStats] = useState({ total: 0, avg_rating: 0, star_counts: {} });
 
@@ -68,6 +71,14 @@ export default function BarangShow() {
   const [shippingCost, setShippingCost] = useState(0);
   const [distance, setDistance] = useState(0);
   const [isCalculatingOngkir, setIsCalculatingOngkir] = useState(false);
+
+  // Voucher state
+  const [availableVouchers, setAvailableVouchers] = useState([]);
+  const [showVouchers, setShowVouchers] = useState(false);
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [voucherCode, setVoucherCode] = useState('');
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
 
   const minDurasi = barang?.min_durasi_sewa || 1;
 
@@ -101,9 +112,74 @@ export default function BarangShow() {
     return (barang.nominal_deposit || 0) * selectedJumlah;
   }, [barang, selectedJumlah]);
 
+  // ✅ PERBAIKAN: total untuk voucher hanya biaya sewa (TANPA deposit dan ongkir)
+  const totalSewa = useMemo(() => {
+    return totalHarga;
+  }, [totalHarga]);
+
   const grandTotal = useMemo(() => {
-    return totalHarga + totalDeposit + shippingCost;
-  }, [totalHarga, totalDeposit, shippingCost]);
+    return totalHarga + totalDeposit + shippingCost - voucherDiscount;
+  }, [totalHarga, totalDeposit, shippingCost, voucherDiscount]);
+
+  // ✅ PERBAIKAN: Fetch available vouchers dengan totalSewa (bukan totalHarga+deposit)
+  const fetchAvailableVouchers = async () => {
+    if (!user) return;
+    if (totalSewa <= 0) return;
+    
+    try {
+      const response = await api.get(`/customer/voucher/available`, {
+        params: { total_price: totalSewa }
+      });
+      setAvailableVouchers(response.data.data || []);
+    } catch (err) {
+      console.error('Gagal ambil voucher:', err);
+    }
+  };
+
+  // ✅ PERBAIKAN: Apply voucher dengan totalSewa (bukan totalHarga+deposit+ongkir)
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) {
+      toast.error('Masukkan kode voucher');
+      return;
+    }
+    
+    if (totalSewa <= 0) {
+      toast.error('Total biaya sewa harus lebih dari 0');
+      return;
+    }
+    
+    setApplyingVoucher(true);
+    try {
+      const response = await api.post('/customer/voucher/validate', {
+        kode_voucher: voucherCode.toUpperCase(),
+        total_price: totalSewa
+      });
+      
+      const data = response.data.data;
+      setAppliedVoucher(data.voucher);
+      setVoucherDiscount(data.discount);
+      toast.success(`Voucher ${voucherCode} berhasil digunakan! Hemat Rp ${data.discount.toLocaleString()}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Voucher tidak valid');
+    } finally {
+      setApplyingVoucher(false);
+    }
+  };
+
+  // Remove voucher
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherDiscount(0);
+    setVoucherCode('');
+    toast.info('Voucher dibatalkan');
+  };
+
+  // ✅ PERBAIKAN: Fetch vouchers saat totalSewa berubah
+  useEffect(() => {
+    if (user && totalSewa > 0) {
+      fetchAvailableVouchers();
+    }
+  }, [totalSewa, user]);
 
   // Fungsi hitung jarak (Haversine formula)
   const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -368,6 +444,7 @@ export default function BarangShow() {
         metode_pengiriman: deliveryMethod,
         alamat_pengiriman: deliveryMethod === 'delivery' ? deliveryAddress : null,
         biaya_pengiriman: shippingCost,
+        kode_voucher: appliedVoucher?.kode_voucher || null,
       };
 
       const response = await axios.post(
@@ -495,8 +572,9 @@ export default function BarangShow() {
 
       <main className="container mx-auto px-4 pt-10 pb-20 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Kolom Kiri */}
+          {/* Kolom Kiri - Sama seperti sebelumnya, tidak berubah */}
           <div className="lg:col-span-5">
+            {/* ... konten kolom kiri (gambar, toko, ulasan) sama seperti sebelumnya ... */}
             <div className="bg-white rounded-3xl overflow-hidden shadow-sm border">
               <img
                 src={getImageUrl()}
@@ -573,7 +651,6 @@ export default function BarangShow() {
                     </span>
                   </div>
 
-                  {/* Filter Buttons */}
                   <div className="flex flex-wrap gap-2 mb-5">
                     <button
                       onClick={() => setReviewFilter(0)}
@@ -601,7 +678,6 @@ export default function BarangShow() {
                     ))}
                   </div>
 
-                  {/* Reviews List */}
                   <div className="flex flex-col gap-5">
                     {filteredReviews.length === 0 ? (
                       <p className="text-xs text-gray-400 text-center py-6">Belum ada ulasan{reviewFilter > 0 ? ` untuk rating ${reviewFilter} bintang` : ''}.</p>
@@ -681,9 +757,7 @@ export default function BarangShow() {
 
               <h1 className="text-3xl font-black text-gray-900">{barang.nama_barang}</h1>
 
-              {/* Star Rating - Dynamic from API */}
               {(() => {
-                // Prioritaskan data dari ulasan API agar konsisten dengan section ulasan
                 const rating = ulasanStats.total > 0 ? ulasanStats.avg_rating : (barang.avg_rating || 0);
                 const reviewCount = ulasanStats.total > 0 ? ulasanStats.total : (barang.total_ulasan || 0);
                 return (
@@ -701,7 +775,7 @@ export default function BarangShow() {
                         );
                       })}
                     </div>
-                    <span className="text-sm font-bold text-gray-800">{rating > 0 ? rating.toFixed ? rating.toFixed(1) : rating : '0.0'}</span>
+                    <span className="text-sm font-bold text-gray-800">{rating > 0 ? rating.toFixed(1) : '0.0'}</span>
                     <span className="text-xs text-gray-400">({reviewCount} ulasan)</span>
                   </div>
                 );
@@ -841,7 +915,6 @@ export default function BarangShow() {
                     className="w-full border rounded-2xl p-4 mt-2 focus:outline-none focus:border-[#00A779]"
                   />
 
-                  {/* DUA TOMBOL */}
                   <div className="flex gap-2 mt-2">
                     <button
                       onClick={() => calculateOngkir(deliveryAddress)}
@@ -860,7 +933,6 @@ export default function BarangShow() {
                     </button>
                   </div>
 
-                  {/* Tampilkan Jarak & Ongkir */}
                   {distance > 0 && (
                     <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
                       <div className="flex items-center justify-between">
@@ -891,6 +963,101 @@ export default function BarangShow() {
                 </div>
               )}
 
+              {/* VOUCHER SECTION - Sudah diperbaiki */}
+              {user && (
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Ticket className="w-5 h-5 text-emerald-500" />
+                    <h3 className="font-bold text-gray-900">Voucher Diskon</h3>
+                  </div>
+                  
+                  {!appliedVoucher ? (
+                    <>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Masukkan kode voucher"
+                          value={voucherCode}
+                          onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                          className="flex-1 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500"
+                        />
+                        <button
+                          onClick={handleApplyVoucher}
+                          disabled={applyingVoucher || !voucherCode || totalSewa <= 0}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+                        >
+                          {applyingVoucher ? 'Memproses...' : 'Pakai'}
+                        </button>
+                      </div>
+                      
+                      {availableVouchers.length > 0 && (
+                        <button
+                          onClick={() => setShowVouchers(!showVouchers)}
+                          className="text-xs text-emerald-600 mt-3 hover:underline"
+                        >
+                          {showVouchers ? 'Sembunyikan' : `Lihat ${availableVouchers.length} voucher tersedia`}
+                        </button>
+                      )}
+                      
+                      {showVouchers && (
+                        <div className="mt-3 space-y-2 max-h-60 overflow-y-auto border rounded-xl p-3">
+                          {availableVouchers.map((voucher) => (
+                            <div
+                              key={voucher.id}
+                              onClick={() => setVoucherCode(voucher.kode_voucher)}
+                              className="p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-bold text-sm text-emerald-700">{voucher.kode_voucher}</p>
+                                  <p className="text-xs text-gray-500">{voucher.nama_voucher}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-bold text-emerald-600">
+                                    {voucher.tipe_diskon === 'percentage' 
+                                      ? `${voucher.nilai_diskon}%` 
+                                      : `Rp ${Number(voucher.nilai_diskon).toLocaleString()}`
+                                    }
+                                  </p>
+                                  {voucher.min_pembelian > 0 && (
+                                    <p className="text-[10px] text-gray-400">
+                                      Min. Rp {Number(voucher.min_pembelian).toLocaleString()}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-emerald-800">{appliedVoucher.kode_voucher}</p>
+                          <p className="text-xs text-emerald-600">{appliedVoucher.nama_voucher}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-emerald-700">
+                            - {appliedVoucher.tipe_diskon === 'percentage' 
+                              ? `${appliedVoucher.nilai_diskon}%` 
+                              : `Rp ${Number(appliedVoucher.nilai_diskon).toLocaleString()}`
+                            }
+                          </p>
+                          <button
+                            onClick={handleRemoveVoucher}
+                            className="text-xs text-red-500 hover:underline mt-1"
+                          >
+                            Batalkan
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Total Harga */}
               <div className="bg-[#F8F9FA] rounded-2xl p-5 mt-6 space-y-2">
                 <div className="flex justify-between text-sm">
@@ -915,12 +1082,25 @@ export default function BarangShow() {
                   </div>
                 )}
 
+                {voucherDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-emerald-600">
+                    <span>Diskon Voucher</span>
+                    <span className="font-semibold">- Rp {voucherDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-lg font-black mt-4 border-t pt-4">
                   <span>Total Pembayaran</span>
                   <span className="text-[#00A779] text-xl">
                     Rp {grandTotal.toLocaleString()}
                   </span>
                 </div>
+
+                {voucherDiscount > 0 && (
+                  <p className="text-[11px] text-emerald-600 mt-2">
+                    🎉 Kamu hemat Rp {voucherDiscount.toLocaleString()} dengan voucher!
+                  </p>
+                )}
 
                 {totalDeposit > 0 && (
                   <p className="text-[11px] text-gray-400 mt-2">

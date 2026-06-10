@@ -20,6 +20,8 @@ use App\Http\Middleware\RoleMiddleware;
 
 use App\Http\Controllers\Api\Customer\WithdrawalController;
 use App\Http\Controllers\Api\Admin\WithdrawalAdminController;
+use App\Http\Controllers\Api\Admin\VoucherController as AdminVoucherController;
+use App\Http\Controllers\Api\Customer\VoucherController as CustomerVoucherController;
 
 /*
 |--------------------------------------------------------------------------
@@ -138,6 +140,13 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::put('/{id}', [UlasanController::class, 'update']);
             Route::get('/check/{id_transaksi}', [UlasanController::class, 'check']);
         });
+
+        // Voucher
+        Route::prefix('voucher')->group(function () {
+            Route::get('/available', [CustomerVoucherController::class, 'getAvailableVouchers']);
+            Route::get('/all', [CustomerVoucherController::class, 'getAllAvailable']);
+            Route::post('/validate', [CustomerVoucherController::class, 'validateAndApply']);
+        });
     });
 
     /*
@@ -197,6 +206,10 @@ Route::middleware(['jwt.auth'])->group(function () {
         // Deposit Refund
         Route::get('/deposit-refund', [\App\Http\Controllers\Api\Admin\DepositRefundController::class, 'index']);
         Route::post('/deposit-refund/{id}/process', [\App\Http\Controllers\Api\Admin\DepositRefundController::class, 'process']);
+
+        // Voucher Management
+        Route::get('/voucher/statistics', [AdminVoucherController::class, 'statistics']);
+        Route::apiResource('/voucher', AdminVoucherController::class);
     });
 
 

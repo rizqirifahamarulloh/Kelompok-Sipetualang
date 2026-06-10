@@ -42,6 +42,9 @@ class Transaksi extends Model
         'deposit_refund_proof',
         'deposit_refunded_at',
         'pemilik_released',
+        'id_voucher',
+        'diskon_voucher',
+        'total_setelah_diskon',
     ];
 
     protected $casts = [
@@ -83,5 +86,15 @@ class Transaksi extends Model
     public function pengajuanPengembalian()
     {
         return $this->hasOne(PengajuanPengembalian::class, 'id_transaksi', 'id_transaksi');
+    }
+
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class, 'id_voucher', 'id');
+    }
+
+    public function voucherUsage()
+    {
+        return $this->hasOne(VoucherUsage::class, 'id_transaksi', 'id_transaksi');
     }
 }
