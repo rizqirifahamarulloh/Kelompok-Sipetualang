@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 import { Key } from 'lucide-react';
+import Navbar from '@/features/customer/components/Navbar';
+import Sidebar from '@/features/customer/components/Sidebar';
+import { getStorageUrl } from '@/utils/storageUrl';
 
 export default function UpdatePassword() {
     const { user } = useAuth();
@@ -22,10 +25,11 @@ export default function UpdatePassword() {
 
     if (!user) return null;
 
+    const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // validasi client-side
         if (newPassword !== confirmPassword) {
             toast.error('Konfirmasi password tidak cocok');
             return;
@@ -48,76 +52,87 @@ export default function UpdatePassword() {
             toast.success('Password berhasil diubah');
             navigate('/profile');
         } catch (err) {
-            console.log("ERROR PASSWORD:", err.response);
-
-            toast.error(
-                err.response?.data?.message ||
-                JSON.stringify(err.response?.data?.errors) ||
-                'Gagal mengubah password'
-            );
+            toast.error(err.response?.data?.message || 'Gagal mengubah password');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-background pt-20">
-            <div className="container max-w-6xl mx-auto px-4 py-8">
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <Key size={18} />
-                            <CardTitle>Ubah Password</CardTitle>
-                        </div>
-                        <CardDescription>
-                            Pastikan password baru mudah diingat tapi aman
-                        </CardDescription>
-                    </CardHeader>
+        <div className="min-h-screen bg-background">
+            <Navbar />
 
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="max-w-6xl mx-auto px-4 pt-24 pb-12">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    
+                    <Sidebar
+                        user={user}
+                        getPhotoUrl={() => getStorageUrl(user?.profile_photo)}
+                        getInitials={getInitials}
+                    />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="lg:col-span-3">
+                        <Card className="border shadow-sm rounded-2xl overflow-hidden">
+                            <CardHeader className="border-b bg-muted/30 px-8 py-6">
+                                <div className="flex items-center gap-2">
+                                    <Key size={18} className="text-primary" />
+                                    <CardTitle className="text-xl font-bold">Ubah Password</CardTitle>
+                                </div>
+                                <CardDescription>
+                                    Pastikan password baru mudah diingat tapi aman
+                                </CardDescription>
+                            </CardHeader>
 
-                                <Input
-                                    type="password"
-                                    placeholder="Password lama"
-                                    value={oldPassword}
-                                    onChange={(e) => setOldPassword(e.target.value)}
-                                />
+                            <CardContent className="p-8">
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="space-y-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-muted-foreground">Password Lama</label>
+                                            <Input
+                                                type="password"
+                                                placeholder="Masukkan password lama"
+                                                value={oldPassword}
+                                                onChange={(e) => setOldPassword(e.target.value)}
+                                                className="rounded-xl"
+                                            />
+                                        </div>
+                                        
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-muted-foreground">Password Baru</label>
+                                            <Input
+                                                type="password"
+                                                placeholder="Minimal 6 karakter"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                className="rounded-xl"
+                                            />
+                                        </div>
+                                        
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-muted-foreground">Konfirmasi Password Baru</label>
+                                            <Input
+                                                type="password"
+                                                placeholder="Ketik ulang password baru"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                className="rounded-xl"
+                                            />
+                                        </div>
+                                    </div>
 
-                                <Input
-                                    type="password"
-                                    placeholder="Password baru"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                />
-
-                                <Input
-                                    type="password"
-                                    placeholder="Konfirmasi password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="md:col-span-2"
-                                />
-
-                            </div>
-
-                            <div className="flex flex-col md:flex-row gap-3">
-                                <Button type="submit" disabled={loading} className="w-full md:w-auto">
-                                    {loading ? 'Menyimpan...' : 'Simpan'}
-                                </Button>
-
-                                <Link to="/profile" className="w-full md:w-auto">
-                                    <Button variant="outline" className="w-full">
-                                        Batal
-                                    </Button>
-                                </Link>
-                            </div>
-
-                        </form>
-                    </CardContent>
-                </Card>
+                                    <div className="flex flex-col md:flex-row gap-3 pt-4 border-t">
+                                        <Button type="submit" disabled={loading} className="rounded-xl">
+                                            {loading ? 'Menyimpan...' : 'Simpan Password'}
+                                        </Button>
+                                        <Link to="/profile">
+                                            <Button variant="outline" className="rounded-xl">Batal</Button>
+                                        </Link>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
             </div>
         </div>
     );
