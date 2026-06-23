@@ -11,7 +11,7 @@ import Footer from '@/features/landing/components/Footer'
 import LoadingScreen from '@/features/landing/components/LoadingScreen'
 
 export default function Home() {
-  // Only show loading on the very first visit per session
+  // cuma tampilin loading pas pertama kali buka aja
   const [isLoading, setIsLoading] = useState(() => {
     return !sessionStorage.getItem('sipetualang_visited')
   })
@@ -22,7 +22,7 @@ export default function Home() {
     } else {
       document.body.style.overflow = 'auto'
       window.scrollTo(0, 0)
-      // Mark as visited so loading won't show again in this session
+      // tandain udah pernah dibuka biar gak loading lagi
       sessionStorage.setItem('sipetualang_visited', 'true')
     }
   }, [isLoading])

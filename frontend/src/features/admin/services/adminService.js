@@ -1,62 +1,62 @@
-// frontend/src/features/admin/services/adminService.js
+// service buat fitur-fitur admin
 import api from '@/services/api'
 
 export const adminService = {
-  // Get all users
+  // ambil semua data user
   async getUsers(params) {
     const response = await api.get('/admin/users', { params })
     return response
   },
 
-  // Get user by ID
+  // ambil data user berdasarkan id
   async getUserById(id) {
     const response = await api.get(`/admin/users/${id}`)
     return response
   },
 
-  // Reset user password
+  // reset password user
   async resetPassword(userId) {
     const response = await api.post(`/admin/users/${userId}/reset-password`)
     return response
   },
 
-  // Update user
+  // update data user
   async updateUser(id, data) {
     const response = await api.put(`/admin/users/${id}`, data)
     return response
   },
 
-  // Delete user
+  // hapus user
   async deleteUser(userId) {
     const response = await api.delete(`/admin/users/${userId}`)
     return response
   },
 
-  // Get dashboard stats
+  // ambil statistik dashboard
   async getStats() {
     const response = await api.get('/admin/dashboard')
     return response
   },
 
-  // Get sidebar badge counts (lightweight)
+  // ambil jumlah badge sidebar (ringan)
   async getSidebarBadges() {
     const response = await api.get('/admin/sidebar-badges')
     return response
   },
 
-  // Get verifications
+  // ambil daftar verifikasi
   async getVerifications() {
     const response = await api.get('/admin/verifikasi')
     return response.data
   },
 
-  // Approve verification
+  // setujui verifikasi
   async approveVerification(id, activateRental = false) {
     const response = await api.post(`/admin/verifikasi/${id}/approve`, { activate_rental: activateRental })
     return response
   },
 
-  // Reject verification
+  // tolak verifikasi
   async rejectVerification(id, catatan) {
     const response = await api.post(`/admin/verifikasi/${id}/reject`, { catatan_admin: catatan })
     return response
@@ -77,7 +77,7 @@ export const adminService = {
     return response.data
   },
   
-  // Shipping endpoints
+  // endpoint pengiriman
   async getPengiriman() {
     const response = await api.get('/admin/pengiriman')
     return response.data
@@ -108,7 +108,7 @@ export const adminService = {
     return response.data
   },
 
-  // 💰 Deposit Refund
+  // pengembalian deposit
   async getDepositRefunds() {
     const response = await api.get('/admin/deposit-refund')
     return response.data
@@ -126,34 +126,34 @@ export const adminService = {
     return response.data
   },
 
-  // ========== 💰 WITHDRAWAL METHODS (TAMBAHKAN INI) ==========
+  // --- penarikan saldo ---
   
-  // Get all withdrawals (riwayat semua penarikan)
+  // ambil riwayat semua penarikan
   async getWithdrawals(status = null) {
     const params = status ? { status } : {};
     const response = await api.get('/admin/withdrawals/all', { params });
     return response.data;
   },
 
-  // Get withdrawal statistics
+  // ambil statistik penarikan
   async getWithdrawalStats() {
     const response = await api.get('/admin/withdrawals/stats');
     return response.data;
   },
 
-  // Get admin balance
+  // ambil saldo admin
   async getAdminBalance() {
     const response = await api.get('/customer/withdrawal/balance');
     return response.data;
   },
 
-  // Admin withdrawal (instant)
+  // penarikan instan oleh admin
   async adminWithdrawal(data) {
     const response = await api.post('/admin/withdrawals/instant', data);
     return response.data;
   },
 
-  // Approve withdrawal (with transfer proof image)
+  // setujui penarikan (kirim bukti transfer)
   async approveWithdrawal(id, data) {
     const formData = new FormData();
     if (data.transfer_proof) formData.append('transfer_proof', data.transfer_proof);
@@ -164,7 +164,7 @@ export const adminService = {
     return response.data;
   },
 
-  // Reject withdrawal
+  // tolak penarikan
   async rejectWithdrawal(id, data) {
     const response = await api.post(`/admin/withdrawals/${id}/reject`, data);
     return response.data;

@@ -1,4 +1,4 @@
-// frontend/src/features/auth/services/authService.js
+// service buat autentikasi user (login, register, dll)
 import api from '@/services/api'
 
 
@@ -12,13 +12,13 @@ export const authService = {
     const response = await api.post('/register', data)
     return response
   },
-    // ✅ TAMBAH INI
+    // kirim email reset password
   async forgotPassword(email) {
     const response = await api.post('/auth/forgot-password', { email })
     return response
   },
 
-  // ✅ TAMBAH INI
+  // proses reset password pake token
   async resetPassword(data) {
     const response = await api.post('/auth/reset-password', data)
     return response

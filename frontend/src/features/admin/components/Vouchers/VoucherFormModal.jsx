@@ -19,7 +19,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function VoucherFormModal({ isOpen, onClose, onSubmit, initialData }) {
-  // 🔥 TAMBAHKAN DEFAULT VALUE 🔥
+  // set tanggal default buat form
   const getDefaultDates = () => {
     const today = new Date();
     const endDate = new Date();
@@ -37,12 +37,12 @@ export default function VoucherFormModal({ isOpen, onClose, onSubmit, initialDat
     kode_voucher: "",
     nama_voucher: "",
     tipe_diskon: "percentage",
-    nilai_diskon: "10",  // 🔥 DEFAULT VALUE 10
-    min_pembelian: "0",  // 🔥 DEFAULT 0
+    nilai_diskon: "10",  // default diskon 10
+    min_pembelian: "0",  // default 0
     max_diskon: "",
     tanggal_mulai: defaultDates.tanggal_mulai,
     tanggal_selesai: defaultDates.tanggal_selesai,
-    kuota: "0",  // 🔥 DEFAULT 0 (unlimited)
+    kuota: "0",  // 0 berarti unlimited
     is_active: true,
   });
 
@@ -99,7 +99,7 @@ export default function VoucherFormModal({ isOpen, onClose, onSubmit, initialDat
     }
   };
 
-  // 🔥 VALIDASI SEBELUM SUBMIT 🔥
+  // cek validasi form sebelum submit
   const validateForm = () => {
     const newErrors = {};
     
@@ -132,7 +132,7 @@ export default function VoucherFormModal({ isOpen, onClose, onSubmit, initialDat
     
     setLoading(true);
     try {
-      // 🔥 KONVERSI DATA KE FORMAT YANG SESUAI 🔥
+      // konversi data ke format yang sesuai
       const submitData = {
         kode_voucher: formData.kode_voucher.toUpperCase(),
         nama_voucher: formData.nama_voucher,

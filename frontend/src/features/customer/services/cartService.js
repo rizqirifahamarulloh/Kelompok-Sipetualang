@@ -1,14 +1,14 @@
-// Cart service menggunakan LOCAL STORAGE (bukan database)
+// service keranjang pake LOCAL STORAGE (bukan database)
 
 const CART_KEY = 'rental_cart';
 
-// Get cart from localStorage
+// ambil data keranjang dari localStorage
 const getCartFromStorage = () => {
   const cart = localStorage.getItem(CART_KEY);
   return cart ? JSON.parse(cart) : [];
 };
 
-// Save cart to localStorage + dispatch event untuk update Navbar badge
+// simpan keranjang ke localStorage + kirim event buat update badge Navbar
 const saveCartToStorage = (cart) => {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   // Dispatch custom event agar Navbar badge langsung update
@@ -16,13 +16,13 @@ const saveCartToStorage = (cart) => {
 };
 
 export const cartService = {
-  // Get all cart items
+  // ambil semua item di keranjang
   async getCart() {
     const cart = getCartFromStorage();
     return { data: cart };
   },
 
-  // Add item to cart
+  // tambah item ke keranjang
   async addToCart(item) {
     const cart = getCartFromStorage();
     const existingIndex = cart.findIndex(i => i.id_barang === item.id_barang);
@@ -41,7 +41,7 @@ export const cartService = {
     return { data: cart };
   },
 
-  // Update cart item quantity
+  // update jumlah item di keranjang
   async updateCartItem(cartId, data) {
     const cart = getCartFromStorage();
     const index = cart.findIndex(i => i.id_cart === cartId);
@@ -53,7 +53,7 @@ export const cartService = {
     return { data: cart };
   },
 
-  // Remove item from cart
+  // hapus item dari keranjang
   async removeFromCart(cartId) {
     let cart = getCartFromStorage();
     cart = cart.filter(item => item.id_cart !== cartId);
@@ -61,23 +61,23 @@ export const cartService = {
     return { data: cart };
   },
 
-  // Clear cart
+  // kosongkan keranjang
   async clearCart() {
     localStorage.removeItem(CART_KEY);
     return { data: [] };
   },
 
-  // Checkout (clear cart after checkout)
+  // checkout (kosongkan keranjang setelah checkout)
   async checkoutMulti(data) {
-    // Simulate checkout process
+    // simulasi proses checkout
     const cart = getCartFromStorage();
     const selectedItems = cart.filter(item => data.cart_ids.includes(item.id_cart));
     
-    // Calculate total
+    // hitung total
     const total = selectedItems.reduce((sum, item) => sum + item.total_harga, 0);
     const shipping = data.shipping_cost || 0;
     
-    // Clear checked out items from cart
+    // hapus item yg udah checkout dari keranjang
     const remainingCart = cart.filter(item => !data.cart_ids.includes(item.id_cart));
     saveCartToStorage(remainingCart);
     

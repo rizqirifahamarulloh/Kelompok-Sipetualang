@@ -48,7 +48,7 @@ export default function Payment() {
       const data = response.data || response || [];
       setTransactions(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error fetching transactions:", err);
+      console.error("Gagal ambil data transaksi:", err);
       setTransactions([]);
     } finally {
       setLoading(false);
@@ -71,7 +71,7 @@ export default function Payment() {
     return matchSearch && matchStatus;
   });
 
-  // Stats
+  // statistik
   const totalPembayaran = transactions.reduce((sum, t) => sum + Number(t.total_biaya || 0), 0);
   const lunas = transactions.filter(t => t.status_pembayaran === 'sukses').length;
   const pending = transactions.filter(t => t.status_pembayaran === 'pending').length;
@@ -82,7 +82,7 @@ export default function Payment() {
     setStatusFilter("semua");
   };
 
-  // ── Detail Modal ──
+  // modal detail
   if (selectedTrx) {
     return <PaymentDetail trx={selectedTrx} onBack={() => setSelectedTrx(null)} />;
   }
@@ -264,7 +264,7 @@ export default function Payment() {
   );
 }
 
-// ─── Payment Detail Sub-component ───────────────────
+// komponen detail pembayaran
 function PaymentDetail({ trx, onBack }) {
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';

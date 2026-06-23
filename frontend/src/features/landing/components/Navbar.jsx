@@ -35,13 +35,13 @@ export default function Navbar({ forceScrolled = false }) {
       }
     }
 
-    // Initial load
+    // pertama kali load
     updateCartCount()
 
-    // Listen for storage changes (cross-tab)
+    // dengerin perubahan storage (beda tab)
     window.addEventListener('storage', updateCartCount)
 
-    // Listen for custom event (same-tab updates)
+    // dengerin event custom (tab yang sama)
     window.addEventListener('cart-updated', updateCartCount)
 
     // Polling fallback setiap 2 detik
@@ -54,7 +54,7 @@ export default function Navbar({ forceScrolled = false }) {
     }
   }, [])
 
-  // Chat Popup States
+  // state chat popup
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [activeChatId, setActiveChatId] = useState(null)
   const [activeChatUser, setActiveChatUser] = useState(null)
@@ -90,7 +90,7 @@ export default function Navbar({ forceScrolled = false }) {
     return () => clearInterval(interval)
   }, [isAuthenticated])
 
-  // === Rental Notifications for Perental Users ===
+  // === notifikasi rental buat user perental ===
   const [rentalNotifications, setRentalNotifications] = useState([])
 
   useEffect(() => {
@@ -110,7 +110,7 @@ export default function Navbar({ forceScrolled = false }) {
         const now = new Date().toISOString()
         const newNotifications = []
 
-        // Stock warnings (< 5 units)
+        // peringatan stok (kurang dari 5 unit)
         const criticalItems = Array.isArray(gears) ? gears.filter(g => g.jumlah_stok < 5) : []
         criticalItems.forEach((item) => {
           const severityLevel = item.jumlah_stok <= 2 ? 'danger' : 'warning'
@@ -126,7 +126,7 @@ export default function Navbar({ forceScrolled = false }) {
           })
         })
 
-        // Incoming rentals (paid but not yet rented)
+        // penyewaan masuk (udah dibayar tapi belum disewa)
         const incomingRentals = Array.isArray(transactions)
           ? transactions.filter(t => t.status_pembayaran === 'sukses' && t.status_sewa === 'dibayar')
           : []
@@ -158,10 +158,10 @@ export default function Navbar({ forceScrolled = false }) {
     return () => clearInterval(interval)
   }, [isAuthenticated, user?.rental])
 
-  // Determine rental nav label & link based on role
+  // tentuin label & link navigasi rental sesuai role
   const isPerental = user?.peran_pengguna === 'perental';
 
-  // Nav links
+  // link navigasi
   const navLinks = [
     { label: t('nav.home'), href: '/' },
     { label: t('nav.catalog'), href: '/sewa-alat' },
@@ -188,7 +188,7 @@ export default function Navbar({ forceScrolled = false }) {
     return () => document.removeEventListener('click', handleClickOutside)
   }, [dropdownOpen])
 
-  // Click outside to close chat popup
+  // tutup chat popup kalo klik di luar
   useEffect(() => {
     function handleClickOutside(event) {
       if (chatContainerRef.current && !chatContainerRef.current.contains(event.target)) {
@@ -235,16 +235,16 @@ export default function Navbar({ forceScrolled = false }) {
     return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase()
   }
 
-  // Get profile photo URL
+  // ambil foto profil
   const getProfilePhotoUrl = () => getStorageUrl(user?.profile_photo)
 
-  // Check if a nav link is active
+  // cek apakah link navigasi lagi aktif
   const isActiveLink = (href) => {
     if (href === '/') return location.pathname === '/'
     return location.pathname === href
   }
 
-  // === Chat Popup Helpers ===
+  // === fungsi bantu chat popup ===
   const getOtherUserInConv = (conv) => {
     if (!user) return null
     const myId = user.id || user.id_pengguna
@@ -333,7 +333,7 @@ export default function Navbar({ forceScrolled = false }) {
     }
   }
 
-  // Polling for active chat messages
+  // polling pesan chat yg aktif
   useEffect(() => {
     if (!isChatOpen) return
 

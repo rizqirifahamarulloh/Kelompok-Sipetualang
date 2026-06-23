@@ -64,7 +64,7 @@ export default function BukaRental() {
 
   const activateRental = async () => {
     try {
-      // 1. Update Profile first - hanya kirim data yang tidak kosong
+      // 1. update profil dulu - cuma kirim data yg gak kosong
       const profileData = {}
       if (formData.namaLengkap) profileData.name = formData.namaLengkap
       if (formData.telepon) profileData.phone = formData.telepon
@@ -94,7 +94,7 @@ export default function BukaRental() {
         activated = true;
       }
 
-      // Refresh profile data
+      // refresh data profil
       const profileRes = await api.get('/profile')
       const updatedUser = { ...user, ...profileRes.data.data }
       setUser(updatedUser)

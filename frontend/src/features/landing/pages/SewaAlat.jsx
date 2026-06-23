@@ -20,11 +20,11 @@ export default function SewaAlat() {
   const [kategoriList, setKategoriList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // FILTER STATES
+  // state filter
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedKategori, setSelectedKategori] = useState('');
 
-  // DESTINASI STATES (BARU)
+  // state destinasi
   const [destinasiList, setDestinasiList] = useState([]);
   const [destinasiSearch, setDestinasiSearch] = useState('');
   const [showDestinasiDropdown, setShowDestinasiDropdown] = useState(false);
@@ -36,7 +36,7 @@ export default function SewaAlat() {
   const [isDateFiltered, setIsDateFiltered] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
 
-  // CART STATE
+  // state keranjang
   const [cartItems, setCartItems] = useState([]);
 
 
@@ -61,9 +61,9 @@ export default function SewaAlat() {
     return diff > 0 ? diff : 0;
   }, [tanggalMulai, tanggalSelesai]);
 
-  // FETCH BARANG (with optional date-based and destination-based availability filter)
+  // ambil data barang (bisa filter berdasarkan tanggal dan destinasi)
   const fetchBarang = async (startDate = null, endDate = null, destinasiId = null, isInitial = false) => {
-    // Only show full-page spinner on initial load
+    // cuma tampilin spinner full page pas pertama kali load
     if (isInitial) {
       setIsLoading(true);
     } else {
@@ -95,7 +95,7 @@ export default function SewaAlat() {
     }
   };
 
-  // FETCH KATEGORI
+  // ambil data kategori
   const fetchKategori = async () => {
     try {
       const response = await axios.get(`${API_URL}/kategori`);
@@ -112,7 +112,7 @@ export default function SewaAlat() {
     }
   };
 
-  // FETCH DESTINASI (dinamis dari database)
+  // ambil data destinasi (dinamis dari database)
   const fetchDestinasi = async () => {
     try {
       const response = await axios.get(`${API_URL}/rental/destinasi`);
@@ -135,7 +135,7 @@ export default function SewaAlat() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // LOAD DATA (initial)
+  // muat data awal
   useEffect(() => {
     const loadData = async () => {
       await Promise.all([fetchBarang(null, null, null, true), fetchKategori(), fetchDestinasi()]);
@@ -144,7 +144,7 @@ export default function SewaAlat() {
     loadData();
   }, [loadCart]);
 
-  // AUTO-FETCH when tanggalMulai or tanggalSelesai or selectedDestinasi changes (reactive filtering)
+  // otomatis fetch ulang kalo tanggal atau destinasi berubah
   useEffect(() => {
     const destinasiId = selectedDestinasi?.id_destinasi || null;
     if (tanggalMulai && tanggalSelesai) {
@@ -253,12 +253,12 @@ export default function SewaAlat() {
     }
   }, [selectedDestinasi, barangList]);
 
-  // Filter barang (dari search + kategori + tanggal) — semua barang ditampilkan, recommended di-sort ke atas
+  // filter barang (dari search + kategori + tanggal) - semua barang ditampilin, yg rekomendasi di-sort ke atas
   const filteredBarang = useMemo(() => {
     let filtered = [...barangList];
 
-    // Filter by min_tanggal_sewa (if customer selected a pickup date)
-    // Using string comparison on YYYY-MM-DD format to avoid timezone issues
+    // filter berdasarkan min_tanggal_sewa (kalo customer pilih tanggal ambil)
+    // pake perbandingan string format YYYY-MM-DD biar gak ada masalah timezone
     if (tanggalMulai) {
       const selectedDate = tanggalMulai; // Already in YYYY-MM-DD format
       filtered = filtered.filter((barang) => {
@@ -292,21 +292,21 @@ export default function SewaAlat() {
       });
     }
 
-    // Filter by search term
+    // filter berdasarkan kata kunci
     if (searchTerm.trim() !== '') {
       filtered = filtered.filter((barang) =>
         barang.nama_barang.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Filter by kategori
+    // filter berdasarkan kategori
     if (selectedKategori !== '') {
       filtered = filtered.filter(
         (barang) => barang.id_kategori === parseInt(selectedKategori)
       );
     }
 
-    // Filter by destinasi (exclusive filter)
+    // filter berdasarkan destinasi (eksklusif)
     if (selectedDestinasi) {
       const destId = selectedDestinasi.id_destinasi;
       filtered = filtered.filter((barang) => {
@@ -356,7 +356,7 @@ export default function SewaAlat() {
     return 'https://via.placeholder.com/400x300';
   };
 
-  // CART HANDLERS
+  // handler keranjang
   const handleAddToCart = async (barang) => {
     try {
       const today = new Date().toISOString().split('T')[0];

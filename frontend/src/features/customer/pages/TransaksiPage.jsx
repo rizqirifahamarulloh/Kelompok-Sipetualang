@@ -35,7 +35,7 @@ import { API_URL } from '@/services/api';
 import { getStorageUrl } from '@/utils/storageUrl';
 import { toast } from 'sonner';
 
-// ─── Helpers ──────────────────────────────────────
+// fungsi bantuan format
 const formatRupiah = (val) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val || 0);
 
@@ -45,7 +45,7 @@ const formatDate = (dateStr) =>
 const formatDateTime = (dateStr) =>
   dateStr ? new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 
-// ── Status configs
+// konfigurasi warna dan label tiap status
 const STATUS_CONFIG = {
   menunggu_pembayaran: { label: 'Menunggu Pembayaran', icon: Clock, cls: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800', dot: 'bg-yellow-500' },
   dibayar:             { label: 'Dibayar',             icon: CreditCard, cls: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800', dot: 'bg-blue-500' },
@@ -68,7 +68,7 @@ const FILTER_TABS = [
   { key: 'selesai',              label: 'Selesai',       icon: CheckCircle },
 ];
 
-// ─── Component ────────────────────────────────────
+// komponen utama halaman transaksi
 export default function TransaksiPage() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
@@ -87,7 +87,7 @@ export default function TransaksiPage() {
       const response = await transactionService.getTransaksiSebagaiPenyewa();
       setTransactions(response.data || []);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+       console.error('Gagal ambil data transaksi:', error);
       setTransactions([]);
     } finally {
       setLoading(false);
@@ -98,7 +98,7 @@ export default function TransaksiPage() {
 
 
 
-  // ── Filtered & sorted
+  // filter dan urutkan data
   const filteredData = useMemo(() => {
     let list = [...transactions];
     if (filter !== 'all') list = list.filter(t => t.status_sewa === filter);
@@ -124,7 +124,7 @@ export default function TransaksiPage() {
     return counts;
   }, [transactions]);
 
-  // ── Payment
+  // proses pembayaran
   const handlePayment = async (trans) => {
     setProcessingId(trans.id_transaksi);
     try {
@@ -162,7 +162,7 @@ export default function TransaksiPage() {
 
   if (!user) return null;
 
-  // ── Render card ──
+  // render kartu transaksi
   const renderCard = (trans) => {
     const cfg = STATUS_CONFIG[trans.status_sewa] || STATUS_CONFIG.selesai;
     const Icon = cfg.icon;
@@ -232,7 +232,7 @@ export default function TransaksiPage() {
             )}
           </div>
 
-          {/* Deposit Refund Status — for completed transactions */}
+          {/* status refund deposit - untuk transaksi yg udah selesai */}
           {trans.status_sewa === 'selesai' && Number(trans.nominal_deposit) > 0 && trans.deposit_status && trans.deposit_status !== 'none' && (
             <DepositStatusSection trans={trans} setDepositProofView={setDepositProofView} />
           )}
@@ -355,7 +355,7 @@ export default function TransaksiPage() {
   );
 }
 
-// ─── Reusable sub-components ───
+// komponen kecil yang dipake ulang
 
 function InfoRow({ icon, label, value, highlight, colSpan }) {
   return (

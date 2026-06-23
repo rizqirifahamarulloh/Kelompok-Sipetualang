@@ -23,7 +23,7 @@ export default function Verifikasi() {
 
   const verificationStatus = user?.verification_status;
   const verificationNote = user?.verification_note;
-  // Handle both boolean and string/integer truthy values
+  // handle nilai boolean maupun string/integer
   const isApproved = user?.is_verified === true || user?.is_verified === 1 || user?.is_verified === 'true' || verificationStatus === 'disetujui';
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function Verifikasi() {
       await customerService.submitVerification(formData);
       toast.success("Dokumen verifikasi berhasil dikirim!");
       
-      // Refresh user data using the api service
+      // refresh data user abis upload
       const res = await api.get('/profile');
       const updatedUser = { ...user, ...res.data.data };
       setUser(updatedUser);

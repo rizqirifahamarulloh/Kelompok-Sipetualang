@@ -1,18 +1,18 @@
-// Shared utility for resolving storage image URLs
+// utility buat bikin URL file storage
 import { BASE_URL } from '@/services/api'
 
 /**
- * Resolves a storage file path to a full URL.
- * Handles: null/undefined, full HTTP URLs, and relative storage paths.
+ * Ubah path file jadi URL lengkap.
+ * Bisa handle: null/undefined, URL lengkap (http), dan path relatif.
  * 
- * @param {string|null} path - The file path (e.g., "foto_barang/abc.jpg" or "http://...")
- * @param {string|null} fallback - Fallback URL if path is empty (default: null)
- * @returns {string|null} Full URL to the file, or fallback
+ * @param {string|null} path - path file (misal: "foto_barang/abc.jpg" atau "http://...")
+ * @param {string|null} fallback - URL cadangan kalo path kosong (default: null)
+ * @returns {string|null} URL lengkap ke file, atau fallback
  */
 export function getStorageUrl(path, fallback = null) {
   if (!path) return fallback
   if (path.startsWith('http://') || path.startsWith('https://')) return path
-  // Remove leading slash if present to avoid double slash
+  // hapus slash di depan biar gak dobel
   const cleanPath = path.startsWith('/') ? path.slice(1) : path
   return `${BASE_URL}/storage/${cleanPath}`
 }

@@ -65,7 +65,7 @@ export default function CartPage() {
   const [showVoucherList, setShowVoucherList] = useState(false);
   const [applyingVoucher, setApplyingVoucher] = useState(false);
 
-  // Load Midtrans Snap.js
+  // muat script Midtrans Snap.js
   useEffect(() => {
     if (!window.snap) {
       const script = document.createElement('script');
@@ -76,7 +76,7 @@ export default function CartPage() {
     }
   }, []);
 
-  // LOAD CART
+  // ambil data keranjang
   const loadCart = async () => {
     try {
       setIsLoading(true);
@@ -112,7 +112,7 @@ export default function CartPage() {
     });
   }, []);
 
-  // Auto-calculate shipping when address changes
+  // otomatis hitung ongkir kalo alamat berubah
   useEffect(() => {
     if (deliveryMethod === 'delivery' && deliveryAddress) {
       calculateOngkir();
@@ -175,7 +175,7 @@ export default function CartPage() {
         });
       }
     } catch (error) {
-      console.error("Error calculating distance:", error);
+       console.error("Gagal hitung jarak:", error);
       setDistance(0);
       setShippingCost(0);
       setNotificationModal({
@@ -266,7 +266,7 @@ export default function CartPage() {
     );
   };
 
-  // REMOVE ITEM
+  // hapus item dari keranjang
   const handleRemoveItem = async (cartId) => {
     if (!confirm("Hapus item ini?")) return;
 
@@ -283,7 +283,7 @@ export default function CartPage() {
     }
   };
 
-  // UPDATE QUANTITY
+  // update jumlah barang
   const handleUpdateQuantity = async (cartId, newQuantity) => {
     if (newQuantity < 1) return;
 
@@ -307,12 +307,12 @@ export default function CartPage() {
     }
   };
 
-  // SELECT ITEM
+  // pilih/batal pilih item
   const handleToggleSelect = (cartId) => {
     setSelectedItems((prev) => ({ ...prev, [cartId]: !prev[cartId] }));
   };
 
-  // SELECT ALL
+  // pilih semua item
   const handleSelectAll = () => {
     const allSelected = cart.length > 0 && cart.every((item) => selectedItems[item.id_cart]);
     const updated = {};
@@ -348,12 +348,12 @@ export default function CartPage() {
     }, 0);
   }, [cart, selectedItems]);
 
-  // ✅ PERBAIKAN 1: total untuk voucher hanya biaya sewa (tanpa deposit)
+  // total buat voucher cuma biaya sewa (tanpa deposit)
   const totalSewa = useMemo(() => {
     return getSelectedTotal;
   }, [getSelectedTotal]);
 
-  // ✅ PERBAIKAN 2: Fetch available vouchers dengan totalSewa
+  // ambil daftar voucher yg tersedia
   const fetchAvailableVouchers = async () => {
     try {
       if (totalSewa <= 0) return;
@@ -366,7 +366,7 @@ export default function CartPage() {
     }
   };
 
-  // ✅ PERBAIKAN 3: Apply voucher dengan totalSewa
+  // pasang voucher pake totalSewa sbg acuan
   const handleApplyVoucher = async () => {
     if (!voucherCode.trim()) {
       toast.error('Masukkan kode voucher');
@@ -396,7 +396,7 @@ export default function CartPage() {
     }
   };
 
-  // Remove voucher
+  // batalkan voucher
   const handleRemoveVoucher = () => {
     setAppliedVoucher(null);
     setDiscount(0);
@@ -404,7 +404,7 @@ export default function CartPage() {
     toast.info('Voucher dibatalkan');
   };
 
-  // ✅ PERBAIKAN 4: Panggil fetch vouchers saat totalSewa berubah
+  // ambil ulang voucher kalo totalSewa berubah
   useEffect(() => {
     if (totalSewa > 0) {
       fetchAvailableVouchers();
@@ -421,7 +421,7 @@ export default function CartPage() {
 
   const finalTotal = grandTotal - discount;
 
-  // CHECKOUT
+  // proses checkout
   const handleCheckout = async () => {
     if (!user) {
       alert("Silakan login terlebih dahulu");
@@ -517,7 +517,7 @@ export default function CartPage() {
     }
   };
 
-  // LOADING
+  // tampilan loading
   if (isLoading) {
     return (
       <div className="bg-white min-h-screen">
@@ -533,7 +533,7 @@ export default function CartPage() {
     );
   }
 
-  // BELUM LOGIN
+  // tampilan belum login
   if (!user) {
     return (
       <div className="bg-background min-h-screen">
@@ -553,7 +553,7 @@ export default function CartPage() {
     );
   }
 
-  // CART KOSONG
+  // tampilan keranjang kosong
   if (cart.length === 0) {
     return (
       <div className="bg-background min-h-screen">
