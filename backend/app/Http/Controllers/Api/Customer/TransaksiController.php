@@ -250,9 +250,9 @@ class TransaksiController extends Controller
                 $midtransItems,
                 $customerDetails,
                 [
-                    'finish' => 'http://localhost:5173/customer/transactions',
-                    'error' => 'http://localhost:5173/customer/transactions',
-                    'pending' => 'http://localhost:5173/customer/transactions',
+                    'finish' => 'http://petualang.fakerryugan.my.id/customer/transactions',
+                    'error' => 'http://petualang.fakerryugan.my.id/customer/transactions',
+                    'pending' => 'http://petualang.fakerryugan.my.id/customer/transactions',
                 ]
             );
 
@@ -261,8 +261,6 @@ class TransaksiController extends Controller
                 return response()->json(['error' => $result['error']], 500);
             }
 
-            // ✅ Jika voucher valid, tandai sebagai used setelah transaksi sukses dibuat
-// ✅ PERBAIKAN: Kirimkan 5 parameter
 if ($voucherDiscount > 0 && $appliedVoucherData) {
     $this->voucherService->markVoucherAsUsed(
         $appliedVoucherData->id,
