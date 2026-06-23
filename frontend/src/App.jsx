@@ -8,7 +8,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import ScrollToTop from '@/components/ScrollToTop'
 import AuthCallback from '@/features/auth/pages/AuthCallback'
 
-// Pages
+// halaman
 import Home from '@/features/landing/pages/Home'
 import BarangShow from '@/features/landing/pages/BarangShow';
 
@@ -39,7 +39,7 @@ import DepositRefund from '@/features/admin/pages/DepositRefund'
 import Withdrawals from '@/features/admin/pages/Withdrawals'
 import Vouchers from '@/features/admin/pages/Vouchers'
 
-// Customer Profile - perbaiki pathnya
+// profil customer
 import Profile from '@/profile/pages/Profile'
 import EditProfile from '@/profile/pages/edit-profile'
 import UpdatePassword from '@/profile/pages/update-password'

@@ -112,7 +112,7 @@ export default function BarangShow() {
     return (barang.nominal_deposit || 0) * selectedJumlah;
   }, [barang, selectedJumlah]);
 
-  // ✅ PERBAIKAN: total untuk voucher hanya biaya sewa (TANPA deposit dan ongkir)
+  // total buat voucher cuma biaya sewa aja (tanpa deposit & ongkir)
   const totalSewa = useMemo(() => {
     return totalHarga;
   }, [totalHarga]);
@@ -121,7 +121,7 @@ export default function BarangShow() {
     return totalHarga + totalDeposit + shippingCost - voucherDiscount;
   }, [totalHarga, totalDeposit, shippingCost, voucherDiscount]);
 
-  // ✅ PERBAIKAN: Fetch available vouchers dengan totalSewa (bukan totalHarga+deposit)
+  // ambil daftar voucher yg tersedia berdasarkan totalSewa
   const fetchAvailableVouchers = async () => {
     if (!user) return;
     if (totalSewa <= 0) return;
@@ -136,7 +136,7 @@ export default function BarangShow() {
     }
   };
 
-  // ✅ PERBAIKAN: Apply voucher dengan totalSewa (bukan totalHarga+deposit+ongkir)
+  // pasang voucher pake totalSewa sbg acuan harga
   const handleApplyVoucher = async () => {
     if (!voucherCode.trim()) {
       toast.error('Masukkan kode voucher');
@@ -166,7 +166,7 @@ export default function BarangShow() {
     }
   };
 
-  // Remove voucher
+  // batalkan voucher
   const handleRemoveVoucher = () => {
     setAppliedVoucher(null);
     setVoucherDiscount(0);
@@ -174,7 +174,7 @@ export default function BarangShow() {
     toast.info('Voucher dibatalkan');
   };
 
-  // ✅ PERBAIKAN: Fetch vouchers saat totalSewa berubah
+  // ambil ulang voucher kalo totalSewa berubah
   useEffect(() => {
     if (user && totalSewa > 0) {
       fetchAvailableVouchers();
@@ -223,7 +223,7 @@ export default function BarangShow() {
         alert("Alamat tidak ditemukan. Silakan masukkan alamat yang lebih spesifik.");
       }
     } catch (error) {
-      console.error("Error calculating distance:", error);
+       console.error("Gagal hitung jarak:", error);
       setDistance(0);
       setShippingCost(0);
       alert("Gagal menghitung ongkir. Periksa koneksi internet Anda.");
@@ -296,7 +296,7 @@ export default function BarangShow() {
     }
   }, [deliveryAddress, deliveryMethod, calculateOngkir]);
 
-  // Load Midtrans
+   // muat script Midtrans
   useEffect(() => {
     if (!window.snap) {
       const script = document.createElement('script');
@@ -306,7 +306,7 @@ export default function BarangShow() {
     }
   }, []);
 
-  // Fetch barang
+   // ambil data barang
   useEffect(() => {
     const fetchBarang = async () => {
       try {
@@ -327,7 +327,7 @@ export default function BarangShow() {
     }
   }, [id]);
 
-  // Fetch recommended products
+   // ambil produk rekomendasi
   useEffect(() => {
     const fetchRecommended = async () => {
       try {
@@ -343,7 +343,7 @@ export default function BarangShow() {
     if (id) fetchRecommended();
   }, [id]);
 
-  // Fetch ulasan from API
+   // ambil data ulasan dari API
   useEffect(() => {
     const fetchUlasan = async () => {
       try {

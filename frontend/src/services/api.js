@@ -1,8 +1,7 @@
-// frontend/src/services/api.js
+// konfigurasi api utama
 import axios from 'axios'
 
-// Toggle between Production API and Local API
-// Set to true to use the online production API, or false for local development
+// ganti true/false buat pindah antara API production sama lokal
 export const USE_PRODUCTION_API = true;
 
 export const BASE_URL = USE_PRODUCTION_API ? 'https://api.fakerryugan.my.id' : 'http://localhost:8000';
@@ -15,7 +14,7 @@ const api = axios.create({
   },
 })
 
-// Request interceptor - Add token
+// pasang token otomatis di setiap request
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -29,13 +28,13 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor - Handle errors
+// tangani error dari response
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
 
-    // Handle 401 Unauthorized
+    // kalau kena 401 (gak authorized), coba refresh token dulu
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
@@ -59,7 +58,7 @@ api.interceptors.response.use(
           return api(originalRequest)
         }
       } catch (refreshError) {
-        // Refresh failed - logout
+        // refresh gagal, paksa logout
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         window.location.href = '/login'

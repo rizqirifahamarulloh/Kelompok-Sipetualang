@@ -3,7 +3,7 @@ import {
   Landmark, User, Calendar, Receipt, Info, FileText, Image as ImageIcon, XCircle
 } from "lucide-react";
 
-// ─── DATA DUMMY DETAIL PEMBAYARAN ──────────────────────────────
+// data dummy detail pembayaran
 const DUMMY_DETAIL = {
   id_pembayaran: "PAY-2310-001",
   id_transaksi: "TRX-8821A",

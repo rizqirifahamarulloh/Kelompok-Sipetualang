@@ -46,12 +46,12 @@ export default function KatalogProduk({
     return () => clearInterval(interval);
   }, []);
 
-  // Check if item is already in cart
+  // cek apakah item udah ada di keranjang
   const isInCart = (idBarang) => {
     return cartItems.some(item => item.id_barang === idBarang);
   };
 
-  // Get stock status for badge — menggunakan data booking dari API
+  // cek status stok buat badge - pake data booking dari API
   const getStockStatus = (barang) => {
     const booking = bookingData[barang.id_barang];
 
@@ -82,7 +82,7 @@ export default function KatalogProduk({
     return { type: 'available', label: null, sisaStok, stokAwal };
   };
 
-  // Determine card status
+  // tentuin status kartu barang
   const getCardStatus = (barang) => {
     const stockStatus = getStockStatus(barang);
     const isDisabled = stockStatus.type === 'rented' || stockStatus.type === 'out_of_stock';
@@ -92,7 +92,7 @@ export default function KatalogProduk({
     return { stockStatus, isDisabled, isRented, isStockEmpty, isLowStock };
   };
 
-  // Gate: require auth before action
+  // harus login dulu sebelum aksi
   const requireAuth = (callback) => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
@@ -101,13 +101,13 @@ export default function KatalogProduk({
     callback();
   };
 
-  // Format tanggal untuk display
+  // format tanggal buat ditampilin
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'numeric', year: 'numeric' });
   };
 
-  // Handle add to cart with visual feedback + stock check
+  // tambah ke keranjang + feedback visual + cek stok
   const handleAddToCart = (barang) => {
     if (!isAuthenticated) {
       setShowAuthModal(true);

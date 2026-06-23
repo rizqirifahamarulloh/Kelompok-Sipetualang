@@ -45,7 +45,7 @@ const formatDate = (dateStr) =>
 const formatDateTime = (dateStr) =>
   dateStr ? new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 
-// ── Status configs ──
+// konfigurasi status transaksi
 const STATUS_CONFIG = {
   dibayar: { label: 'Dibayar', icon: CreditCard, cls: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
   sedang_disewa: { label: 'Sedang Disewa', icon: Package, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
@@ -59,13 +59,13 @@ export default function TransactionsPage() {
   const [rentalFilter, setRentalFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('newest');
 
-  // Return modal
+  // state modal pengembalian
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [selectedReturnTrx, setSelectedReturnTrx] = useState(null);
   const [returnForm, setReturnForm] = useState({ metode_kembali: 'pickup', no_resi_kembali: '' });
   const [submittingReturn, setSubmittingReturn] = useState(false);
 
-  // Review state
+  // state ulasan
   const [reviewModal, setReviewModal] = useState(null);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
@@ -73,7 +73,7 @@ export default function TransactionsPage() {
   const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState([]);
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Edit Review state
+  // state edit ulasan
   const [editModal, setEditModal] = useState(null);
   const [editRating, setEditRating] = useState(0);
   const [editComment, setEditComment] = useState('');
@@ -93,19 +93,19 @@ export default function TransactionsPage() {
       const response = await transactionService.getTransaksiSebagaiPenyewa();
       setTransactions(response.data || []);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error('Gagal ambil data transaksi:', error);
       setTransactions([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Fetch transactions on mount
+  // ambil transaksi saat pertama kali load
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  // Check reviews for completed transactions
+  // cek status ulasan buat transaksi yg udah selesai
   useEffect(() => {
     const checkReviews = async () => {
       const selesai = transactions.filter(t => t.status_sewa === 'selesai');
@@ -129,7 +129,7 @@ export default function TransactionsPage() {
             }
           });
         } catch (err) {
-          console.error('Error checking reviews:', err);
+          console.error('Gagal cek ulasan:', err);
         }
       }
       setReviewedItems(reviewedMap);
@@ -140,7 +140,7 @@ export default function TransactionsPage() {
     }
   }, [transactions, token]);
 
-  // ── Filtered & sorted
+  // filter dan urutkan data
   const filteredData = useMemo(() => {
     let list = transactions.filter(t => ['sedang_disewa', 'selesai', 'dibayar'].includes(t.status_sewa));
     if (rentalFilter === 'aktif') list = list.filter(t => t.status_sewa === 'sedang_disewa' || t.status_sewa === 'dibayar');
@@ -159,7 +159,7 @@ export default function TransactionsPage() {
     selesai: transactions.filter(t => t.status_sewa === 'selesai').length,
   }), [transactions]);
 
-  // ── Handlers
+  // handler-handler
   const openReturnModal = (trx) => {
     setSelectedReturnTrx(trx);
     setReturnForm({ metode_kembali: 'pickup', no_resi_kembali: '' });
@@ -185,7 +185,7 @@ export default function TransactionsPage() {
   const getPhotoUrl = () => getStorageUrl(user?.profile_photo);
   const getInitials = () => user?.nama?.charAt(0).toUpperCase() || 'U';
 
-  // ── Review handlers
+  // handler ulasan
   const openReviewModal = (trans, id_barang = null, nama_barang = null) => {
     setReviewModal({
       ...trans,
@@ -228,7 +228,7 @@ export default function TransactionsPage() {
       });
       toast.success('Ulasan berhasil dikirim!');
       
-      // Refresh review status
+      // refresh status ulasan
       const res = await axios.get(`${API_URL}/customer/ulasan/check/${reviewModal.id_transaksi}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -255,7 +255,7 @@ export default function TransactionsPage() {
     }
   };
 
-  // ── Edit Review handlers
+  // handler edit ulasan
   const openEditModal = (ulasanData, trans, detailItem) => {
     const existingFotoList = ulasanData?.foto_ulasan || [];
     setEditModal({
@@ -321,7 +321,7 @@ export default function TransactionsPage() {
       
       toast.success(`Ulasan "${editModal.nama_barang}" berhasil diperbarui!`);
       
-      // Refresh review status
+      // refresh status ulasan
       const res = await axios.get(`${API_URL}/customer/ulasan/check/${editModal.id_transaksi}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -349,7 +349,7 @@ export default function TransactionsPage() {
 
   if (!user) return null;
 
-  // ── Render single card
+  // render kartu transaksi
   const renderCard = (trans) => {
     const cfg = STATUS_CONFIG[trans.status_sewa] || STATUS_CONFIG.selesai;
     const Icon = cfg.icon;
@@ -357,7 +357,7 @@ export default function TransactionsPage() {
 
     return (
       <div key={trans.id_transaksi} className="border rounded-2xl bg-card overflow-hidden hover:shadow-md transition-shadow">
-        {/* ─ Card Header ─ */}
+        {/* header kartu */}
         <div className="flex items-center justify-between gap-3 px-5 py-3 border-b bg-muted/30">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
@@ -375,7 +375,7 @@ export default function TransactionsPage() {
           </Badge>
         </div>
 
-        {/* ─ Card Body ─ */}
+        {/* isi kartu */}
         <div className="p-5 space-y-4">
 
           {/* Daftar Barang */}
@@ -572,7 +572,7 @@ export default function TransactionsPage() {
             </div>
           )}
 
-          {/* ── Completed: Return Info ── */}
+          {/* transaksi selesai: info pengembalian */}
           {trans.status_sewa === 'selesai' && trans.pengembalian && (
             <div className="bg-muted/40 rounded-xl p-4 border space-y-2">
               <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -600,7 +600,7 @@ export default function TransactionsPage() {
             </div>
           )}
 
-          {/* ── Actions ── */}
+          {/* tombol aksi */}
           {trans.status_sewa === 'sedang_disewa' && trans.status_kembali === 'belum' && (
             <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold gap-1.5 h-10 rounded-xl" onClick={() => openReturnModal(trans)}>
               <RotateCcw className="w-4 h-4" /> Kembalikan Barang
@@ -701,7 +701,7 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Review Modal */}
+      {/* modal ulasan */}
       {reviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setReviewModal(null)}>
           <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -754,7 +754,7 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Edit Review Modal */}
+      {/* modal edit ulasan */}
       {editModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEditModal(null)}>
           <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -816,7 +816,7 @@ export default function TransactionsPage() {
                 </div>
               )}
               
-              {/* New Photos Preview */}
+              {/* preview foto baru */}
               {editPhotoPreviews.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-2">Foto Baru ({editPhotoPreviews.length}/5)</p>
@@ -837,7 +837,7 @@ export default function TransactionsPage() {
                 </div>
               )}
               
-              {/* Upload Button */}
+              {/* tombol upload foto */}
               {(existingPhotos.length + editPhotos.length) < 5 && (
                 <div>
                   <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/30 hover:border-blue-400 transition-colors">
@@ -867,7 +867,7 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Return Modal */}
+      {/* modal pengembalian barang */}
       {isReturnModalOpen && selectedReturnTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border max-h-[85vh] overflow-y-auto">
@@ -925,7 +925,7 @@ export default function TransactionsPage() {
   );
 }
 
-// ── Reusable sub-components ──
+// komponen kecil yang dipake ulang
 function InfoRow({ icon, label, value, highlight, colSpan }) {
   return (
     <div className={`flex items-start gap-2 text-xs ${colSpan ? 'col-span-2' : ''}`}>

@@ -37,8 +37,8 @@ export default function TokoPage() {
   const [sortBy, setSortBy] = useState('');
 
   // =========================
-// FETCH DATA
-// =========================
+  // ambil data toko
+  // =========================
 useEffect(() => {
   const fetchData = async () => {
     try {
@@ -81,7 +81,7 @@ useEffect(() => {
 }, [id]); // ✅ hanya depends on id
 
   // =========================
-  // FILTER PRODUK
+  // filter produk
   // =========================
   const filteredProduk = useMemo(() => {
     let result = produkList;
@@ -106,7 +106,7 @@ useEffect(() => {
   }, [produkList, selectedKategori, sortBy]);
 
   // =========================
-  // CHAT
+  // chat
   // =========================
   const startChat = async () => {
     if (!user) {
@@ -145,7 +145,7 @@ useEffect(() => {
   };
 
   // =========================
-  // IMAGE
+  // gambar
   // =========================
   const getImageUrl = (foto) => {
     if (!foto)
@@ -157,7 +157,7 @@ useEffect(() => {
   };
 
   // =========================
-  // LOADING
+  // loading
   // =========================
   if (isLoading) {
     return (

@@ -10,7 +10,7 @@ const THEME_CLASSES = {
   light: 'bg-white text-[rgb(38,38,38)]',
 }
 
-/* ── Desktop fan-spread positions ─────────────────────────── */
+/* posisi kartu fan-spread di desktop */
 const DESKTOP = [
   { x: '-160%', y: 20, rotate: -6, scale: 0.9, z: 1 },
   { x: '-80%', y: 5, rotate: 4, scale: 0.95, z: 2 },
@@ -19,7 +19,7 @@ const DESKTOP = [
   { x: '160%', y: 20, rotate: -5, scale: 0.9, z: 1 },
 ]
 
-/* ── Mobile stacked-rack positions (documents in a file rack) */
+/* posisi kartu stack di mobile (kayak dokumen di rak) */
 const MOBILE_STACK = [
   { y: 60, scale: 1, z: 5 },
   { y: 10, scale: 0.95, z: 4 },
@@ -69,7 +69,7 @@ export default function Testimonial() {
               const desktop = DESKTOP[index]
               const mobile = MOBILE_STACK[index]
 
-              // Compute animation target based on viewport
+              // hitung target animasi berdasarkan ukuran layar
               const target = isMobile
                 ? {
                     x: 0,
