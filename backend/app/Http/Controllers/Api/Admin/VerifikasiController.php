@@ -8,7 +8,7 @@ use App\Models\Verifikasi;
 
 class VerifikasiController extends Controller
 {
-    // 🔍 Ambil semua data verifikasi
+    // Ambil semua data verifikasi
     public function index()
     {
         try {
@@ -26,7 +26,7 @@ class VerifikasiController extends Controller
         }
     }
 
-    // ✅ Approve KTP
+    //  Approve KTP
     public function approve(Request $request, $id)
     {
         $verifikasi = Verifikasi::findOrFail($id);
@@ -49,7 +49,7 @@ class VerifikasiController extends Controller
         ]);
     }
 
-    // ❌ Reject KTP
+    // Reject KTP
     public function reject(Request $request, $id)
     {
         $request->validate([
@@ -67,7 +67,7 @@ class VerifikasiController extends Controller
         ]);
     }
 
-    // 🔍 Detail 1 data (opsional, tapi bagus buat modal/detail page)
+    // Detail 1 data (opsional, tapi bagus buat modal/detail page)
     public function show($id)
     {
         $data = Verifikasi::with('pengguna')->findOrFail($id);

@@ -128,7 +128,7 @@ class NotifikasiController extends Controller
         foreach ($criticalGears as $g) {
             $severityLevel = $g->jumlah_stok <= 0 ? 'danger' : ($g->jumlah_stok <= 2 ? 'danger' : 'warning');
             $stockLabel = $g->jumlah_stok <= 0 ? 'HABIS' : "tinggal {$g->jumlah_stok} unit";
-            
+
             $this->upsertNotification($user, 'stock_crit_' . $g->id_barang, [
                 'type' => 'stock_warning',
                 'title' => $g->jumlah_stok <= 0 ? 'Stok Habis!' : 'Peringatan Stok Kritis',
@@ -141,7 +141,7 @@ class NotifikasiController extends Controller
         // Remove stok warnings for items that are no longer critical (>= 5)
         $nonCriticalKeys = Barang::where('jumlah_stok', '>=', 5)->pluck('id_barang')
             ->map(fn($id) => 'stock_crit_' . $id)->toArray();
-        
+
         if (!empty($nonCriticalKeys)) {
             Notifikasi::where('id_pengguna', $user->id_pengguna)
                 ->whereIn('unique_key', $nonCriticalKeys)
@@ -207,7 +207,7 @@ class NotifikasiController extends Controller
             if ($b->status_approval === 'disetujui') {
                 $this->upsertNotification($user, $uniqueKey, [
                     'type' => 'barang_status',
-                    'title' => '✅ Barang Disetujui Admin',
+                    'title' => 'Barang Disetujui Admin',
                     'message' => "Barang '{$b->nama_barang}' telah disetujui oleh admin dan sekarang tampil di katalog sewa untuk disewa oleh customer.",
                     'severity' => 'success',
                     'data' => ['id_barang' => $b->id_barang, 'status_approval' => 'disetujui'],
@@ -219,7 +219,7 @@ class NotifikasiController extends Controller
             } elseif ($b->status_approval === 'ditolak') {
                 $this->upsertNotification($user, $uniqueKey, [
                     'type' => 'barang_status',
-                    'title' => '❌ Barang Ditolak Admin',
+                    'title' => 'Barang Ditolak Admin',
                     'message' => "Barang '{$b->nama_barang}' ditolak oleh admin. Silakan perbarui data barang dan ajukan kembali melalui menu Kelola Barang.",
                     'severity' => 'danger',
                     'data' => ['id_barang' => $b->id_barang, 'status_approval' => 'ditolak'],
@@ -231,13 +231,12 @@ class NotifikasiController extends Controller
             } elseif ($b->status_approval === 'pending') {
                 $this->upsertNotification($user, $uniqueKey, [
                     'type' => 'barang_status',
-                    'title' => '⏳ Barang Menunggu Peninjauan',
+                    'title' => 'Barang Menunggu Peninjauan',
                     'message' => "Barang '{$b->nama_barang}' sedang menunggu peninjauan admin. Anda akan diberitahu saat admin menyetujui atau menolaknya.",
                     'severity' => 'warning',
                     'data' => ['id_barang' => $b->id_barang, 'status_approval' => 'pending'],
                 ]);
 
-                // Clean up old approved/rejected notifications for this item
                 $this->cleanupOldBarangNotifications($user, $b->id_barang, ['disetujui', 'ditolak']);
             }
         }

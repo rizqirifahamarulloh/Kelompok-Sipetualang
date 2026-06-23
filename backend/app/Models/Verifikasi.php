@@ -10,7 +10,7 @@ class Verifikasi extends Model
 
     protected $primaryKey = 'id_verifikasi';
 
-    public $timestamps = false; // karena kamu pakai tanggal_pengajuan manual
+    public $timestamps = false;
 
     protected $fillable = [
         'id_pengguna',

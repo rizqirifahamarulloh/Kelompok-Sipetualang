@@ -126,7 +126,7 @@ class AuthController extends Controller
             ]
         );
 
-        $resetLink = config('app.frontend_url', 'http://petualang.fakerryugan.my.id') . '/reset-password?token=' . $token . '&email=' . urlencode($user->email);
+        $resetLink = config('app.frontend_url', 'https://petualang-sibm4.karyakreasi.id') . '/reset-password?token=' . $token . '&email=' . urlencode($user->email);
 
         Mail::send('emails.reset-password', [
             'user' => $user,
@@ -248,7 +248,7 @@ class AuthController extends Controller
 
             $token = JWTAuth::fromUser($pengguna);
 
-            $frontendUrl = config('app.frontend_url', 'http://petualang.fakerryugan.my.id');
+            $frontendUrl = config('app.frontend_url', 'https://petualang-sibm4.karyakreasi.id');
             $redirectUrl = $frontendUrl . '/auth/callback?token=' . $token . '&user=' . urlencode(json_encode([
                 'id_pengguna' => $pengguna->id_pengguna,
                 'nama' => $pengguna->nama,

@@ -9,7 +9,7 @@ use App\Models\Transaksi;
 use App\Models\Pengembalian;
 use App\Models\Pengguna;
 use App\Services\MidtransService;
-use App\Services\VoucherService;  // ✅ Tambahkan ini
+use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,12 +17,12 @@ use Illuminate\Support\Facades\DB;
 class TransaksiController extends Controller
 {
     protected $midtrans;
-    protected $voucherService;  // ✅ Tambahkan ini
+    protected $voucherService;
 
-    public function __construct(MidtransService $midtrans, VoucherService $voucherService)  // ✅ Tambahkan parameter
+    public function __construct(MidtransService $midtrans, VoucherService $voucherService)
     {
         $this->midtrans = $midtrans;
-        $this->voucherService = $voucherService;  // ✅ Tambahkan ini
+        $this->voucherService = $voucherService;
     }
 
     public function checkout(Request $request)
@@ -44,7 +44,7 @@ class TransaksiController extends Controller
             'metode_pengiriman' => 'required|in:pickup,delivery',
             'alamat_pengiriman' => 'nullable|string',
             'biaya_pengiriman' => 'nullable|numeric',
-            'kode_voucher' => 'nullable|string',  // ✅ Tambahkan validasi voucher
+            'kode_voucher' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -110,7 +110,7 @@ class TransaksiController extends Controller
                 ];
             }
 
-            // ✅ PERBAIKAN: Proses voucher (diskon hanya untuk totalSewa, TANPA deposit)
+            // Proses voucher (diskon hanya untuk totalSewa, TANPA deposit)
             $voucherDiscount = 0;
             $appliedVoucherData = null;
             $finalTotalSewa = $totalSewa;
@@ -128,10 +128,10 @@ class TransaksiController extends Controller
                 }
             }
 
-            // ✅ Hitung ulang total biaya: (SEWA setelah diskon) + DEPOSIT + ONGKIR
+            //  Hitung ulang total biaya: (SEWA setelah diskon) + DEPOSIT + ONGKIR
             $totalBiaya = $finalTotalSewa + $totalDeposit + $biayaPengiriman;
 
-            // ✅ Buat Midtrans items berdasarkan harga setelah diskon
+            //  Buat Midtrans items berdasarkan harga setelah diskon
             // Ini lebih kompleks karena diskon harus dialokasikan ke item sewa (bukan deposit)
             // Cara sederhana: buat item diskon negatif di Midtrans
 
@@ -159,7 +159,7 @@ class TransaksiController extends Controller
                 }
             }
 
-            // ✅ Add discount as negative item (only if discount > 0)
+            //  Add discount as negative item (only if discount > 0)
             if ($voucherDiscount > 0) {
                 $midtransItems[] = [
                     'id' => 'DISCOUNT',
@@ -218,8 +218,8 @@ class TransaksiController extends Controller
                 'status_pembayaran' => 'pending',
                 'status_sewa' => 'menunggu_pembayaran',
                 'midtrans_order_id' => $orderId,
-                'kode_voucher' => $voucherCode,  // ✅ Simpan kode voucher
-                'diskon_voucher' => $voucherDiscount,  // ✅ Simpan nominal diskon
+                'kode_voucher' => $voucherCode,  //  Simpan kode voucher
+                'diskon_voucher' => $voucherDiscount,  //  Simpan nominal diskon
             ]);
 
             // Create detail transaksi for each item
@@ -250,9 +250,9 @@ class TransaksiController extends Controller
                 $midtransItems,
                 $customerDetails,
                 [
-                    'finish' => 'http://petualang.fakerryugan.my.id/customer/transactions',
-                    'error' => 'http://petualang.fakerryugan.my.id/customer/transactions',
-                    'pending' => 'http://petualang.fakerryugan.my.id/customer/transactions',
+                    'finish' => 'https://petualang-sibm4.karyakreasi.id/customer/transactions',
+                    'error' => 'https://petualang-sibm4.karyakreasi.id/customer/transactions',
+                    'pending' => 'https://petualang-sibm4.karyakreasi.id/customer/transactions',
                 ]
             );
 
@@ -267,7 +267,7 @@ if ($voucherDiscount > 0 && $appliedVoucherData) {
         Auth::id(),
         $transaksi->id_transaksi,
         $voucherDiscount,
-        $finalTotalSewa  
+        $finalTotalSewa
     );
 }
 

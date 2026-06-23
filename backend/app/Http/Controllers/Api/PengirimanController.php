@@ -26,7 +26,7 @@ class PengirimanController extends Controller
         }
 
         // Tampilkan transaksi yang berstatus sewa: dibayar, sedang_disewa, selesai, dibatalkan
-        // yang pembayarannya sukses. Tentu, pickup juga tetap ditampilkan agar admin dapat melihatnya, 
+        // yang pembayarannya sukses. Tentu, pickup juga tetap ditampilkan agar admin dapat melihatnya,
         // tapi delivery memiliki aksi khusus.
         $transactions = Transaksi::with(['penyewa', 'pengiriman', 'detailTransaksi.barang'])
             ->where('status_pembayaran', 'sukses')
@@ -85,7 +85,7 @@ class PengirimanController extends Controller
                 'id_pengguna' => $transaksi->id_penyewa,
                 'unique_key' => 'pengiriman_dikirim_' . $transaksi->id_transaksi . '_' . time(),
                 'type' => 'shipping',
-                'title' => 'Barang Sedang Dikirim 🚚',
+                'title' => 'Barang Sedang Dikirim',
                 'message' => "Peralatan sewaan Anda ({$transaksi->nama_barang}) telah diserahkan ke kurir {$request->kurir} dengan nomor resi {$request->no_resi}. Posisi saat ini: {$request->lokasi_terakhir}",
                 'severity' => 'info',
                 'data' => [
@@ -146,9 +146,9 @@ class PengirimanController extends Controller
             }
 
             // Kirim notifikasi real-time ke customer ketika lokasi berubah atau status berubah
-            $title = 'Pembaruan Lokasi Barang 📍';
+            $title = 'Pembaruan Lokasi Barang';
             if ($request->status_pengiriman === 'sampai' && $oldStatus !== 'sampai') {
-                $title = 'Barang Telah Sampai! 🎉';
+                $title = 'Barang Telah Sampai!';
                 $msg = "Peralatan sewaan Anda ({$pengiriman->transaksi->nama_barang}) telah tiba di tujuan: {$request->lokasi_terakhir}. Silakan lakukan konfirmasi penerimaan barang.";
             } else {
                 $msg = "Peralatan sewaan Anda ({$pengiriman->transaksi->nama_barang}) terdeteksi di lokasi baru: {$request->lokasi_terakhir}.";
@@ -249,7 +249,7 @@ class PengirimanController extends Controller
                 'id_pengguna' => Auth::id(),
                 'unique_key' => 'pengiriman_diterima_' . $pengiriman->id_transaksi . '_' . time(),
                 'type' => 'shipping',
-                'title' => 'Konfirmasi Penerimaan Sukses 👍',
+                'title' => 'Konfirmasi Penerimaan Sukses',
                 'message' => "Anda telah mengonfirmasi penerimaan barang ({$pengiriman->transaksi->nama_barang}). Status sewa Anda sekarang aktif (Sedang Disewa). Selamat berpetualang!",
                 'severity' => 'success',
                 'data' => [
@@ -300,7 +300,7 @@ class PengirimanController extends Controller
             'id_pengguna' => Auth::id(),
             'unique_key' => 'pengembalian_proses_' . $transaksi->id_transaksi . '_' . time(),
             'type' => 'return',
-            'title' => 'Proses Pengembalian Dimulai 🔄',
+            'title' => 'Proses Pengembalian Dimulai',
             'message' => "Proses pengembalian alat '{$transaksi->nama_barang}' via " . ($request->metode_kembali === 'delivery' ? 'Kirim Kurir (Delivery)' : 'Datang Langsung ke Gudang') . " telah diajukan. Menunggu verifikasi penerimaan barang oleh Admin.",
             'severity' => 'warning',
             'data' => [
@@ -448,7 +448,7 @@ class PengirimanController extends Controller
                 'id_pengguna' => $transaksi->id_penyewa,
                 'unique_key' => 'pengembalian_konfirmasi_' . $transaksi->id_transaksi . '_' . time(),
                 'type' => 'return',
-                'title' => 'Pengembalian Alat Disetujui ✅',
+                'title' => 'Pengembalian Alat Disetujui',
                 'message' => "Pengembalian alat sewaan Anda ({$transaksi->nama_barang}) telah diverifikasi oleh Admin. Kondisi barang: {$request->kondisi_barang}." . $dendaMessage . $kerusakanMessage . $depositMessage,
                 'severity' => ($totalDenda > 0 || $dendaKerusakan > 0) ? 'danger' : 'success',
                 'data' => [
@@ -468,7 +468,7 @@ class PengirimanController extends Controller
                 'id_pengguna' => $transaksi->id_pemilik,
                 'unique_key' => 'pengembalian_pemilik_' . $transaksi->id_transaksi . '_' . time(),
                 'type' => 'return',
-                'title' => 'Barang Kembali — Pendapatan Dicairkan 💰',
+                'title' => 'Barang Kembali — Pendapatan Dicairkan',
                 'message' => "Barang '{$transaksi->nama_barang}' telah dikembalikan oleh penyewa dan diverifikasi Admin. Kondisi: {$request->kondisi_barang}." . $earningsMessage,
                 'severity' => 'success',
                 'data' => [
@@ -535,7 +535,7 @@ class PengirimanController extends Controller
                 'id_pengguna' => $transaksi->id_penyewa,
                 'unique_key' => 'pickup_diambil_' . $transaksi->id_transaksi . '_' . time(),
                 'type' => 'shipping',
-                'title' => 'Barang Berhasil Diambil 📦',
+                'title' => 'Barang Berhasil Diambil',
                 'message' => "Peralatan sewaan Anda ({$transaksi->nama_barang}) telah berhasil diambil dari gudang. Status sewa Anda sekarang aktif (Sedang Disewa). Selamat berpetualang!",
                 'severity' => 'success',
                 'data' => [

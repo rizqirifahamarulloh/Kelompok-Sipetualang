@@ -11,7 +11,6 @@ class Barang extends Model
     protected $table = 'barang';
     protected $primaryKey = 'id_barang';
 
-    // Matikan timestamps karena tabel tidak punya
     public $timestamps = false;
 
     protected $fillable = [

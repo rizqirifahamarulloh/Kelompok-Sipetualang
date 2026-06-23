@@ -9,7 +9,6 @@ class Message extends Model
     protected $table = 'messages';
     protected $primaryKey = 'id_message';
 
-    // Migration pakai timestamps, jadi true
     public $timestamps = true;
 
     protected $fillable = ['id_conversation', 'id_sender', 'message', 'is_read'];

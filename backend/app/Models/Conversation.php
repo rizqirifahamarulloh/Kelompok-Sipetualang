@@ -9,7 +9,6 @@ class Conversation extends Model
     protected $table = 'conversations';
     protected $primaryKey = 'id_conversation';
 
-    // Migration pakai timestamps, jadi true
     public $timestamps = true;
 
     protected $fillable = ['id_user_a', 'id_user_b', 'last_message_at'];
